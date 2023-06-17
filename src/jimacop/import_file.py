@@ -79,3 +79,69 @@ class ImportFile(
 
                 self.atoms = pd.DataFrame(data=atom_data, index=index)
 
+    def import_atom_from_list(self, atom_symbol_list):
+        """原子のリストからatom_symbol_to_type, atom_type_to_symbol, atom_type_to_massを作成する.
+        Parameters
+        ----------
+            atom_symbol_list : list
+                原子のリスト
+
+        Example
+        -------
+            atom_symbol_list = ['C', 'H', 'O', 'N']
+            の場合、Cの原子のタイプが1, Hの原子のタイプが2, Oの原子のタイプが3, Nの原子のタイプが4となる
+
+        """
+        atom_symbol_to_mass = {
+            "Cr":	51.9961,
+            "Mn":	54.938045,
+            "Fe":	55.845,
+            "Co":	58.933195,
+            "Ni":	58.6934,
+            "Cu":	63.546,
+            "Zn":	65.38,
+            "Ga":	69.723,
+            "Ge":	72.64,
+        }
+        atom_symbol_to_type = {}
+        type_list = [i for i in range(1, len(atom_symbol_list)+1)]
+        atom_symbol_to_type = {key: val for key, val in zip(atom_symbol_list, type_list)}
+        # type -> symbol# symbol -> type # type -> mass
+        self.atom_symbol_to_type = atom_symbol_to_type
+        self.atom_type_to_symbol = {
+            atom_type: atom_symbol for atom_symbol, atom_type in self.atom_symbol_to_type.items()}
+        self.atom_type_to_mass = {}
+        for atom_symbol, atom_type in self.atom_symbol_to_type.items():
+            self.atom_type_to_mass[atom_type] = atom_symbol_to_mass[atom_symbol]
+
+    
+    def import_atom_from_str(self, atom_symbol_str):
+        """
+            受け取ったstrをlistにして、
+            import_para_from_list()を呼び出す。
+            Parameters
+            ----------
+                para_atom_symbol_list : list   
+                空白区切りの原子の文字列
+
+            Example
+            -------
+                para_atom_symbol_str = 'C H O N' #原子と原子の間には、スペース
+                の場合、Cの原子のタイプが1, Hの原子のタイプが2, Oの原子のタイプが3, Nの原子のタイプが4となる
+        """
+        self.import_atom_from_list(atom_symbol_str.split())
+
+
+
+    def import_car(self, file_path: Union[str, Path]) -> None:
+        """ Car file を読み込み 
+            self.atoms, self.cell の更新
+        """
+        car_df = pd.read_csv(file_path, names=['symbol+id', 'x', 'y', 'z', 'XXXX', '1', 'xx', 'symbol', '0.000'],
+                         usecols=['x', 'y', 'z', 'symbol'],
+                         skiprows=4,  sep='\s+')
+        self.cell = np.float_(car_df.iloc[0, 0:3]) # cell size部分を抜き取る
+        car_df = car_df[1:].dropna() 
+        car_df.insert(0, 'type', car_df['symbol'].map(self.atom_symbol_to_type)) # type列を作成
+        self.atoms = car_df[['type', 'x', 'y', 'z']] 
+        
