@@ -1,9 +1,10 @@
 import pandas as pd
 import numpy as np
 
+from .import_file import ImportFile
 
 class SimulationFrame(
-
+    ImportFile,
 ):
     """シミュレーションしたデータを読み込み、書き込み、分析するためのクラス
     一つのフレームを扱う
