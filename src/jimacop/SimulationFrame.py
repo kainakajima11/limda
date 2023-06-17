@@ -43,3 +43,4 @@ class SimulationFrame(
         self.atom_type_to_mass = None
         self.step_num = None
 
+
