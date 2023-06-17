@@ -35,5 +35,10 @@ class SimulationFrame(
     step_num: int
 
     def __init__(self):
-        pass
+        self.atoms = None
+        self.cell = None
+        self.atom_symbol_to_type = None
+        self.atom_type_to_symbol = None
+        self.atom_type_to_mass = None
+        self.step_num = None
 
