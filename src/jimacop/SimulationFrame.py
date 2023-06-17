@@ -1,9 +1,10 @@
 import pandas as pd
 import numpy as np
 
+from .import_file import ImportFile
 
 class SimulationFrame(
-
+    ImportFile,
 ):
     """シミュレーションしたデータを読み込み、書き込み、分析するためのクラス
     一つのフレームを扱う
@@ -35,5 +36,11 @@ class SimulationFrame(
     step_num: int
 
     def __init__(self):
-        pass
+        self.atoms = None
+        self.cell = None
+        self.atom_symbol_to_type = None
+        self.atom_type_to_symbol = None
+        self.atom_type_to_mass = None
+        self.step_num = None
+
 
