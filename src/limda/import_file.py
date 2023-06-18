@@ -2,7 +2,9 @@ import pandas as pd
 import numpy as np
 from typing import Union
 from pathlib import Path 
+
 from limda.import_atoms_symbol_to_mass import import_atoms_symbol_to_mass
+
 class ImportFile(
 
 ):
@@ -100,7 +102,9 @@ class ImportFile(
         self.atom_type_to_symbol = {
             atom_type: atom_symbol for atom_symbol, atom_type in self.atom_symbol_to_type.items()}
         self.atom_type_to_mass = {}
+
         atom_symbol_to_mass = import_atoms_symbol_to_mass()
+
         for atom_symbol, atom_type in self.atom_symbol_to_type.items():
             self.atom_type_to_mass[atom_type] = atom_symbol_to_mass[atom_symbol]
 
@@ -134,4 +138,4 @@ class ImportFile(
         car_df = car_df[1:].dropna() 
         car_df.insert(0, 'type', car_df['symbol'].map(self.atom_symbol_to_type)) # type列を作成
         self.atoms = car_df[['type', 'x', 'y', 'z']] 
-        
+

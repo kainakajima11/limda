@@ -43,7 +43,6 @@ class SimulationFrame(
         self.atom_type_to_mass = None
         self.step_num = None
 
-    
     def replicate_atoms(self, replicate_directions=[1, 1, 1]) -> None:
         """
         x, y, z 方向にセルを複製する関数
@@ -67,6 +66,5 @@ class SimulationFrame(
         self.atoms.reset_index(drop=True, inplace=True)
         for dim in range(3):
             self.cell[dim] *= replicate_directions[dim]
-
 
 
