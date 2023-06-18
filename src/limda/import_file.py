@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
 from typing import Union
-from pathlib import Path
-
+from pathlib import Pathgit 
+from limda.import_atoms_symbol_to_mass import import_atoms_symbol_to_mass
 class ImportFile(
 
 ):
@@ -91,18 +91,7 @@ class ImportFile(
             atom_symbol_list = ['C', 'H', 'O', 'N']
             の場合、Cの原子のタイプが1, Hの原子のタイプが2, Oの原子のタイプが3, Nの原子のタイプが4となる
 
-        """
-        atom_symbol_to_mass = {
-            "Cr":	51.9961,
-            "Mn":	54.938045,
-            "Fe":	55.845,
-            "Co":	58.933195,
-            "Ni":	58.6934,
-            "Cu":	63.546,
-            "Zn":	65.38,
-            "Ga":	69.723,
-            "Ge":	72.64,
-        }
+        """ 
         atom_symbol_to_type = {}
         type_list = [i for i in range(1, len(atom_symbol_list)+1)]
         atom_symbol_to_type = {key: val for key, val in zip(atom_symbol_list, type_list)}
@@ -111,6 +100,7 @@ class ImportFile(
         self.atom_type_to_symbol = {
             atom_type: atom_symbol for atom_symbol, atom_type in self.atom_symbol_to_type.items()}
         self.atom_type_to_mass = {}
+        atom_symbol_to_mass = import_atoms_symbol_to_mass()
         for atom_symbol, atom_type in self.atom_symbol_to_type.items():
             self.atom_type_to_mass[atom_type] = atom_symbol_to_mass[atom_symbol]
 

@@ -43,4 +43,30 @@ class SimulationFrame(
         self.atom_type_to_mass = None
         self.step_num = None
 
+    
+    def replicate_atoms(self, replicate_directions=[1, 1, 1]) -> None:
+        """
+        x, y, z 方向にセルを複製する関数
+
+        Parameters
+        ----------
+        replicate_directions : list
+            x, y, z方向に何倍するかを指定する。
+            例えばx方向に2倍,y方向に3倍,z方向に4倍したい時は
+            replicate_directions = [2, 3, 4] とする
+
+        """
+        for i, dim in enumerate(['x', 'y', 'z']):
+            copy_atoms = self.atoms.copy()
+            for idx in range(1,replicate_directions[i]): 
+                replicate = lambda d: d[dim] + self.cell[i]*idx
+                append_atoms = copy_atoms.copy()
+                append_atoms[dim] = append_atoms.apply(replicate,axis=1)
+                self.atoms = pd.concat([self.atoms, append_atoms])
+
+        self.atoms.reset_index(drop=True, inplace=True)
+        for dim in range(3):
+            self.cell[dim] *= replicate_directions[dim]
+
+
 
