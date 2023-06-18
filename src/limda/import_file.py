@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 from typing import Union
 from pathlib import Path 
-
-from limda.import_atoms_symbol_to_mass import import_atoms_symbol_to_mass
+import limda.const as C
+import os
 
 class ImportFile(
 
@@ -81,7 +81,7 @@ class ImportFile(
 
                 self.atoms = pd.DataFrame(data=atom_data, index=index)
 
-    def import_atom_from_list(self, atom_symbol_list):
+    def import_atom_from_list(self, atom_symbol_list:list[str]):
         """原子のリストからatom_symbol_to_type, atom_type_to_symbol, atom_type_to_massを作成する.
         Parameters
         ----------
@@ -101,15 +101,13 @@ class ImportFile(
         self.atom_symbol_to_type = atom_symbol_to_type
         self.atom_type_to_symbol = {
             atom_type: atom_symbol for atom_symbol, atom_type in self.atom_symbol_to_type.items()}
+        
         self.atom_type_to_mass = {}
-
-        atom_symbol_to_mass = import_atoms_symbol_to_mass()
-
         for atom_symbol, atom_type in self.atom_symbol_to_type.items():
-            self.atom_type_to_mass[atom_type] = atom_symbol_to_mass[atom_symbol]
+            self.atom_type_to_mass[atom_type] = C.ATOM_SYMBOL_TO_MASS[atom_symbol]
 
     
-    def import_atom_from_str(self, atom_symbol_str):
+    def import_atom_from_str(self, atom_symbol_str:str):
         """
             受け取ったstrをlistにして、
             import_para_from_list()を呼び出す。
@@ -139,3 +137,25 @@ class ImportFile(
         car_df.insert(0, 'type', car_df['symbol'].map(self.atom_symbol_to_type)) # type列を作成
         self.atoms = car_df[['type', 'x', 'y', 'z']] 
 
+
+    def import_dumppos(self, file_path: Union[str, Path]) -> None:
+        current_row = 0
+        with open(file_path, 'r') as ifp:
+            while True:
+                current_row += 1
+                spline = ifp.read_line.split()
+                if len(spline) <= 1:
+                    continue
+                if spline[0] == "ITEM:" and spline[1] == 'ATOMS':
+                    columns = spline[3:]
+                    break
+
+        self.atoms = pd.read_csv(
+            ifp, skiprows = current_row, sep='\s+', names=columns)
+        if 'type' in self.atoms:
+            self.atoms['type'] = self.atoms['type'].astype(int)
+        if 'mask' in self.atoms:
+            self.atoms['mask'] = self.atoms['mask'].astype(int)
+
+        self.atoms.index = self.atoms.index - 1
+        self.atoms.sort_index(inplace=True)
