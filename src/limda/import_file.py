@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from typing import Union
-from pathlib import Pathgit 
+from pathlib import Path 
 from limda.import_atoms_symbol_to_mass import import_atoms_symbol_to_mass
 class ImportFile(
 
