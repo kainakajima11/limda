@@ -26,6 +26,10 @@ class SimulationFrames(
         原子のtypeをkey, 原子の質量(g/mol)をvalueとするdict
     
     """
+    sf: list[SimulationFrame]
+    atom_symbol_to_type: dict[str, int]
+    atom_type_to_symbol : dict[int, str]
+    atom_type_to_mass : dict[int, float]
 #----------------------
     def __init__(self):
         self.sf:list[SimulationFrame] = []
