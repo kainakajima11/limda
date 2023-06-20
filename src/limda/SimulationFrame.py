@@ -2,10 +2,10 @@ import pandas as pd
 import numpy as np
 import sys
 import os
-from .import_file import ImportFile
+from .import_frame import ImportFrame
 
 class SimulationFrame(
-    ImportFile,
+    ImportFrame,
 ):
     """シミュレーションしたデータを読み込み、書き込み、分析するためのクラス
     一つのフレームを扱う
@@ -66,11 +66,9 @@ class SimulationFrame(
         全原子数を返す関数。
         %%% bondorder_list、connect_list_from_dumpbond_cg の扱いが分かったら追加
         """
-        if self.atoms is not None:
-            return len(self.atoms)
-        else:
-            print('Import file first')
-            sys.exit(-1)
+        assert self.atoms is not None, 'Import file first'
+        return len(self.atoms)
+
 #--------------------------------------
     def get_atom_type_set(self) -> set:
         """
@@ -78,17 +76,13 @@ class SimulationFrame(
         """
         return set(self.atoms['type'])
 #----------------------------------------------
-    def wrap_particles(self) -> None:
+    def wrap_atoms(self) -> None: #ky
         """
         セルの外にはみ出している原子をセルの中に入れる。
         """
+        assert self.cell is not None, "set sf.cell"
+        assert 0 not in set(self.cell), "cell size must not be 0" 
 
-        if self.cell is None:
-            print('set sf.cell')
-            sys.exit(-1)
-        if 0 in self.cell:
-            print('cell size must not be 0')
-            sys.exit(-1)
         self.atoms[['x', 'y', 'z']] %= self.cell
 #---------------------------------------------------------------------------------
     def replicate_atoms(self, replicate_directions:list[int] = [1, 1, 1]) -> None:
