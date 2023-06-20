@@ -49,9 +49,9 @@ class SimulationFrames(
         sfs[step_idx]でsfs.sdat[step_idx]を得ることができる
         """
         return self.sf[key]
-#---------------------------------------------------------- 
+#------------------------------------
     def shuffle_sf(self, seed:int=1):
-        """SimulationFrames.sfの順番をシャッフルする
+        """self.sfの順番をシャッフルする
         Parameters
         ----------
             seed: int
@@ -59,7 +59,24 @@ class SimulationFrames(
         """
         random.seed(seed)
         random.shuffle(self.sf)
-# ---------------------------------------------------------   
-
-
+# -----------------------------------------------------------------  
+    def concat_simulation_frames(self, simulation_frames_list:list):
+        """sfsを結合する
+        Parameters
+        ----------
+            simulation_frames_list : List[SimulationFrames]
+                結合するsfsのリスト, 
+        Note
+        ----
+            concat_sdatsメソッドを使用するSimulationFramesは
+            import_para()後のを使う
+        """
+        self.sf = []
+        for outer_sfs in simulation_frames_list:
+            for step_idx in range(len(outer_sfs)):
+                self.sf.append(outer_sfs.sf[step_idx])
+        
+        step_nums = list(range(len(self.sf)))
+        for step_idx, step_num in enumerate(tqdm(step_nums)):
+            self.sf[step_idx].step_num = step_num
 

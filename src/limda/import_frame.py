@@ -80,7 +80,7 @@ class ImportFrame(
                     pass
 
                 self.atoms = pd.DataFrame(data=atom_data, index=index)
-#-------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------
     def import_para_from_list(self, atom_symbol_list:list[str]):
         """原子のリストからatom_symbol_to_type, atom_type_to_symbol, atom_type_to_massを作成する.
         Parameters
@@ -105,7 +105,7 @@ class ImportFrame(
         self.atom_type_to_mass = {}
         for atom_symbol, atom_type in self.atom_symbol_to_type.items():
             self.atom_type_to_mass[atom_type] = C.ATOM_SYMBOL_TO_MASS[atom_symbol]
-#--------------------------------------------------------------------------------
+#-------------------------------------------------------
     def import_para_from_str(self, atom_symbol_str:str):
         """
             受け取ったstrをlistにして、
@@ -121,7 +121,7 @@ class ImportFrame(
                 の場合、Cの原子のタイプが1, Hの原子のタイプが2, Oの原子のタイプが3, Nの原子のタイプが4となる
         """
         self.import_para_from_list(atom_symbol_str.split())
-#--------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------
     def import_car(self, file_path: Union[str, Path]) -> None:
         """ Car file を読み込み 
             self.atoms, self.cell の更新
@@ -137,8 +137,8 @@ class ImportFrame(
         car_df = car_df[1:].dropna() 
         car_df.insert(0, 'type', car_df['symbol'].map(self.atom_symbol_to_type)) # type列を作成
         self.atoms = car_df[['type', 'x', 'y', 'z']] 
-#-----------------------------------------------------------------------------------
-    def import_dumppos(self, file_path: Union[str, Path]) -> None: #y
+#-----------------------------------------------------------------
+    def import_dumppos(self, file_path: Union[str, Path]) -> None: 
         """ dumppos file を読み込み 
             self.atomsの更新
              Parameter
@@ -150,15 +150,22 @@ class ImportFrame(
         with open(file_path, 'r') as ifp:
             while True:
                 current_row += 1
-                spline = ifp.read_line.split()
-                if len(spline) <= 1:
+                spline = ifp.readline().split()
+                if len(spline) == 0:
+                    continue
+                if spline[0] == "ITEM:" and spline[1] == "BOX":
+                    self.cell = [None, None, None]
+                    for dim in range(3):
+                        spline = ifp.readline().split()
+                        self.cell[dim] = float(spline[1])
+                    current_row += 3
                     continue
                 if spline[0] == "ITEM:" and spline[1] == 'ATOMS':
                     columns = spline[3:]
                     break
 
         self.atoms = pd.read_csv(
-            ifp, skiprows = current_row, sep='\s+', names=columns)
+            file_path, skiprows = current_row, sep='\s+', names=columns)
         if 'type' in self.atoms:
             self.atoms['type'] = self.atoms['type'].astype(int)
         if 'mask' in self.atoms:
