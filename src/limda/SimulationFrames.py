@@ -64,11 +64,11 @@ class SimulationFrames(
         """sfsを結合する
         Parameters
         ----------
-            simulation_frames_list : List[SimulationFrames]
+            simulation_frames_list : list[SimulationFrames]
                 結合するsfsのリスト, 
         Note
         ----
-            concat_sdatsメソッドを使用するSimulationFramesは
+            concat_sfsメソッドを使用するSimulationFramesは
             import_para()後のを使う
         """
         self.sf = []
