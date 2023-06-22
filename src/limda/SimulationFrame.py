@@ -64,7 +64,6 @@ class SimulationFrame(
     def get_total_atoms(self) -> int:
         """
         全原子数を返す関数。
-        %%% bondorder_list、connect_list_from_dumpbond_cg の扱いが分かったら追加
         """
         assert self.atoms is not None, 'Import file first'
         return len(self.atoms)

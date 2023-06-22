@@ -1,3 +1,4 @@
+import numpy as np
 import pathlib
 import subprocess
 
@@ -64,6 +65,32 @@ class ExportFile(
 
         self.atoms.to_csv(ofn, columns=['x', 'y', 'z'], mode='a', header=False,
                           sep=' ', float_format='%.10f', index=False)
+#----------------------------------------------------------------------------------
+    def export_vasp_poscar_from_contcar(
+            self, 
+            ofn: str, 
+            contcar_path:str="",            
+        ):
+        """
+        POSCARをCONTCARから作る。
+        Parameters
+        ----------
+        ofn: str
+            POSCARのPath
+        contcar_path
+            CONTCARのPath
+        
+        アンサンブルが異なるときは使わない方がよい
+        """
+        header_line = []
+        with open(contcar_path, 'r') as cp:
+            splines = cp.readlines()
+        
+        for spline in splines:
+            header_line.append(f"{spline}")
+
+        with open(ofn, 'w') as ofp:
+            ofp.writelines(header_line)
 #----------------------------------------------------------------------------------
     def export_vasp_incar( #ky
             self,
@@ -150,7 +177,7 @@ class ExportFile(
         with open(ofn, "w") as ofp:
             ofp.writelines(config)
 #----------------------------------------------------------------
-    def export_vasp_potcar(
+    def export_vasp_potcar( #ky
             self, 
             ofn: str,
             potcar_root: str,  
@@ -175,3 +202,4 @@ class ExportFile(
         make_potcar_command_list.append(f" > {ofn}")
         make_potcar_command = " ".join(make_potcar_command_list)
         subprocess.run(make_potcar_command, shell=True)
+#------------------------------------------------------------------------

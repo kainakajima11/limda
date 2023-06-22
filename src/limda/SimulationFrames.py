@@ -12,7 +12,7 @@ class SimulationFrames(
     ImportFrames,
 ):
     """シミュレーションしたデータを読み込み、書き込み、分析するためのクラス
-    複数ののフレームを同時に扱う
+    複数のフレームを同時に扱う
 
     Attributes
     ----------
@@ -79,4 +79,3 @@ class SimulationFrames(
         step_nums = list(range(len(self.sf)))
         for step_idx, step_num in enumerate(tqdm(step_nums)):
             self.sf[step_idx].step_num = step_num
-

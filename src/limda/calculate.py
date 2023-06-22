@@ -30,7 +30,9 @@ def vasp(
         iconst_config: list[str]=None,
         vasp_command: str="vasp_std",
         print_vasp: bool=True,
-        exist_ok: bool=False
+        exist_ok: bool=False,
+        poscar_from_contcar: bool = False,
+        contcar_path: str = ""
 ):
     """vaspを実行する.
     Parameters
@@ -70,7 +72,10 @@ def vasp(
         exist_ok: bool
             calc_directoryが存在する時、exist_ok=Trueのときは上書きしてvaspを実行する
             calc_directoryが存在する時、exist_ok=Falseのときは上書きしない
-    
+        poscar_from_contcar: bool
+            poscarをcontcarから作るときTrueにする
+        contcar_path: str
+            contcarからposcarを作るときに必要なcontcarのpath
     """
     assert potcar_root is not None, "There isn't potcar_root."
     assert incar_config is not None, "There isn't incar_config."
@@ -86,7 +91,10 @@ def vasp(
     kpoints_path = calc_directory / kpoints_ofn
     iconst_path = calc_directory / iconst_ofn
     num_process = incar_config["NCORE"] * incar_config["NPAR"] * incar_config["KPAR"]
-    self.export_vasp_poscar(poscar_path, poscar_comment, poscar_scaling_factor)
+    if poscar_from_contcar == False:
+        self.export_vasp_poscar(poscar_path, poscar_comment, poscar_scaling_factor)
+    else:
+        self.export_vasp_poscar_from_contcar(poscar_path, contcar_path)
     self.export_vasp_incar(incar_path, incar_config)
     self.export_vasp_potcar(potcar_path, potcar_root)
     self.export_vasp_kpoints(kpoints_path, kpoints_comment, kpoints_kx, kpoints_ky, kpoints_kz)
@@ -95,10 +103,10 @@ def vasp(
         self.export_vasp_iconst(iconst_path, iconst_config)
 
     cmd = f'mpiexec -np {num_process} {vasp_command} > stdout'
-    dmol_md_process = subprocess.Popen(cmd, cwd=calc_directory, shell=True)
+    vasp_md_process = subprocess.Popen(cmd, cwd=calc_directory, shell=True)
     time.sleep(5)
     if print_vasp:
         tail_process = subprocess.Popen(f'tail -F stdout', cwd=calc_directory, shell=True)
-        while dmol_md_process.poll() is None:
+        while vasp_md_process.poll() is None:
             time.sleep(1)
         tail_process.kill()

@@ -18,50 +18,14 @@ class ImportFrames(
 #-----------------------
     def __init__(self):
         pass
-#--------------------------------------------------------------------------------------
-    def import_atom_type_from_poscar(self, poscar_path: Union[str, pathlib.Path]) -> Tuple[list[int], SimulationFrame]:
-        """vaspに用いるPOSCARから, 
-        原子それぞれの種類を表すリストを作成する。
-        また、初期構造のSimulationFrameが得られる。
-        Parameters
-        ----------
-            poscar_path: Union[str, Path]
-                vaspで計算したディレクトリ内のPOSCARのpath 
-        Return val
-        ----------
-            atom_types: list[int]
-            原子の種類をtype listと照らし合した時の整数が入っています。  
-
-            sf: SimulationFrame
-            t=0 の SimulationFrame
-        """
-        sf = SimulationFrame()
-        with open(poscar_path, "r") as f:
-            f.readlines(2)
-            sf.cell = [None, None, None]
-            for dim in range(3):
-                sf.cell[dim] = float(f.readline().split()[dim])
-            atom_symbol_list = list(f.readline().split())
-            atom_type_counter = list(map(int, f.readline().split()))
-            atom_types = []
-            for atom_type_count, atom_symbol in zip(atom_type_counter, atom_symbol_list):
-                for _ in range(atom_type_count):
-                    atom_types.append(self.atom_symbol_to_type[atom_symbol])
-
-            sf.atoms = pd.read_csv(
-                f, skiprows = 1, sep='\s+', names=("x", "y", "z"))
-            
-        return atom_types, sf
-#----------------------------------------------------------------------------------
-    def import_vasp(self, calc_directory: Union[str, pathlib.Path], get_first_sf:bool = False): # 初期構造を取り入れるか
+#----------------------------------------------------------------------------------------------
+    def import_vasp(self, calc_directory: Union[str, pathlib.Path]):
         """vaspで計算した第一原理MDファイルから、
         原子の座標, cellの大きさ, 原子にかかる力, ポテンシャルエネルギーを読み込む
         Parameters
         ----------
             calc_directory: str
                 vaspで計算したディレクトリ
-            get_first_df: bool
-                Trueにすると開始時を含めたsfsが得られる。
         Note
         ----
             読み込んだデータ
@@ -71,9 +35,9 @@ class ImportFrames(
                 simulation_frames[step_idx].cell : セルの大きさ
         """
         calc_directory = pathlib.Path(calc_directory)
-        atom_types, first_sf = self.import_atom_type_from_poscar(f'{calc_directory}/POSCAR')
-        if get_first_sf:
-            self.sf.append(first_sf)
+        first_sf = SimulationFrame()
+        first_sf.atom_symbol_to_type = self.atom_symbol_to_type
+        atom_types = first_sf.import_from_poscar(f'{calc_directory}/POSCAR')
 
         with open(calc_directory / "OUTCAR", "r") as f:
             lines = f.readlines()
