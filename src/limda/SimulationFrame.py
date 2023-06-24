@@ -5,6 +5,7 @@ import os
 from .import_frame import ImportFrame
 from .export_frame import ExportFrame
 from .calculate import Calculate
+import limda.const as C
 
 class SimulationFrame(
     ImportFrame,
@@ -190,11 +191,10 @@ class SimulationFrame(
             target_atoms &= (z_mn <= sf.atoms['z'])&(sf.atoms['z'] <= z_mx)
             return target_atoms
         atom_type_counter = self.count_atom_types(res_type='dict', condition=condition)
-        NA = 6.02214076 * (10 ** 23) #avogadro constant
         for atom_symbol, atom_type_count in atom_type_counter.items():
             atom_type = self.atom_symbol_to_type[atom_symbol]
             atom_mass = self.atom_type_to_mass[atom_type]
-            all_weight += atom_type_count * atom_mass / NA
+            all_weight += atom_type_count * atom_mass / C.NA
         # セル内の密度(g/cm^3)
         density = all_weight / volume
         return density

@@ -1,6 +1,8 @@
 import numpy as np
+import pandas as pd
 import pathlib
 import subprocess
+from typing import Union
 
 class ExportFrame(
 
@@ -38,13 +40,13 @@ class ExportFrame(
                 print(f'warning : cell[{dim}] has been initialized to 0')
                 self.cell[dim] = 0.0
 
-        header_line = []
-        header_line.append(f"{comment.strip()}\n")
-        header_line.append(f"{scaling_factor}\n")
-        header_line.append(f"{self.cell[0]:.10f} 0.0000000000 0.0000000000\n")
-        header_line.append(f"0.0000000000 {self.cell[1]:.10f} 0.0000000000\n")
-        header_line.append(f"0.0000000000 0.0000000000 {self.cell[2]:.10f}\n")
-
+        header_line = [
+            f"{comment.strip()}\n",
+            f"{scaling_factor}\n",
+            f"{self.cell[0]:.10f} 0.0000000000 0.0000000000\n",
+            f"0.0000000000 {self.cell[1]:.10f} 0.0000000000\n",
+            f"0.0000000000 0.0000000000 {self.cell[2]:.10f}\n"
+        ]
         atom_symbol_to_atom_counter = self.count_atom_types(res_type='dict')
         atom_symbols = []
         atom_types_counter = []
@@ -133,13 +135,13 @@ class ExportFrame(
             kz: int
                 x, y, z方向のK点
         """
-
-        output = []
-        output.append(comment.strip() + "\n")
-        output.append("0\n")
-        output.append("Monkhorst\n")
-        output.append(f"{kx} {ky} {kz}\n")
-        output.append("0 0 0\n")
+        output = [
+            f"{comment.strip()}\n",
+            "0\n",
+            "Monkhorst\n",
+            f"{kx} {ky} {kz}\n",
+            "0 0 0\n"
+        ]
 
         with open(ofn, "w") as ofp:
             ofp.writelines(output)    
@@ -203,8 +205,8 @@ class ExportFrame(
         make_potcar_command = " ".join(make_potcar_command_list)
         subprocess.run(make_potcar_command, shell=True)
 #------------------------------------------------------------------------------
-    def export_dumppos(self, ofn: str, time_step: int=None, out_columns=None)->None: #ky
-        """dumpposファイルを出力する。
+    def export_dumppos(self, ofn: str, time_step: int=None, out_columns=None)->None:
+        """dumpposファイルを作成する。
         Parameters
         ----------
         ofn: str
@@ -258,4 +260,108 @@ class ExportFrame(
                           sep=' ', float_format='%.6f')
         # 0-indexed
         self.atoms.index = self.atoms.index - 1
-#--------------------------------------------------
+#--------------------------------------------------------------
+    def export_input(self, ofn: Union[str,pathlib.Path]="input.rd")->None:
+        """input.rdを作成する。
+        Parameters
+        ----------
+        ofn: Union[str, Path]
+            input fileの名前
+        """
+        for dim in range(3):
+            if self.cell[dim] == 0:
+                print(f"warning : cell[{dim}] is not defined")
+                print(f"warning : cell[{dim}] has been initialized to 0")
+                self.cell[dim] = 0.0
+        atom_type_set = self.get_atom_type_set()
+        header_line = [
+            f"#cellx {0.0}  {self.cell[0]}\n",
+            f"#celly {0.0}  {self.cell[1]}\n",
+            f"#cellz {0.0}  {self.cell[2]}\n\n",
+            f"#masses {len(atom_type_set)}\n",
+        ]
+        for atom_type in atom_type_set:
+            header_line.append(
+                f"{atom_type} {self.atom_type_to_mass[atom_type]}\n"
+            )
+        header_line.append("\n")
+        header_line.append(f"#atoms {self.get_total_atoms()}\n")
+
+        out_columns = ['type', 'mask', 'x', 'y', 'z']
+
+        if 'mask' not in self.atoms:
+            print('warning : mask is not defined.')
+            print('warning : mask has been initialized to 0.')
+            self.atoms['mask'] = np.zeros(self.get_total_atoms(),
+                                          dtype=int)
+        if 'vx' in self.atoms and 'vy' in self.atoms and 'vz' in self.atoms:
+            out_columns.extend(['vx', 'vy', 'vz'])
+
+        self.wrap_atoms()
+        def make_coods_not_zero(axises :list[str]):
+            for axis in axises:
+                self.atoms[axis] = np.where(
+                    0, 0.001, self.atoms['x'])
+        make_coods_not_zero(['x', 'y', 'z'])
+
+        self.atoms.index = self.atoms.index + 1 # 1-indexed
+        body_line = []
+        for row in self.atoms[out_columns].itertuples():
+            body_line.append('    '.join(map(str, row)))
+            body_line.append('\n')
+
+        with open(ofn, 'w') as ofs:
+            ofs.writelines(header_line)
+            ofs.writelines(body_line)
+
+        self.atoms.index = self.atoms.index - 1
+#-----------------------------------------------------------
+    def export_xyz(self, ofn: Union[str,pathlib.Path],
+                   out_columns: list[str]=None,
+                   structure_name: str= "structure")->None:
+        """xyz fileを作成する.
+        Parameters
+        ----------
+        ofn: Union[str Path]
+            xyz fileの名前
+        out_columns: list[str]
+            xyzに書き込む種類を指定するlist
+        structure_name: str
+            構造の名前
+        """
+        if out_columns is None:
+            out_columns = ['type', 'x', 'y', 'z']
+        if structure_name == "structure":
+            print('warning : structure_name is not defined')
+            print('warning : structure_name has been initialized to \'structure\'')
+
+        header_line = [
+            f"{self.get_total_atoms()}\n",
+            f"{structure_name}\n",
+        ]
+
+        with open(ofn, 'w') as ofp:
+            ofp.writelines(header_line)
+        self.atoms.to_csv(ofn, columns=out_columns, sep='\t',
+                          mode='a', header=False, index=False,
+                          float_format='%.6f')
+#-----------------------------------------------------------
+    def export_file(self, export_file_name: str):
+        """引数のfile名に合った種類の形式でfileを作成.
+        Parameter
+        ---------
+        export_file_name: str 
+            作成するfile名
+        Example
+            input file - inputで始まる
+        """
+        if export_file_name.startswith('input'):
+            self.export_input(export_file_name)
+        elif export_file_name.startswith('dump') or export_file_name.endswith('pos'):
+            self.export_dumppos(export_file_name)
+        elif export_file_name.endswith('xyz'):
+            self.export_xyz(export_file_name)
+        elif export_file_name.endswith('car'):
+            self.export_car(export_file_name)
+        else:
+            raise RuntimeError("適切なfile名にしてください.")     

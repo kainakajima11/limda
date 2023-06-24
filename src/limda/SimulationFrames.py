@@ -139,7 +139,7 @@ class SimulationFrames(
         main_sfs.sf = self.sf[0:len(self)-remain]
         remain_sfs.sf = self.sf[len(self)-remain:len(self)]
         sfs_list = main_sfs.split_sframes_specify_list_size(list_size)
-        if keep_remains == True and remain != 0:
+        if keep_remains and remain != 0:
             remain_sfs.atom_symbol_to_type = self.atom_symbol_to_type
             remain_sfs.atom_type_to_symbol = self.atom_type_to_symbol
             remain_sfs.atom_type_to_mass = self.atom_type_to_mass

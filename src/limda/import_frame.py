@@ -2,8 +2,9 @@ import pandas as pd
 import numpy as np
 from typing import Union
 import pathlib 
+import re
+import sys
 import limda.const as C
-import os
 
 class ImportFrame(
 
@@ -225,3 +226,42 @@ class ImportFrame(
                 f, skiprows = 1, sep='\s+', names=("x", "y", "z"))
             
         return atom_types
+#-----------------------------------------------------------------------------------
+    def import_xyz(self, ifn: Union[str,pathlib.Path])->None:
+        """xyz fileを読み込む.
+        Parameter
+        ---------
+        ifn: Union[str,Path]
+            読み込むfile名
+        """
+        with open(ifn, 'r') as ifp:
+            lines = ifp.readlines()
+        total_atom = int(lines[0])
+        lattice_value = re.search('Lattice="(.*?)"', lines[1])
+
+        if lattice_value is not None:
+            cellsize = lattice_value.group(1).split()
+            self.cell[0] = float(cellsize[0])
+            self.cell[1] = float(cellsize[1])
+            self.cell[2] = float(cellsize[2])
+        
+        splines = np.array([l.split() for l in lines[2:2+total_atom]])
+        atom_data = dict()
+        try: 
+            atom_data['type'] = splines[:, 0].astype(int)
+        except:
+            atom_symbols = splines[:,0].astype(str)
+            if self.atom_symbol_to_type is None:
+                print("error : atom_symbol_to_type is not defined")
+                print("Import para first")
+                sys.exit(-1)
+            atom_data['type'] = np.array(
+                [self.atom_symbol_to_type[atom_symbol] for atom_symbol in atom_symbols]
+            )
+
+        for idx, dim in enumerate(['x', 'y', 'z']):
+            atom_data[dim] = splines[:, idx+1].astype(float)
+
+        index = np.arange(total_atom)
+        self.atoms = pd.DataFrame(data=atom_data, index=index)
+        self.atoms.sort_index(inplace=True)

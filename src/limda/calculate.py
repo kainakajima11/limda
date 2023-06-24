@@ -4,6 +4,7 @@ from tqdm import tqdm
 import subprocess
 import os
 import time
+from typing import Union
 
 try:
     from ase.build import molecule
@@ -14,6 +15,8 @@ except:
 class Calculate(
 
 ):
+    """計算を実行するクラス
+    """
     def __init__(self):
         pass
 
@@ -46,6 +49,8 @@ class Calculate(
                 vaspのドキュメントをを参照してください.基本的に変える必要はない
             potcar_root: str
                 元のPOTCARがあるフォルダ
+            incar_config: dict
+                INCARに書かれるconfig
             kpoints_comment: str
                 KPOINTSの1行目に書かれるコメント
             kpoints_kx: int
@@ -84,7 +89,7 @@ class Calculate(
         kpoints_path = calc_directory / "KPOINTS"
         iconst_path = calc_directory / "ICONST"
         num_process = incar_config["NCORE"] * incar_config["NPAR"] * incar_config["KPAR"]
-        if poscar_from_contcar == False:
+        if not poscar_from_contcar:
             self.export_vasp_poscar(poscar_path, poscar_comment, poscar_scaling_factor)
         else:
             self.export_vasp_poscar_from_contcar(poscar_path, contcar_path)
@@ -103,3 +108,183 @@ class Calculate(
             while vasp_md_process.poll() is None:
                 time.sleep(1)
             tail_process.kill()
+#----------------------------------------------------------------------------------------------
+    def laich(self, #y
+              calc_dir: str='laich_calc',
+              para_file_path: str=None,
+              laich_mode: str='MD',
+              laich_cmd: str ='laich',
+              laich_config :dict=None,
+              exist_ok=False):
+        """LaichでMD,または構造最適化を実行する。
+        """
+        calc_dir = pathlib.Path(calc_dir)
+        assert exist_ok or calc_dir.exists(), "calc_dir exists."
+        calc_dir.mkdir()
+
+        if para_file_path is not None:
+            para_file_path = pathlib.Path(para_file_path)
+        input_file_path = calc_dir / 'input.rd'
+        config_file_path = calc_dir / 'config.rd'
+        self.export_input(input_file_path)
+        with open(config_file_path, 'w') as f:
+            f.write(laich_mode)
+            f.writelines(laich_config)
+
+        if para_file_path is not None:
+            try:
+                subprocess.run(f'cp {para_file_path} {calc_dir / "para.rd"}', shell=True)
+            except:
+                pass
+
+        np = laich_config["MPIGridX"]*laich_config["MPIGridY"]*laich_config["MPIGridZ"]
+
+        cmd = f"mpiexec.hydra -np {np} {laich_cmd} < /dev/null >& out"
+        laich_md_process = subprocess.Popen(cmd, cwd=calc_dir, shell=True)
+        laich_md_process.wait()
+
+        dumppos_paths = list(calc_dir.glob('./dump.pos.*'))
+        dumppos_paths.sort(reverse=True)
+        assert len(dumppos_paths) != 0, "dumpposが生成されていません"
+        optimized_dumppos_path = dumppos_paths[0]
+        self.import_dumppos(optimized_dumppos_path)
+#------------------------------------------------------------------------------------------
+# laich_config = {
+#     "ForceField": "Reaxff",
+#     "XYZFile": "input.rd",
+#     "ParaFile": "para.rd",
+#     "TimeStep": 0.25,
+#     "TotalStep": 10000,
+#     "ObserveStep": 1,
+#     "FileStep": 1000,
+#     "BondStep": 1000,
+#     "SaveRestartStep": 10000,
+#     "SEL": 50,
+#     "NPUGS": 1,
+#     "NNPModelPath": "script_model.pth",
+#     "WEIGHTPATH": './script_model.pth',
+#     "MPIGridX": 1,
+#     "MPIGridY": 1,
+#     "MPIGridZ": 1,
+#     "CUTOFF": 10.0,
+#     "MARGIN": 1.0,
+#     "GhostFactor": 20.0,
+#     # MD Mode
+#     "NNPModelPath": "script_model.pth",
+#     "OMPGridX": 1,
+#     "OMPGridY": 1,
+#     "OMPGridZ": 1,
+#     "ShowMask": 1,
+#     "ReadVelocity": 0,
+#     "Thermo": "Langevin",
+#     "AimTemp": 300.0,
+#     "InitTemp": 300.0,
+#     "FinalTemp": 300.0,
+#     "ThermoFreq": 0.005,
+#     # OPT Mode
+#     "DelR": 0.0001,
+#     "MaxR": 0.1
+# }
+#---------------------------------------------------------------------------------------------
+    def packmol(self,
+                sf_list: list,
+                pack_num_list: list[int],
+                tolerance: float=2.0,
+                packmol_tmp_dir: Union[str,pathlib.Path]="./packmol_tmp",
+                xyz_condition: list[float]=None,
+                seed: int=-1,
+                print_packmol=False
+                ):
+        """packmolで原子を詰める
+        Parameters
+        ----------
+            sf_list : list[SimulationFrame]
+                詰めるsfのlist
+            pack_num_list : list
+                詰めるsdatの個数のリスト
+            tolerance : float
+                最小の原子間距離, 原子を詰める時に原子間がtolerance以上になるように詰める
+            xyz_condition : list
+                詰める原子の座標の条件
+            packmol_tmp_dir : Union[str,pathlib.Path]
+                packmolを動かすときの一時的なディレクトリ
+            seed : int
+                シード値
+                seed = -1のときはseedは時間で決定される
+            print_packmol : bool
+                packmolの標準出力を表示するか
+        Example
+        -------
+        xyz_condition = [
+          # [xmin, ymin, zmin, xmax, ymax, zmax] で指定する
+            [2, 2, 2, 8, 18, 28],  # sf2の条件
+            [2, 2, 2, 8, 10, 10]   # sf3の条件
+        ]
+        sf1.packmol(sf_list=[sdat2, sdat3], pack_num_list=[5, 8], xyz_condition=xyz_condition)
+        とすると, sf1にsf2の原子が5個, sf3の原子が8個詰められる
+        sf2は2 <= x <= 8 かつ 2 <= y <= 18 かつ 2 <= z <= 28 の位置のみに詰められる
+        sdat3は2 <= x <= 8 かつ 2 <= y <= 10 かつ 2 <= z <= 10 の位置のみに詰められる
+
+        Note
+        ----
+            周期境界条件の場合は端まで詰めると計算が回らなくなるので注意.
+            境界には間を開けることを推奨
+
+            この関数を使うには、$ packmol のみでコマンドが使えるようにパスを通しておく必要がある
+        """
+        if xyz_condition is not None:
+            assert len(xyz_condition) == len(sf_list), "sf_listとxyz_conditonを同じ長さにしてください."
+        
+        packmol_tmp_dir = pathlib.Path(packmol_tmp_dir)
+        packmol_tmp_dir.mkdir()
+
+        first_line = [
+            f"tolerance {tolerance}\n",
+            f"filetype xyz\n",
+            f"seed {seed}\n",
+            f"output packmol_mixture_result.xyz\n\n"
+        ]
+
+        second_line = []
+        if self.atoms is not None and self.get_total_atoms() >= 1:
+            second_line = [
+                "structure this_sf.xyz\n",
+                "\tnumber 1\n",
+                "\tfixed 0. 0. 0. 0. 0. 0. 0. \n",
+                "end structure\n\n",
+            ]
+
+        with open(packmol_tmp_dir / "packmol_mixture_comment.inp", 'w') as f:
+            f.writelines(first_line)
+            f.writelines(second_line)
+            for frame_idx in range(len(sf_list)):
+                f.write(f"structure sf_idx_{frame_idx}.xyz\n")
+                f.write(f"\tnumber {pack_num_list[frame_idx]}\n")
+                if xyz_condition is not None:
+                    f.write(f"\tinside box")
+                    for condition in xyz_condition[frame_idx]:
+                        f.write(f"\t{condition}")
+                    f.write("\n")
+                f.write("end structure\n\n")
+        
+        # export xyz file
+        if self.atoms is not None and self.get_total_atoms() >= 1:
+            self.export_xyz(packmol_tmp_dir / "this_sf.xyz", structure_name="this_sf")
+
+        for frame_idx in range(len(sf_list)):
+            sf_list[frame_idx].export_xyz(packmol_tmp_dir / f"sf_idx_{frame_idx}.xyz",
+                                          structure_name=f"sf_idx_{frame_idx}")
+        
+        # run packmol
+        cmd = f"packmol < {'packmol_mixture_comment.inp'}"
+        if print_packmol:
+            p = subprocess.Popen(cmd, cwd=packmol_tmp_dir, shell=True, )
+        else:
+            p = subprocess.Popen(cmd, cwd=packmol_tmp_dir, shell=True,
+                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+        p.wait()
+        # import result
+        self.import_xyz(packmol_tmp_dir / "packmol_mixture_result.xyz")
+
+

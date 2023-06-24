@@ -21,7 +21,7 @@ class ExportFrames(
             output_folder = pathlib.Path(output_folder)
 
         for idx, frame in enumerate(self.sf):
-            if frame.step_num == None:
+            if frame.step_num is None:
                 step_num = idx
             else:
                 step_num = frame.step_num
