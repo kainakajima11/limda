@@ -109,17 +109,33 @@ class Calculate(
                 time.sleep(1)
             tail_process.kill()
 #----------------------------------------------------------------------------------------------
-    def laich(self, #y
+    def laich(self,
               calc_dir: str='laich_calc',
               para_file_path: str=None,
-              laich_mode: str='MD',
               laich_cmd: str ='laich',
               laich_config :dict=None,
+              print_laich: bool=False,
               exist_ok=False):
         """LaichでMD,または構造最適化を実行する。
+        Parameters
+        ----------
+            calc_dir: str
+                laichの結果が出力される部分
+            para_file_path: str
+                para fileのpath
+            laich_mode: str
+                "MD" or "OPT" にする.
+                MD : 分子動力学計算を行う.
+                OPT : 構造最適化を行う.
+            laich_config: dict
+                変数の入ったdict
+            print_laich: bool
+                out fileをprintするか
+            exist_ok: bool
         """
         calc_dir = pathlib.Path(calc_dir)
-        assert exist_ok or calc_dir.exists(), "calc_dir exists."
+        if not exist_ok:
+            assert not calc_dir.exists(), "calc_dir exists."
         calc_dir.mkdir()
 
         if para_file_path is not None:
@@ -128,8 +144,8 @@ class Calculate(
         config_file_path = calc_dir / 'config.rd'
         self.export_input(input_file_path)
         with open(config_file_path, 'w') as f:
-            f.write(laich_mode)
-            f.writelines(laich_config)
+            for key in laich_config.keys():
+                f.write(f"{key} {laich_config[key]}\n")
 
         if para_file_path is not None:
             try:
@@ -140,8 +156,13 @@ class Calculate(
         np = laich_config["MPIGridX"]*laich_config["MPIGridY"]*laich_config["MPIGridZ"]
 
         cmd = f"mpiexec.hydra -np {np} {laich_cmd} < /dev/null >& out"
-        laich_md_process = subprocess.Popen(cmd, cwd=calc_dir, shell=True)
-        laich_md_process.wait()
+        laich_process = subprocess.Popen(cmd, cwd=calc_dir, shell=True)
+        time.sleep(5)
+        if print_laich:
+            tail_process = subprocess.Popen(f'tail -F out', cwd=calc_dir, shell=True)
+            while laich_process.poll() is None:
+                time.sleep(1)
+            tail_process.kill()
 
         dumppos_paths = list(calc_dir.glob('./dump.pos.*'))
         dumppos_paths.sort(reverse=True)
@@ -150,6 +171,7 @@ class Calculate(
         self.import_dumppos(optimized_dumppos_path)
 #------------------------------------------------------------------------------------------
 # laich_config = {
+#     "Mode": "MD"
 #     "ForceField": "Reaxff",
 #     "XYZFile": "input.rd",
 #     "ParaFile": "para.rd",
@@ -159,7 +181,6 @@ class Calculate(
 #     "FileStep": 1000,
 #     "BondStep": 1000,
 #     "SaveRestartStep": 10000,
-#     "SEL": 50,
 #     "NPUGS": 1,
 #     "NNPModelPath": "script_model.pth",
 #     "WEIGHTPATH": './script_model.pth',

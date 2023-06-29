@@ -211,7 +211,8 @@ class ImportFrame(
             t=0 の SimulationFrame
         """
         with open(poscar_path, "r") as f:
-            f.readlines(2)
+            f.readline()
+            f.readline()
             self.cell = np.array([None, None, None])
             for dim in range(3):
                 self.cell[dim] = float(f.readline().split()[dim])
@@ -222,8 +223,8 @@ class ImportFrame(
                 for _ in range(atom_type_count):
                     atom_types.append(self.atom_symbol_to_type[atom_symbol])
 
-            self.atoms = pd.read_csv(
-                f, skiprows = 1, sep='\s+', names=("x", "y", "z"))
+            # self.atoms = pd.read_csv(
+            #     f, skiprows = 1, sep='\s+', names=("x", "y", "z"))
             
         return atom_types
 #-----------------------------------------------------------------------------------

@@ -51,7 +51,7 @@ class SimulationFrames(
         """
         return self.sf[key]
 #------------------------------------
-    def shuffle_sframes(self, seed:int=1):
+    def shuffle_sfs(self, seed:int=1):
         """self.sfの順番をシャッフルする
         Parameters
         ----------
@@ -61,7 +61,7 @@ class SimulationFrames(
         random.seed(seed)
         random.shuffle(self.sf)
 # -----------------------------------------------------------------  
-    def concat_sframes(self, simulation_frames_list:list):
+    def concat_sfs(self, simulation_frames_list:list):
         """sfsを結合する
         Parameters
         ----------
@@ -81,7 +81,7 @@ class SimulationFrames(
         for step_idx, step_num in enumerate(tqdm(step_nums)):
             self.sf[step_idx].step_num = step_num
 #-------------------------------------------------------------------
-    def split_sframes_specified_list_size(self, list_size: int)->list:
+    def split_sfs_specified_list_size(self, list_size: int)->list:
         """sfsを複数のsfsに分け, sfsのlistを返す。
             listのサイズを指定できる
         Parameters
@@ -112,7 +112,7 @@ class SimulationFrames(
             frames.atom_type_to_mass = self.atom_type_to_mass
         return sfs_list
 #---------------------------------------------------------------------------------------------------------------
-    def split_sframes(self, each_sfs_size: int, keep_remains:bool = False)->list:
+    def split_sfs(self, each_sfs_size: int, keep_remains:bool = False)->list:
         """ sfsを複数のsfsに分け, sfsのlistを返す。
             sfs1つ1つサイズを指定できる。
         Parameters

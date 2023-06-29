@@ -10,7 +10,7 @@ from .SimulationFrame import SimulationFrame
 import os
 
 class ImportFrames(
-    ImportFrame
+
 ):
     """シミュレーションしたデータを読み込むためのクラス
     複数のフレームを読み込む(file -> SimulationFrames)
@@ -118,7 +118,47 @@ class ImportFrames(
             self.sf[step_idx].atom_type_to_mass = self.atom_type_to_mass
             self.sf[step_idx].atom_type_to_symbol = self.atom_type_to_symbol
             self.sf[step_idx].import_dumppos(f'{dir_name}/dump.pos.{step_num}')
-                        
+#-------------------------------------------------------------------------------
+    def import_para_from_list(self, atom_symbol_list:list[str]):
+        """原子のリストからatom_symbol_to_type, atom_type_to_symbol, atom_type_to_massを作成する.
+        Parameters
+        ----------
+            atom_symbol_list : list
+                原子のリスト
+
+        Example
+        -------
+            atom_symbol_list = ['C', 'H', 'O', 'N']
+            の場合、Cの原子のタイプが1, Hの原子のタイプが2, Oの原子のタイプが3, Nの原子のタイプが4となる
+
+        """ 
+        atom_symbol_to_type = {}
+        type_list = [i for i in range(1, len(atom_symbol_list)+1)]
+        atom_symbol_to_type = {key: val for key, val in zip(atom_symbol_list, type_list)}
+        # type -> symbol# symbol -> type # type -> mass
+        self.atom_symbol_to_type = atom_symbol_to_type
+        self.atom_type_to_symbol = {
+            atom_type: atom_symbol for atom_symbol, atom_type in self.atom_symbol_to_type.items()}
+        
+        self.atom_type_to_mass = {}
+        for atom_symbol, atom_type in self.atom_symbol_to_type.items():
+            self.atom_type_to_mass[atom_type] = C.ATOM_SYMBOL_TO_MASS[atom_symbol]
+#-------------------------------------------------------
+    def import_para_from_str(self, atom_symbol_str:str):
+        """
+            受け取ったstrをlistにして、
+            import_para_from_list()を呼び出す。
+            Parameters
+            ----------
+                para_atom_symbol_list : list   
+                空白区切りの原子の文字列
+
+            Example
+            -------
+                para_atom_symbol_str = 'C H O N' #原子と原子の間には、スペース
+                の場合、Cの原子のタイプが1, Hの原子のタイプが2, Oの原子のタイプが3, Nの原子のタイプが4となる
+        """
+        self.import_para_from_list(atom_symbol_str.split())                        
                 
      
 

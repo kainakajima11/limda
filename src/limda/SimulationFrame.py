@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import random
 import sys
 import os
 from .import_frame import ImportFrame
@@ -194,7 +195,7 @@ class SimulationFrame(
         for atom_symbol, atom_type_count in atom_type_counter.items():
             atom_type = self.atom_symbol_to_type[atom_symbol]
             atom_mass = self.atom_type_to_mass[atom_type]
-            all_weight += atom_type_count * atom_mass / C.NA
+            all_weight += atom_type_count * atom_mass / C.AVOGADORO_CONST
         # セル内の密度(g/cm^3)
         density = all_weight / volume
         return density
@@ -220,3 +221,30 @@ class SimulationFrame(
         else:
             raise ValueError(
                 f'res_type: {res_type} is not supported. supported res_type : [series, dict]')
+#---------------------------------------------------------------------------------------------
+    def shuffle_type(self, type_ratio: list[float] = [1,1,1,1,1]):
+        """sfのtypeをランダムにシャッフルする。
+            atomsに座標を持たせてから使用。
+        Parameters
+        ----------
+        type_ratio: list[float]
+            typeに対する割合が入ったlist
+
+        Example
+        -------
+        sf.shuffle_type([1,2,3])
+            # 原子数:6 -> sf.atoms["type"] = [1,2,2,3,3,3] をシャッフルしたもの
+            余りはtype_ratioに応じてランダムに入る
+        """
+        tot_atoms = self.get_total_atoms()
+        tot_ratio = sum(type_ratio)
+        type_ratio = [(type_ratio[i]*tot_atoms/tot_ratio) for i in range(len(type_ratio))]
+        remain_weight = [type_ratio[i] - int(type_ratio[i]) for i in range(len(type_ratio))]
+        type_list = []
+        for idx, ratio in enumerate(type_ratio):
+            type_list.extend([idx+1 for _ in range(int(ratio))])
+        remain_type = random.choices([i+1 for i,_ in enumerate(type_ratio)], k=tot_atoms-len(type_list), weights=remain_weight)
+        type_list.extend(remain_type)
+
+        random.shuffle(type_list)    
+        self.atoms["type"] = type_list

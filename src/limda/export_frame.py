@@ -301,7 +301,7 @@ class ExportFrame(
         def make_coods_not_zero(axises :list[str]):
             for axis in axises:
                 self.atoms[axis] = np.where(
-                    0, 0.001, self.atoms['x'])
+                    0, 0.0001, self.atoms[axis])
         make_coods_not_zero(['x', 'y', 'z'])
 
         self.atoms.index = self.atoms.index + 1 # 1-indexed
