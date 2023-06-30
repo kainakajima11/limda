@@ -93,3 +93,5 @@ ATOM_SYMBOL_TO_MASS:dict[str,float] = {
     "Pa":	231.03588,
     "U":    238.02891
 }
+
+AVOGADORO_CONST = 6.02214076 * (10 ** 23) #avogadro constant

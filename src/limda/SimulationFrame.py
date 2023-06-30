@@ -1,11 +1,17 @@
 import pandas as pd
 import numpy as np
+import random
 import sys
 import os
 from .import_frame import ImportFrame
+from .export_frame import ExportFrame
+from .calculate import Calculate
+import limda.const as C
 
 class SimulationFrame(
     ImportFrame,
+    ExportFrame,
+    Calculate
 ):
     """シミュレーションしたデータを読み込み、書き込み、分析するためのクラス
     一つのフレームを扱う
@@ -64,7 +70,6 @@ class SimulationFrame(
     def get_total_atoms(self) -> int:
         """
         全原子数を返す関数。
-        %%% bondorder_list、connect_list_from_dumpbond_cg の扱いが分かったら追加
         """
         assert self.atoms is not None, 'Import file first'
         return len(self.atoms)
@@ -144,6 +149,102 @@ class SimulationFrame(
                 self.atoms = self.atoms[~condition]
             if reindex:
                 self.atoms.reset_index(drop=True, inplace=True)
+#-------------------------------------------------------------------------------------------
+    def density(self, x_max=None, x_min=None, y_max=None, y_min=None,z_max=None,z_min=None): #k
+        """セル内の密度を計算する関数
+        Parameters
+        ----------
+        x_max: float
+            xの上限
+        x_min: float
+            xの下限
+        y_max: float
+            yの上限
+        y_min: float
+            yの下限
+        z_max: float
+            zの上限
+        z_min: float
+            zの下限
+        Returns
+        -------
+        density : float
+            セル内の密度(g/cm^3)
+        """
+        x_mx = x_max if x_max is not None else self.cell[0]
+        x_mn = x_min if x_min is not None else 0
+        assert x_mx >= x_mn, 'set correct x_max and x_min'
 
+        y_mx = y_max if y_max is not None else self.cell[1]
+        y_mn = y_min if y_min is not None else 0
+        assert y_mx >= y_mn, 'set correct y_max and y_min'
 
+        z_mx = z_max if z_max is not None else self.cell[2]
+        z_mn = z_min if z_min is not None else 0
+        assert z_mx >= z_mn, 'set correct z_max and z_min'
 
+        # 体積(cm^3)
+        volume = (x_mx - x_mn) * (y_mx - y_mn) * (z_mx - z_mn) * (10 ** - 24)
+        all_weight = 0
+        def condition(sf):
+            target_atoms = (x_mn <= sf.atoms['x'])&(sf.atoms['x'] <= x_mx)
+            target_atoms &= (y_mn <= sf.atoms['y'])&(sf.atoms['y'] <= y_mx)
+            target_atoms &= (z_mn <= sf.atoms['z'])&(sf.atoms['z'] <= z_mx)
+            return target_atoms
+        atom_type_counter = self.count_atom_types(res_type='dict', condition=condition)
+        for atom_symbol, atom_type_count in atom_type_counter.items():
+            atom_type = self.atom_symbol_to_type[atom_symbol]
+            atom_mass = self.atom_type_to_mass[atom_type]
+            all_weight += atom_type_count * atom_mass / C.AVOGADORO_CONST
+        # セル内の密度(g/cm^3)
+        density = all_weight / volume
+        return density
+#--------------------------------------------------------------------------------------
+    def count_atom_types(self, res_type='series', condition=None): #k
+        """原子のタイプごとに原子の個数をカウントする関数
+        Parameters
+        ----------
+        res_type : str
+            res_type='series'のときは結果をpd.Seriesで返す
+            res_type='dict'のときは結果をdictで返す
+        condition : function
+            condition関数
+        """
+        if condition is None:
+            target_atoms = np.array([True] * self.get_total_atoms())
+        else:
+            target_atoms = condition(self)
+        if res_type == 'series':
+            return self.atoms.loc[target_atoms,'type'].value_counts().rename(index=self.atom_type_to_symbol)
+        elif res_type == 'dict':
+            return self.atoms.loc[target_atoms,'type'].value_counts().rename(index=self.atom_type_to_symbol).to_dict()
+        else:
+            raise ValueError(
+                f'res_type: {res_type} is not supported. supported res_type : [series, dict]')
+#---------------------------------------------------------------------------------------------
+    def shuffle_type(self, type_ratio: list[float]):
+        """sfのtypeをランダムにシャッフルする。
+            atomsに座標を持たせてから使用。
+        Parameters
+        ----------
+        type_ratio: list[float]
+            typeに対する割合が入ったlist
+
+        Example
+        -------
+        sf.shuffle_type([1,2,3])
+            # 原子数:6 -> sf.atoms["type"] = [1,2,2,3,3,3] をシャッフルしたもの
+            余りはtype_ratioに応じてランダムに入る
+        """
+        tot_atoms = self.get_total_atoms()
+        tot_ratio = sum(type_ratio)
+        type_ratio = [(type_ratio[i]*tot_atoms/tot_ratio) for i in range(len(type_ratio))]
+        remain_weight = [type_ratio[i] - int(type_ratio[i]) for i in range(len(type_ratio))]
+        type_list = []
+        for idx, ratio in enumerate(type_ratio):
+            type_list.extend([idx+1 for _ in range(int(ratio))])
+        remain_type = random.choices([i+1 for i,_ in enumerate(type_ratio)], k=tot_atoms-len(type_list), weights=remain_weight)
+        type_list.extend(remain_type)
+
+        random.shuffle(type_list)    
+        self.atoms["type"] = type_list
