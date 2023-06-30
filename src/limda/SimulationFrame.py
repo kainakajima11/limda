@@ -222,7 +222,7 @@ class SimulationFrame(
             raise ValueError(
                 f'res_type: {res_type} is not supported. supported res_type : [series, dict]')
 #---------------------------------------------------------------------------------------------
-    def shuffle_type(self, type_ratio: list[float] = [1,1,1,1,1]):
+    def shuffle_type(self, type_ratio: list[float]):
         """sfのtypeをランダムにシャッフルする。
             atomsに座標を持たせてから使用。
         Parameters

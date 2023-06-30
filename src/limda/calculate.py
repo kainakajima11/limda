@@ -153,9 +153,9 @@ class Calculate(
             except:
                 pass
 
-        np = laich_config["MPIGridX"]*laich_config["MPIGridY"]*laich_config["MPIGridZ"]
+        num_process = laich_config["MPIGridX"]*laich_config["MPIGridY"]*laich_config["MPIGridZ"]
 
-        cmd = f"mpiexec.hydra -np {np} {laich_cmd} < /dev/null >& out"
+        cmd = f"mpiexec.hydra -np {num_process} {laich_cmd} < /dev/null >& out"
         laich_process = subprocess.Popen(cmd, cwd=calc_dir, shell=True)
         time.sleep(5)
         if print_laich:
