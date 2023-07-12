@@ -145,3 +145,4 @@ class SimulationFrames(
             remain_sfs.atom_type_to_mass = self.atom_type_to_mass
             sfs_list.append(remain_sfs)
         return sfs_list
+

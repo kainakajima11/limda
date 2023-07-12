@@ -6,6 +6,7 @@ import os
 from .import_frame import ImportFrame
 from .export_frame import ExportFrame
 from .calculate import Calculate
+from .neighbor import cy_get_neighbor_list
 import limda.const as C
 
 class SimulationFrame(
@@ -41,7 +42,7 @@ class SimulationFrame(
     atom_type_to_symbol : dict[int, str]
     atom_type_to_mass : dict[int, float]
     step_num: int
-#----------------------
+#--------------------------------------
     def __init__(self):
         self.atoms = None
         self.cell = None
@@ -233,7 +234,7 @@ class SimulationFrame(
         Example
         -------
         sf.shuffle_type([1,2,3])
-            # 原子数:6 -> sf.atoms["type"] = [1,2,2,3,3,3] をシャッフルしたもの
+            原子数:6 -> sf.atoms["type"] = [1,2,2,3,3,3] をシャッフルしたもの
             余りはtype_ratioに応じてランダムに入る
         """
         tot_atoms = self.get_total_atoms()
@@ -243,8 +244,113 @@ class SimulationFrame(
         type_list = []
         for idx, ratio in enumerate(type_ratio):
             type_list.extend([idx+1 for _ in range(int(ratio))])
-        remain_type = random.choices([i+1 for i,_ in enumerate(type_ratio)], k=tot_atoms-len(type_list), weights=remain_weight)
+
+        remain_type = random.choices([i+1 for i in range(len(type_ratio))], k=tot_atoms-len(type_list), weights=remain_weight)
         type_list.extend(remain_type)
 
         random.shuffle(type_list)    
         self.atoms["type"] = type_list
+#--------------------------------------------------------------------------------       
+    def get_neighbor_list(self, cut_off: float=3.4 ,bond_length: list[list[float]] = [])->list[list[int]]:
+        """neighbor_list を作成します。
+        Parameters
+        -----------
+            cut_off: float
+                typeに関係なく、距離を指定するときに用いる。
+                bond_lengthを指定しなければ、この値が採用されます。
+            bond_length: list[list[float]]
+                size : type数 x type数
+                Example
+                -------
+                "C H O" というparaならば bond_length[0][1] : C-H の最大結合距離 = bond_length[1][0]
+        Return val
+        ----------
+            neighbor_list: list[list[int]]
+                list[i番目の原子と結合している原子のidが入ったlist]
+        """
+        neighbor_list = [[] for _ in range(len(self))]
+        if not bond_length:
+            if cut_off*3 > min(self.cell):
+                mesh_length = min(self.cell)/3
+            else:
+                mesh_length = cut_off
+            neighbor_list = cy_get_neighbor_list(atoms_type = self.atoms["type"],
+                                                 atoms_pos = [self.atoms["x"], self.atoms["y"], self.atoms["z"]],
+                                                 mesh_length = mesh_length + 0.01,
+                                                 atom_num = len(self),
+                                                 bond_length = [],
+                                                 cut_off = cut_off,
+                                                 cell = self.cell,
+                                                 mode = "neighbor")
+        else:
+            mesh_length = max(list(map(lambda x: max(x), bond_length)))
+            if mesh_length*3 > min(self.cell):
+                mesh_length = min(self.cell)/3
+            neighbor_list = cy_get_neighbor_list(atoms_type = self.atoms["type"],
+                                                atoms_pos = [self.atoms["x"], self.atoms["y"], self.atoms["z"]],
+                                                mesh_length = mesh_length + 0.01,
+                                                atom_num = len(self),
+                                                bond_length = bond_length,
+                                                cut_off = 0,
+                                                cell = self.cell,
+                                                mode = "neighbor")
+        for idx in range(len(neighbor_list)):
+            neighbor_list[idx] = sorted(neighbor_list[idx])
+
+        return neighbor_list
+#-------------------------------------------------------------------------------------
+    def get_edge_idx(self, cut_off: float)->list[list[int]]:
+        """allegroのデータセットを作るように,edge_indexを作成します。
+            neighbor_listとは、listのサイズが異なり、list[list[int]] : 2 x 結合個数で重複はなしです。
+            Parameters
+            ----------
+            cut_off: float
+                edgeとしてみなす最大距離
+        """
+        if cut_off*3 > min(self.cell):
+            mesh_length = min(self.cell / 3)
+        else:
+            mesh_length = cut_off
+        edge_idx = [[],[]]
+        edge_idx = cy_get_neighbor_list(atoms_type = self.atoms["type"],
+                                   atoms_pos = [self.atoms["x"],self.atoms["y"], self.atoms["z"]],
+                                   mesh_length = mesh_length+0.01,
+                                   atom_num = len(self),
+                                   bond_length = [],
+                                   cut_off = cut_off,
+                                   cell = self.cell,
+                                   mode = "edge")
+        return edge_idx
+        
+#-------------------------------------------------------------------------------------    
+    def get_neighbor_list_test(self, bond_length: list[list[float]])->list[list[int]]:
+        """ neighbor_listを作成します。
+            pythonでO(N^2)のため、get_neighbor_list()のtest用です。
+        Parameters
+        -----------
+            bond_length: list[list[float]]
+        """
+        neighbor_list_test = [[] for _ in range(len(self))]
+        x = self.atoms['x'].values
+        y = self.atoms['y'].values
+        z = self.atoms['z'].values
+        atom_types = self.atoms['type'].to_list()
+        for i  in range(self.get_total_atoms()):
+            for j in range(i+1, self.get_total_atoms()):
+                dx:list[float] = [None,None,None]
+                dx[0] = x[j] - x[i]
+                dx[1] = y[j] - y[i]
+                dx[2] = z[j] - z[i]
+                for ax in range(3):
+                    if dx[ax] < -self.cell[ax]/2:
+                        dx[ax] += self.cell[ax]
+                    elif self.cell[ax]/2 < dx[ax]:
+                        dx[ax] -= self.cell[ax]
+                if dx[0]*dx[0] + dx[1]*dx[1] + dx[2]*dx[2] <= bond_length[atom_types[i]-1][atom_types[j]-1]*bond_length[atom_types[i]-1][atom_types[j]-1]:
+                    neighbor_list_test[i].append(j)
+                    neighbor_list_test[j].append(i)
+
+        for idx in range(len(neighbor_list_test)):
+            neighbor_list_test[idx] = sorted(neighbor_list_test[idx])
+
+        return neighbor_list_test
