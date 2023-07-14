@@ -36,7 +36,7 @@ export PYTHONPATH="$PYTHONPATH:$HOME/limda/src"
 nfshome17/knakajima を各自のものに変えてください。
 ```
 "python.analysis.extraPaths": [
-    "/nfshome17/knakajima/kudocop/package"
+    "/nfshome17/knakajima/limda/src"
 ],
 ```
 ## Documents of limda
