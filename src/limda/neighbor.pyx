@@ -65,8 +65,11 @@ cdef void make_mesh_size(vector[double] cell, double mesh_length, int mesh_size[
     
     for i in range(3):
         mesh_size[i] = int(cell[i]/mesh_length)
+<<<<<<< HEAD
         if mesh_size[i] < 3:
             mesh_size[i] = 3
+=======
+>>>>>>> main
         mesh_length_adjusted[i] = cell[i]/mesh_size[i]
 #----------------------------------------------------------------------------------------------------
 cdef void make_mesh_id(int mesh_size[3], atom *catoms, double mesh_length_adjusted[3], int atom_num):
@@ -237,6 +240,7 @@ cdef vector[vector[int]] get_edge_idx(atom *catoms, vector[vector[int]] append_m
     for edge_id in range(len(unsort_edges)):
         edge_idx[0].push_back(unsort_edges[edge_id][0])
         edge_idx[1].push_back(unsort_edges[edge_id][1])
+<<<<<<< HEAD
     return edge_idx  
 #---------------------------------------------------------------
 #---------------------------------------------------------------
@@ -295,3 +299,6 @@ cdef vector[vector[int]] get_count_mols(atom *catoms, vector[vector[int]] mols_l
             mols_list.push_back(molecule)
 
     return mols_list
+=======
+    return edge_idx    
+>>>>>>> main
