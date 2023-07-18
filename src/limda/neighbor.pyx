@@ -333,3 +333,31 @@ def cy_count_bonds(vector[int] atoms_type, vector[vector[double]] atoms_pos, dou
                 bonds_list[min(catoms[atom_idx].typ, catoms[neighbor_list[atom_idx][neighbor_atom_idx]].typ)-1][max(catoms[atom_idx].typ, catoms[neighbor_list[atom_idx][neighbor_atom_idx]].typ)-1] += 1
 
     return bonds_list
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+def cy_count_coord_numbers(vector[int] atoms_type, vector[vector[double]] atoms_pos, double mesh_length, int atom_num, vector[vector[double]] bond_length, vector[double] cell, double cut_off, int typ_len):
+    cdef:
+        atom *catoms = <atom *> malloc(atom_num * sizeof(atom))
+        int mesh_size[3],i
+        double mesh_length_adjusted[3]
+        vector[vector[int]] append_mesh
+        vector[vector[int]] neighbor_list
+        vector[vector[int]] coord_numbers_list
+        int atom_idx, neighbor_atom_idx
+
+    make_catoms(atoms_type, atoms_pos, atom_num, catoms)
+    make_mesh_size(cell, mesh_length, mesh_size, mesh_length_adjusted)
+    make_mesh_id(mesh_size, catoms, mesh_length_adjusted, atom_num)
+    append_mesh.resize(mesh_size[0]*mesh_size[1]*mesh_size[2])
+    append_mesh = get_append_mesh(catoms, append_mesh, atom_num)
+    neighbor_list.resize(atom_num)
+    if cut_off == 0:
+        neighbor_list = get_neighbors_pairs(catoms, append_mesh, mesh_size, neighbor_list, bond_length, cell)
+    else:
+        neighbor_list = get_neighbors(catoms, append_mesh, mesh_size, neighbor_list, cut_off, cell)
+    coord_numbers_list.resize(typ_len)
+    for atom_idx in range(atom_num):
+        coord_numbers_list[catoms[atom_idx].typ-1].push_back(len(neighbor_list[atom_idx]))
+
+    return coord_numbers_list
+
