@@ -8,7 +8,7 @@ class ExportFrames(
 ):
     def __init__(self):
         pass
-#-------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------
     def export_dumpposes(self, output_folder: str=None, out_columns=None) -> None:
         """SimulationFramesに入ってるSimulationFrameを出力する。
         Parameters

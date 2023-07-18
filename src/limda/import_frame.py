@@ -266,3 +266,22 @@ class ImportFrame(
         index = np.arange(total_atom)
         self.atoms = pd.DataFrame(data=atom_data, index=index)
         self.atoms.sort_index(inplace=True)
+#-------------------------------------------------------------
+    def import_file(self, import_filename):
+        """
+        file名から、適切な形式fileを読み込みます.
+        Parameters
+        ----------
+        import_filename: str 
+            読み込むファイル名
+        """
+        if import_filename.startswith('input'):
+            self.import_input(import_filename)
+        elif import_filename.startswith("dump") or import_filename.endswith("pos"):
+            self.import_dumppos(import_filename)
+        elif import_filename.endswith("car"):
+            self.import_xyz(import_filename)
+        elif import_filename.endswith("car"):
+            self.import_car(import_filename)
+        else:
+            raise RuntimeError("適切なfile名にしてください.")
