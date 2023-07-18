@@ -123,10 +123,8 @@ class Calculate(
                 laichの結果が出力される部分
             para_file_path: str
                 para fileのpath
-            laich_mode: str
-                "MD" or "OPT" にする.
-                MD : 分子動力学計算を行う.
-                OPT : 構造最適化を行う.
+            laich_cmd: str
+                laichを実行するときのコマンド
             laich_config: dict
                 変数の入ったdict
             print_laich: bool
@@ -214,6 +212,7 @@ class Calculate(
                 packmol_tmp_dir: Union[str,pathlib.Path]="./packmol_tmp",
                 xyz_condition: list[float]=None,
                 seed: int=-1,
+                packmol_cmd: str=f"packmol < {'packmol_mixture_comment.inp'}",
                 print_packmol=False
                 ):
         """packmolで原子を詰める
@@ -232,6 +231,8 @@ class Calculate(
             seed : int
                 シード値
                 seed = -1のときはseedは時間で決定される
+            packmol_cmd : str
+                packmolを実行するときのコマンド
             print_packmol : bool
                 packmolの標準出力を表示するか
         Example
@@ -297,15 +298,13 @@ class Calculate(
                                           structure_name=f"sf_idx_{frame_idx}")
         
         # run packmol
-        cmd = f"packmol < {'packmol_mixture_comment.inp'}"
         if print_packmol:
-            p = subprocess.Popen(cmd, cwd=packmol_tmp_dir, shell=True, )
+            p = subprocess.Popen(packmol_cmd, cwd=packmol_tmp_dir, shell=True, )
         else:
-            p = subprocess.Popen(cmd, cwd=packmol_tmp_dir, shell=True,
+            p = subprocess.Popen(packmol_cmd, cwd=packmol_tmp_dir, shell=True,
                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         p.wait()
         # import result
         self.import_xyz(packmol_tmp_dir / "packmol_mixture_result.xyz")
-
 
