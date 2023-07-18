@@ -65,11 +65,8 @@ cdef void make_mesh_size(vector[double] cell, double mesh_length, int mesh_size[
     
     for i in range(3):
         mesh_size[i] = int(cell[i]/mesh_length)
-<<<<<<< HEAD
         if mesh_size[i] < 3:
             mesh_size[i] = 3
-=======
->>>>>>> main
         mesh_length_adjusted[i] = cell[i]/mesh_size[i]
 #----------------------------------------------------------------------------------------------------
 cdef void make_mesh_id(int mesh_size[3], atom *catoms, double mesh_length_adjusted[3], int atom_num):
@@ -240,7 +237,6 @@ cdef vector[vector[int]] get_edge_idx(atom *catoms, vector[vector[int]] append_m
     for edge_id in range(len(unsort_edges)):
         edge_idx[0].push_back(unsort_edges[edge_id][0])
         edge_idx[1].push_back(unsort_edges[edge_id][1])
-<<<<<<< HEAD
     return edge_idx  
 #---------------------------------------------------------------
 #---------------------------------------------------------------
@@ -299,6 +295,41 @@ cdef vector[vector[int]] get_count_mols(atom *catoms, vector[vector[int]] mols_l
             mols_list.push_back(molecule)
 
     return mols_list
-=======
-    return edge_idx    
->>>>>>> main
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+def cy_count_bonds(vector[int] atoms_type, vector[vector[double]] atoms_pos, double mesh_length, int atom_num, vector[vector[double]] bond_length, vector[double] cell, double cut_off, int typ_len):
+    # Cythonを用いてどんな結合が何個あるかを数えます。
+    # Return val
+    # bonds_list: list[list[int]]
+    # Example
+    # paraが"C H O"で, 系にCO2, とH2Oが入っているとき
+    # bonds_list = [[0,0,2], [0,0,2], [0,0,0]] となる。
+    # 注意:結合 i-jは i<=j のみ記録され, i < jは記録されない (i,jはparaの順番)
+    cdef:
+        atom *catoms = <atom *> malloc(atom_num * sizeof(atom))
+        int mesh_size[3],i
+        double mesh_length_adjusted[3]
+        vector[vector[int]] append_mesh
+        vector[vector[int]] neighbor_list
+        vector[vector[int]] bonds_list
+        int atom_idx,neighbor_atom_idx
+
+    make_catoms(atoms_type, atoms_pos, atom_num, catoms)
+    make_mesh_size(cell, mesh_length, mesh_size, mesh_length_adjusted)
+    make_mesh_id(mesh_size, catoms, mesh_length_adjusted, atom_num)
+    append_mesh.resize(mesh_size[0]*mesh_size[1]*mesh_size[2])
+    append_mesh = get_append_mesh(catoms, append_mesh, atom_num)
+    neighbor_list.resize(atom_num)
+    if cut_off == 0:
+        neighbor_list = get_neighbors_pairs(catoms, append_mesh, mesh_size, neighbor_list, bond_length, cell)
+    else:
+        neighbor_list = get_neighbors(catoms, append_mesh, mesh_size, neighbor_list, cut_off, cell)
+    bonds_list.resize(typ_len)
+    for i in range(typ_len):
+        bonds_list[i].resize(typ_len)
+    for atom_idx in range(atom_num):
+        for neighbor_atom_idx in range(len(neighbor_list[atom_idx])):
+            if atom_idx < neighbor_list[atom_idx][neighbor_atom_idx]:
+                bonds_list[min(catoms[atom_idx].typ, catoms[neighbor_list[atom_idx][neighbor_atom_idx]].typ)-1][max(catoms[atom_idx].typ, catoms[neighbor_list[atom_idx][neighbor_atom_idx]].typ)-1] += 1
+
+    return bonds_list

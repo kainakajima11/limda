@@ -1,5 +1,6 @@
 from .neighbor import cy_get_neighbor_list
 from .neighbor import cy_count_molecules
+from .neighbor import cy_count_bonds
 
 class AnalisysFrame(
 
@@ -110,7 +111,7 @@ class AnalisysFrame(
         return neighbor_list_test
     
 #--------------------------------------------------------------------------------------    
-    def count_molecules(self, cut_off: float=3.4 ,bond_length: list[list[float]] = []):
+    def count_molecules(self, cut_off: float=3.4 ,bond_length: list[list[float]] = [])->dict[str, int]:
         """
         系内に何の分子が何個存在するか数え上げます。
         bond_lengthを引数で指定した場合、bond_lengthをもとに数えます。
@@ -171,5 +172,58 @@ class AnalisysFrame(
             else:
                 molecules_dict[mol_str] += 1
 
-        for molecule, num in molecules_dict.items():
-            print(f"{molecule} : {num}")
+        return molecules_dict
+#----------------------------------------------------------------------------------
+    def count_bonds(self, cut_off: float=3.4 ,bond_length: list[list[float]] = [])->dict[str,int]:
+        """
+        系内でどんな結合が何個あるかを数え上げます。
+        bond_lengthを引数で指定した場合、bond_lengthをもとに数えます。
+        指定しなければcut_offをもとに数えます。
+        Parameters
+        ----------
+        cut_off: float
+            結合距離をすべて同じで探索するときに指定する結合距離
+        bond_length: list[list[float]]
+            原子タイプごとに結合距離を指定したいときに使用します。
+        
+        Example
+        -------
+            系にCO2が3つ、H2Oが1つ存在するとき
+            
+            C-O : 6
+            H-O : 2
+
+            とprintされます。
+        """
+        if not bond_length:
+            if cut_off*3 > min(self.cell):
+                mesh_length = min(self.cell)/3-0.01
+            else:
+                mesh_length = cut_off
+            bonds_list = cy_count_bonds(atoms_type = self.atoms["type"],
+                                                 atoms_pos = [self.atoms["x"], self.atoms["y"], self.atoms["z"]],
+                                                 mesh_length = mesh_length + 0.01,
+                                                 atom_num = len(self),
+                                                 bond_length = [],
+                                                 cut_off = cut_off,
+                                                 cell = self.cell,
+                                                 typ_len = len(self.atom_symbol_to_type))
+        else:
+            mesh_length = max(list(map(lambda x: max(x), bond_length)))
+            if mesh_length*3 > min(self.cell):
+                mesh_length = min(self.cell)/3-0.01
+            bonds_list = cy_count_bonds(atoms_type = self.atoms["type"],
+                                                atoms_pos = [self.atoms["x"], self.atoms["y"], self.atoms["z"]],
+                                                mesh_length = mesh_length + 0.01,
+                                                atom_num = len(self),
+                                                bond_length = bond_length,
+                                                cut_off = 0,
+                                                cell = self.cell,
+                                                typ_len = len(self.atom_symbol_to_type))
+        bonds_dict: dict[str,int] = {}
+        for typ_i_idx in range(len(self.atom_symbol_to_type)):
+            for typ_j_idx in range(typ_i_idx, len(self.atom_symbol_to_type)):
+                bond_str = f"{self.atom_type_to_symbol[typ_i_idx+1]}-{self.atom_type_to_symbol[typ_j_idx+1]}"
+                bonds_dict[bond_str] = bonds_list[typ_i_idx][typ_j_idx]
+
+        return bonds_dict
