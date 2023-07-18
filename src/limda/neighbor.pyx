@@ -1,8 +1,11 @@
 # distutils: language = c++
 
 import numpy as np
+import queue
 from libc.stdlib cimport malloc
 from libcpp.vector cimport vector
+from libcpp.queue cimport queue
+from libcpp cimport bool
 
 cdef struct atom:
     # Cython上で原子のid, type, どこのmeshにいるか, 座標を記録する構造体
@@ -62,6 +65,8 @@ cdef void make_mesh_size(vector[double] cell, double mesh_length, int mesh_size[
     
     for i in range(3):
         mesh_size[i] = int(cell[i]/mesh_length)
+        if mesh_size[i] < 3:
+            mesh_size[i] = 3
         mesh_length_adjusted[i] = cell[i]/mesh_size[i]
 #----------------------------------------------------------------------------------------------------
 cdef void make_mesh_id(int mesh_size[3], atom *catoms, double mesh_length_adjusted[3], int atom_num):
@@ -232,4 +237,61 @@ cdef vector[vector[int]] get_edge_idx(atom *catoms, vector[vector[int]] append_m
     for edge_id in range(len(unsort_edges)):
         edge_idx[0].push_back(unsort_edges[edge_id][0])
         edge_idx[1].push_back(unsort_edges[edge_id][1])
-    return edge_idx    
+    return edge_idx  
+#---------------------------------------------------------------
+#---------------------------------------------------------------
+def cy_count_molecules(vector[int] atoms_type, vector[vector[double]] atoms_pos, double mesh_length, int atom_num, vector[vector[double]] bond_length, vector[double] cell, double cut_off, int typ_len):
+    # Cythonを用いて, 分子をlistにpush_backしていきます。
+    # Return val
+    # mols_list: list[list[int]]
+    # Example
+    # paraが"C H O"で, 系にCO2, とH2Oが入っているとき
+    # mols_list = [[1,0,2], [0,2,1]] となる。
+    cdef:
+        atom *catoms = <atom *> malloc(atom_num * sizeof(atom))
+        int mesh_size[3]
+        double mesh_length_adjusted[3]
+        vector[vector[int]] append_mesh
+        vector[vector[int]] neighbor_list
+        vector[vector[int]] mols_list
+
+    make_catoms(atoms_type, atoms_pos, atom_num, catoms)
+    make_mesh_size(cell, mesh_length, mesh_size, mesh_length_adjusted)
+    make_mesh_id(mesh_size, catoms, mesh_length_adjusted, atom_num)
+    append_mesh.resize(mesh_size[0]*mesh_size[1]*mesh_size[2])
+    append_mesh = get_append_mesh(catoms, append_mesh, atom_num)
+    neighbor_list.resize(atom_num)
+    if cut_off == 0:
+        neighbor_list = get_neighbors_pairs(catoms, append_mesh, mesh_size, neighbor_list, bond_length, cell)
+    else:
+        neighbor_list = get_neighbors(catoms, append_mesh, mesh_size, neighbor_list, cut_off, cell)
+    
+    mols_list = get_count_mols(catoms, mols_list, neighbor_list, atom_num, typ_len)
+    return mols_list
+#--------------------------------------------------------------------------------------------------------------------------------------------------
+cdef vector[vector[int]] get_count_mols(atom *catoms, vector[vector[int]] mols_list, vector[vector[int]] neighbor_list, int atom_num, int typ_len):
+    # nrighbor_listから幅優先探索を行い、count_molsを作成します。
+    cdef:
+        vector[bool] counted
+        vector[int] molecule
+        queue[int] q
+        int start_atom_idx,counting_atom_idx
+    counted.resize(atom_num)
+    for start_atom_idx in range(atom_num):
+        if not counted[start_atom_idx]:
+            q.push(start_atom_idx)
+            counted[start_atom_idx] = True
+            molecule.clear()
+            molecule.resize(typ_len)
+            molecule[catoms[start_atom_idx].typ - 1] += 1
+            while not q.empty():
+                counting_atom_idx = q.front()
+                q.pop()
+                for neighbor_atom_idx in range(len(neighbor_list[counting_atom_idx])):
+                    if not counted[neighbor_list[counting_atom_idx][neighbor_atom_idx]]:
+                        counted[neighbor_list[counting_atom_idx][neighbor_atom_idx]] = True
+                        q.push(neighbor_list[counting_atom_idx][neighbor_atom_idx])
+                        molecule[catoms[neighbor_list[counting_atom_idx][neighbor_atom_idx]].typ-1] += 1
+            mols_list.push_back(molecule)
+
+    return mols_list
