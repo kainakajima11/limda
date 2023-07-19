@@ -1,6 +1,7 @@
 from .neighbor import cy_get_neighbor_list
 from .neighbor import cy_count_molecules
 from .neighbor import cy_count_bonds
+from .neighbor import cy_count_coord_numbers
 
 class AnalisysFrame(
 
@@ -227,3 +228,41 @@ class AnalisysFrame(
                 bonds_dict[bond_str] = bonds_list[typ_i_idx][typ_j_idx]
 
         return bonds_dict
+#------------------------------------------------------------------------------------------
+    def count_coord_numbers(self, cut_off: float=3.4 ,bond_length: list[list[float]] = [])->list[dict[int,int]]:
+        """
+        """
+        if not bond_length:
+            if cut_off*3 > min(self.cell):
+                mesh_length = min(self.cell)/3-0.01
+            else:
+                mesh_length = cut_off
+            coord_numbers_list = cy_count_coord_numbers(atoms_type = self.atoms["type"],
+                                                 atoms_pos = [self.atoms["x"], self.atoms["y"], self.atoms["z"]],
+                                                 mesh_length = mesh_length + 0.01,
+                                                 atom_num = len(self),
+                                                 bond_length = [],
+                                                 cut_off = cut_off,
+                                                 cell = self.cell,
+                                                 typ_len = len(self.atom_symbol_to_type))
+        else:
+            mesh_length = max(list(map(lambda x: max(x), bond_length)))
+            if mesh_length*3 > min(self.cell):
+                mesh_length = min(self.cell)/3-0.01
+            coord_numbers_list = cy_count_coord_numbers(atoms_type = self.atoms["type"],
+                                                atoms_pos = [self.atoms["x"], self.atoms["y"], self.atoms["z"]],
+                                                mesh_length = mesh_length + 0.01,
+                                                atom_num = len(self),
+                                                bond_length = bond_length,
+                                                cut_off = 0,
+                                                cell = self.cell,
+                                                typ_len = len(self.atom_symbol_to_type))
+        coord_numbers_dict: list[dict[int,int]] = [{} for _ in range(len(self.atom_symbol_to_type))]
+        for typ_idx in range(len(self.atom_symbol_to_type)):
+            for coord_number in coord_numbers_list[typ_idx]:
+                if coord_number not in coord_numbers_dict[typ_idx].keys():
+                    coord_numbers_dict[typ_idx][coord_number] = 1
+                else:
+                    coord_numbers_dict[typ_idx][coord_number] += 1
+            coord_numbers_dict[typ_idx] = dict(sorted(coord_numbers_dict[typ_idx].items()))
+        return coord_numbers_dict
