@@ -361,7 +361,5 @@ class ExportFrame(
             self.export_dumppos(export_file_name)
         elif export_file_name.endswith('xyz'):
             self.export_xyz(export_file_name)
-        elif export_file_name.endswith('car'):
-            self.export_car(export_file_name)
         else:
             raise RuntimeError("適切なfile名にしてください.")     

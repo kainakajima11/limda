@@ -4,7 +4,7 @@ from typing import Union
 import pathlib
 from typing import Tuple
 from tqdm import tqdm, trange
-import const as C
+from . import const as C
 from .import_frame import ImportFrame
 from .SimulationFrame import SimulationFrame
 import os
