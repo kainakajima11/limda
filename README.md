@@ -22,7 +22,7 @@ cd .limda/src
 python3 ./limda/setup.py build_ext --inplace
 ```
 ## Add Path
-PYTHON PATH に $HOME/kudocop/package を追加してください。
+PYTHON PATH に $HOME/limda/src を追加してください。
 ```
 #bashの場合 -> $HOME/.bashrcに下記を追記
 export PYTHONPATH="$PYTHONPATH:$HOME/limda/src"
