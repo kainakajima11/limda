@@ -11,7 +11,7 @@ from .neighbor import cy_get_neighbor_list
 from .neighbor import cy_count_molecules
 from .neighbor import cy_count_bonds
 from .neighbor import cy_count_coord_numbers
-import const as C
+from . import const as C
 
 class SimulationFrame(
     ImportFrame,
