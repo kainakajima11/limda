@@ -250,9 +250,27 @@ class SimulationFrame(
         for idx, ratio in enumerate(type_ratio):
             type_list.extend([idx+1 for _ in range(int(ratio))])
 
-        remain_type = random.choices([i+1 for i in range(len(type_ratio))], k=tot_atoms-len(type_list), weights=remain_weight)
-        type_list.extend(remain_type)
+        if len(type_list) != len(self):
+            remain_type = random.choices([i+1 for i in range(len(type_ratio))], k=tot_atoms-len(type_list), weights=remain_weight)
+            type_list.extend(remain_type)
 
         random.shuffle(type_list)    
         self.atoms["type"] = type_list
 #--------------------------------------------------------------------------------       
+    def make_magmom_str(self, initial_magmom:list[float]):
+        type_dict: dict[int,int] = {}
+        for type_len in range(len(self.atom_symbol_to_type)):
+            type_dict[type_len] = 0
+
+        type_list = self.atoms["type"]
+        for typ in type_list:
+            type_dict[typ-1] += 1
+
+        magmom_str = ""
+        for type_len in range(len(self.atom_symbol_to_type)):
+            for _ in range(type_dict[type_len]):
+                magmom_str += str(initial_magmom[type_len])
+                magmom_str += " "
+
+        magmom_str = magmom_str[:-1]
+        return magmom_str
