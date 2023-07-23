@@ -257,7 +257,26 @@ class SimulationFrame(
         random.shuffle(type_list)    
         self.atoms["type"] = type_list
 #--------------------------------------------------------------------------------       
-    def make_magmom_str(self, initial_magmom:list[float]):
+    def make_magmom_str(self, initial_magmom:list[float])->str:
+        """
+        VaspのMAGMOM(初期磁気モーメントを決めるパラメーター)を簡単に設定できるようにします。
+        MAGMOMの仕様
+        -------
+            例えばpara が "Fe Co Ni"でそれらが3つずつ入った系を考えます。
+            磁気モーメントをFe->4, Co->3, Ni->2 で入れたいとします。
+            vaspのPOSCARにはtypeごとに座標が入ります。
+            そしてMAGMOMはPOSCARの原子順に空白区切りで磁気モーメントを入れる必要があります。
+            なので、例の場合は "4 4 4 3 3 3 2 2 2" というstrを返します。
+        Parameter
+        ---------
+            initial_magmom: list[float]
+                atomtypeごとの初期磁気モーメント値が入ったlistです。
+                例の場合 : initial_magmom = [4,3,2] と指定します。
+        Returnval
+        ---------
+            magmom_str: str 
+                MAGMOMにこのstrを指定すればokです。
+        """
         type_dict: dict[int,int] = {}
         for type_len in range(len(self.atom_symbol_to_type)):
             type_dict[type_len] = 0
