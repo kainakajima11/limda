@@ -59,7 +59,7 @@ class SimulationFrame(
 #-------------------------------------
     def __getitem__(self, key) -> pd.DataFrame:
         """
-        sdat.atoms[column]をsdat[column]と省略して書くことが出来る。
+        sf.atoms[column]をsf[column]と省略して書くことが出来る。
         """
         return self.atoms[key]
 #-------------------------------------------
@@ -68,7 +68,7 @@ class SimulationFrame(
 #------------------------------
     def __len__(self) -> int:
             """
-            sdat.get_total_atoms()をlen(sdat)と省略して書くことが出来る。
+            sdat.get_total_atoms()をlen(sf)と省略して書くことが出来る。
             """
             return self.get_total_atoms()
 
@@ -87,7 +87,7 @@ class SimulationFrame(
         """
         return set(self.atoms['type'])
 #----------------------------------------------
-    def wrap_atoms(self) -> None: #ky
+    def wrap_atoms(self) -> None:
         """
         セルの外にはみ出している原子をセルの中に入れる。
         """
@@ -156,7 +156,7 @@ class SimulationFrame(
             if reindex:
                 self.atoms.reset_index(drop=True, inplace=True)
 #-------------------------------------------------------------------------------------------
-    def density(self, x_max=None, x_min=None, y_max=None, y_min=None,z_max=None,z_min=None): #k
+    def density(self, x_max=None, x_min=None, y_max=None, y_min=None,z_max=None,z_min=None):
         """セル内の密度を計算する関数
         Parameters
         ----------
@@ -206,7 +206,7 @@ class SimulationFrame(
         density = all_weight / volume
         return density
 #--------------------------------------------------------------------------------------
-    def count_atom_types(self, res_type='series', condition=None): #k
+    def count_atom_types(self, res_type='series', condition=None):
         """原子のタイプごとに原子の個数をカウントする関数
         Parameters
         ----------
@@ -290,6 +290,31 @@ class SimulationFrame(
             for _ in range(type_dict[type_len]):
                 magmom_str += str(initial_magmom[type_len])
                 magmom_str += " "
+
+        magmom_str = magmom_str[:-1]
+        return magmom_str
+#---------------------------------------------------------------------------
+    def make_antiferro_magmom_str(self, initial_mag:float = 1):
+        """BCCで反強磁性をとる物質のMAGMOMを作成します。
+            BCCを考えた時、中心の原子には負の磁気モーメントが、
+            頂点の原子には正の磁気モーメントが入ります。
+            Parameter
+            ---------
+                initial_mag: float
+                    初期磁気モーメント
+        """
+        magmom_str = ""
+        initial_mag_str = str(initial_mag)
+        mn_dist = 1e9
+        for x in self.atoms["x"]:
+            if x == 0:
+                continue
+            mn_dist = min(x, mn_dist)
+
+        for x in self.atoms["x"]:
+            if int(x/mn_dist)%2 == 1:
+                magmom_str += "-"
+            magmom_str += initial_mag_str + " "
 
         magmom_str = magmom_str[:-1]
         return magmom_str
