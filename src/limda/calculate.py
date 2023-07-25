@@ -39,6 +39,7 @@ class Calculate(
             exist_ok: bool=False,
             poscar_from_contcar: bool = False,
             contcar_path: str = "",
+            place :str = "kbox"
     ):
         """vaspを実行する.
         Parameters
@@ -111,7 +112,10 @@ class Calculate(
         if iconst_config is not None:
             self.export_vasp_iconst(iconst_path, iconst_config)
 
-        cmd = f'mpiexec -np {num_process} {vasp_command} > stdout'
+        if place == "kbox":
+            cmd = f'mpiexec -np {num_process} {vasp_command} > stdout'
+        elif place == "masamune" or place == "MASAMUNE":
+            cmd = f'aprun -n {num_process} -N {min(36, num_process)} -j 1 {vasp_command} > stdout'
         vasp_md_process = subprocess.Popen(cmd, cwd=calc_directory, shell=True)
         time.sleep(5)
         if print_vasp:
