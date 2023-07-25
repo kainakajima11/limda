@@ -39,7 +39,8 @@ class Calculate(
             exist_ok: bool=False,
             poscar_from_contcar: bool = False,
             contcar_path: str = "",
-            place :str = "kbox"
+            place :str = "kbox",
+            num_nodes: int = 1,
     ):
         """vaspを実行する.
         Parameters
@@ -84,6 +85,7 @@ class Calculate(
         """
         assert potcar_root is not None, "There isn't potcar_root."
         assert incar_config is not None, "There isn't incar_config."
+        assert num_process%num_nodes == 0
         if not calc_directory:
             calc_directory = f"{system_name}_{step_num}"
         calc_directory = pathlib.Path(calc_directory)
@@ -115,7 +117,7 @@ class Calculate(
         if place == "kbox":
             cmd = f'mpiexec -np {num_process} {vasp_command} > stdout'
         elif place == "masamune" or place == "MASAMUNE":
-            cmd = f'aprun -n {num_process} -N {min(36, num_process)} -j 1 {vasp_command} > stdout'
+            cmd = f'aprun -n {num_process} -N {num_process / num_nodes} -j 1 {vasp_command} > stdout'
         vasp_md_process = subprocess.Popen(cmd, cwd=calc_directory, shell=True)
         time.sleep(5)
         if print_vasp:
