@@ -22,7 +22,9 @@ class Calculate(
 
     def vasp(
             self,
-            calc_directory: str,
+            calc_directory: str="",
+            system_name: str="",
+            step_num: int= 0,
             poscar_comment: str="",
             poscar_scaling_factor: float=1.0,
             incar_config: dict=None,
@@ -36,13 +38,17 @@ class Calculate(
             print_vasp: bool=True,
             exist_ok: bool=False,
             poscar_from_contcar: bool = False,
-            contcar_path: str = ""
+            contcar_path: str = "",
     ):
         """vaspを実行する.
         Parameters
         ----------
             calc_directory: str
                 vaspで計算を実行するディレクトリ
+            system_name: str
+                vaspで計算を実行する系の名前
+            step_num: int
+                vaspで計算を実行するファイルが何個目のファイルか
             poscar_comment: str
                 POSCARの1行目に書かれるコメント
             poscar_scaling_factor: float
@@ -77,12 +83,17 @@ class Calculate(
         """
         assert potcar_root is not None, "There isn't potcar_root."
         assert incar_config is not None, "There isn't incar_config."
+        if not calc_directory:
+            calc_directory = f"{system_name}_{step_num}"
         calc_directory = pathlib.Path(calc_directory)
         for key in ["NCORE", "NPAR", "KPAR"]:
             if key not in incar_config:
                 incar_config[key] = 1
 
         os.makedirs(calc_directory, exist_ok=exist_ok)
+        if poscar_from_contcar:
+            incar_config["ISTART"] = 1
+            subprocess.run(["cp", f"./{system_name}_{step_num-1}/WAVECAR", f'./{calc_directory}'])
         poscar_path = calc_directory / "POSCAR"
         incar_path = calc_directory / "INCAR"
         potcar_path = calc_directory / "POTCAR"
