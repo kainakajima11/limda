@@ -44,7 +44,7 @@ class SimulationFrame(
     atom_type_to_mass : dict[int, float]
     step_num: int
 #--------------------------------------
-    def __init__(self):
+    def __init__(self, para: str = ""):
         self.atoms = None
         self.cell = None
         self.atom_symbol_to_type = None
@@ -52,6 +52,8 @@ class SimulationFrame(
         self.atom_type_to_mass = None
         self.step_num = None
         self.potential_energy = None
+        if para:
+            self.import_para_from_str(para)
 #-------------------------------------
     def __getitem__(self, key) -> pd.DataFrame:
         """
