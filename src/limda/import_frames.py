@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import pickle
 from typing import Union
 import pathlib
 from typing import Tuple
@@ -52,7 +53,7 @@ class ImportFrames(
                 sf.atom_type_to_mass = self.atom_type_to_mass
                 sf.atom_type_to_symbol = self.atom_type_to_symbol 
 
-                sf.cell = [None, None, None]
+                sf.cell = np.empty(3, dtype=np.float32)
                 for dim in range(3):
                     sf.cell[dim] = float(splines[cell_line_idx+dim+1][dim])
 
@@ -159,7 +160,28 @@ class ImportFrames(
                 の場合、Cの原子のタイプが1, Hの原子のタイプが2, Oの原子のタイプが3, Nの原子のタイプが4となる
         """
         self.import_para_from_list(atom_symbol_str.split())                        
-                
+#----------------------------------------------------------
+    def import_pickle(self, file_name: Union[str, pathlib.Path]):
+        """
+        pickle fileを読み込み、sfsに入れます。
+        pickle file には 
+        cell, position, force, atom_types, cut_off, edge_index, potential_energyの情報が入っていますが、
+        cut_off, edge_indexの情報は抜け落ちます。
+
+        Parameters
+        ----------
+        file_name :Union[str, pathlib.Path]
+            importするpickleファイルのパス
+        """
+        pic = pd.read_pickle(file_name)
+        for sf_dict in pic:
+            sf = SimulationFrame()
+            sf.cell = sf_dict["cell"]
+            sf.potential_energy = sf_dict["potential_energy"]
+            sf.atoms = pd.DataFrame(sf_dict["atom_types"] + 1, columns=["type"])
+            sf.atoms[["x", "y", "z"]] = pd.DataFrame(sf_dict["pos"])
+            sf.atoms[["fx", "fy", "fz"]] = pd.DataFrame(sf_dict["force"])
+            self.sf.append(sf)
      
 
 
