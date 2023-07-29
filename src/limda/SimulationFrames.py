@@ -32,12 +32,13 @@ class SimulationFrames(
     atom_type_to_symbol : dict[int, str]
     atom_type_to_mass : dict[int, float]
 #----------------------
-    def __init__(self):
+    def __init__(self, para: str=""):
         self.sf:list[SimulationFrame] = []
         self.atom_symbol_to_type: dict[str, int] = None
         self.atom_type_to_symbol : dict[int, str] = None
         self.atom_type_to_mass : dict[int, float] = None
-
+        if para:
+            self.import_para_from_str(para)
 #---------------------
     def __len__(self):
         """
