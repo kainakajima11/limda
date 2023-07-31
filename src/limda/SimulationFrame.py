@@ -6,14 +6,14 @@ import os
 from .import_frame import ImportFrame
 from .export_frame import ExportFrame
 from .calculate import Calculate
-from .analisys_frame import AnalisysFrame
+from .analize_frame import AnalizeFrame
 from . import const as C
 
 class SimulationFrame(
     ImportFrame,
     ExportFrame,
     Calculate,
-    AnalisysFrame,
+    AnalizeFrame,
 ):
     """シミュレーションしたデータを読み込み、書き込み、分析するためのクラス
     一つのフレームを扱う
@@ -291,20 +291,20 @@ class SimulationFrame(
 
         magmom_str = magmom_str[:-1]
         return magmom_str
-#--------------------------------------------------
+#-------------------------------------------------------
     def change_lattice_const(self,
-                             new_cell: float = None,
-                             new_cell_list: list[float]=[None],
-                             magnification: float = None):
+                             new_cell: np.float32 = None,
+                             new_cell_list: np.array(np.float32)=[None],
+                             magnification: np.float32 = None):
         """
         現在の系を形はそのままに拡大（縮小）します。
         Parameters
         ----------
-            new_cell: float
+            new_cell: np.float32
                 変更後のセルサイズ(xyz共通)
-            new_cell_list: list[float]
+            new_cell_list: np.array(np.float32)
                 変更後のセルサイズ(xyz別)
-            magnification: float
+            magnification: np.float32
                 セルを何倍にするか
         Specification
         -------------
@@ -312,10 +312,22 @@ class SimulationFrame(
         """
         assert new_cell or new_cell_list or magnification
         if new_cell:
-            new_cell_list = [new_cell, new_cell, new_cell]
+            new_cell_list = np.array([new_cell, new_cell, new_cell])
         elif magnification:
             new_cell_list = magnification*self.cell
 
         for dim, new_cel, cel in zip(["x", "y", "z"], new_cell_list, self.cell):
             self.atoms[dim] *= new_cel/cel
-        self.cell = np.array(new_cell_list)
+        self.cell = new_cell_list
+#--------------------------------------------------
+    def make_empty_space(self,
+                        empty_length: float = 10.0):
+        """z方向に空白部分を作ります.
+            Parameter
+            ---------
+            empty_length: float
+                空白部分のz方向の長さです。
+                半分ずつ+z方向と-z方向に空間が作られます。
+        """
+        self.cell[2] += empty_length
+        self.atoms["z"] += empty_length / 2

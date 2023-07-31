@@ -78,4 +78,4 @@ sfの密度を返します。
 [実際のコード](https://github.com/kainakajima11/limda/blob/main/src/limda/calculate.py)
 <a id="anchor7"></a>
 ## AnalyzeFrame
-[実際のコード](https://github.com/kainakajima11/limda/blob/main/src/limda/analysis_frame.py)
+[実際のコード](https://github.com/kainakajima11/limda/blob/main/src/limda/analyse_frame.py)
