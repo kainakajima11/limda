@@ -293,32 +293,23 @@ class SimulationFrame(
         return magmom_str
 #-------------------------------------------------------
     def change_lattice_const(self,
-                             new_cell: np.float32 = None,
-                             new_cell_list: np.array(np.float32)=[None],
+                             new_cell: np.array(np.float32) = None,
                              magnification: np.float32 = None):
         """
         現在の系を形はそのままに拡大（縮小）します。
         Parameters
         ----------
-            new_cell: np.float32
-                変更後のセルサイズ(xyz共通)
-            new_cell_list: np.array(np.float32)
+            new_cell: np.array(np.float32)
                 変更後のセルサイズ(xyz別)
             magnification: np.float32
                 セルを何倍にするか
-        Specification
-        -------------
-            new_cell, magnification, new_cell_listの順に値が優先されます。
         """
-        assert new_cell or new_cell_list or magnification
-        if new_cell:
-            new_cell_list = np.array([new_cell, new_cell, new_cell])
-        elif magnification:
-            new_cell_list = magnification*self.cell
-
-        for dim, new_cel, cel in zip(["x", "y", "z"], new_cell_list, self.cell):
-            self.atoms[dim] *= new_cel/cel
-        self.cell = new_cell_list
+        assert new_cell or magnification,"new_cellかmagnificationのどちらかを指定してください"
+        assert not (new_cell and magnification), "new_cellかmagnificationのどちらかを指定してください"
+        if magnification:
+            new_cell = magnification*self.cell
+        self.atoms[["x", "y", "z"]] *= new_cell/self.cell
+        self.cell = new_cell
 #--------------------------------------------------
     def make_empty_space(self,
                         empty_length: float = 10.0):
