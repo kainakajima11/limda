@@ -3,7 +3,7 @@ from .neighbor import cy_count_molecules
 from .neighbor import cy_count_bonds
 from .neighbor import cy_count_coord_numbers
 
-class AnalizeFrame(
+class AnalisysFrame(
 
 ):
     def __init__(self):
