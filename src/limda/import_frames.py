@@ -161,34 +161,28 @@ class ImportFrames(
         """
         self.import_para_from_list(atom_symbol_str.split())                        
 #----------------------------------------------------------
-    def import_allegro_frames(self, file_name: Union[str, pathlib.Path])->list[dict]:
+    def import_pickle(self, file_name: Union[str, pathlib.Path]):
         """
         pickle fileを読み込み、sfsに入れます。
         pickle file には 
         cell, position, force, atom_types, cut_off, edge_index, potential_energyの情報が入っていますが、
-        cut_off, edge_indexの情報はsfs.sfには入らないため、保持するためには返り値であるframesを受け取る必要があります.
+        cut_off, edge_indexの情報は抜け落ちます。
 
         Parameters
         ----------
-            file_name :Union[str, pathlib.Path]
-                importするpickleファイルのパス
-        Return val
-        ----------
-            frames :list[dict]
-                pickelファイルに入っている情報をsfごとにdictで保持したlist
+        file_name :Union[str, pathlib.Path]
+            importするpickleファイルのパス
         """
-        with open(file_name, 'rb') as p:
-            frames = pickle.load(p)
-        for frame in frames:
+        pic = pd.read_pickle(file_name)
+        for sf_dict in pic:
             sf = SimulationFrame()
-            sf.cell = frame["cell"]
-            sf.potential_energy = frame["potential_energy"]
-            sf.atoms = pd.DataFrame(frame["atom_types"] + 1, columns=["type"])
-            sf.atoms[["x", "y", "z"]] = pd.DataFrame(frame["pos"])
-            sf.atoms[["fx", "fy", "fz"]] = pd.DataFrame(frame["force"])
+            sf.cell = sf_dict["cell"]
+            sf.potential_energy = sf_dict["potential_energy"]
+            sf.atoms = pd.DataFrame(sf_dict["atom_types"] + 1, columns=["type"])
+            sf.atoms[["x", "y", "z"]] = pd.DataFrame(sf_dict["pos"])
+            sf.atoms[["fx", "fy", "fz"]] = pd.DataFrame(sf_dict["force"])
             self.sf.append(sf)
-
-        return frames
+     
 
 
     

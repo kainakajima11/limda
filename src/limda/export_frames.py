@@ -31,7 +31,7 @@ class ExportFrames(
             frame.export_dumppos(ofn = output_folder / f'dump.pos.{step_num}',
                                   time_step = step_num, out_columns=out_columns)
 #--------------------------------------------------------------------------------
-    def export_allegro_frames(self,
+    def export_allegro(self,
                        output_dir: str,
                        output_file_name: str,
                        cut_off: float,
