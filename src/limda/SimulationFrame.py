@@ -85,7 +85,7 @@ class SimulationFrame(
         """
         return set(self.atoms['type'])
 #----------------------------------------------
-    def wrap_atoms(self) -> None: #ky
+    def wrap_atoms(self) -> None:
         """
         セルの外にはみ出している原子をセルの中に入れる。
         """

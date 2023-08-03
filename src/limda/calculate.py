@@ -325,4 +325,57 @@ class Calculate(
         p.wait()
         # import result
         self.import_xyz(packmol_tmp_dir / "packmol_mixture_result.xyz")
+#---------------------------------------------------------------------
+    def lax(self,
+            calc_dir: str = "lax_calc",
+            lax_cmd: Union[pathlib.Path,str] = "lax/src/build/lax", #laxが完成したら変える.
+            lax_config: dict = None,
+            print_lax: bool = False,
+            exist_ok = False,
+            mask_info: list[str] = []):
+        """
+        laxでMDを実行する.
+        Parameters
+        ----------
+        calc_dir
+            計算が行なわれるディレクトリ、ここにdumpposが出力されます。
+        lax_cmd
+            laxの実行ファイルのpath
+        lax_config
+            laxのconfig fileに書き出される変数のdict
+        print_lax
+            out fileを出力するか
+        exist_ok
+            calc_dirが存在するときに計算を行うか
+        mask_info
+            input fileにそのまま出力されるmoveやpressの情報
+        """
+        calc_dir = pathlib.Path(calc_dir)
+        if not exist_ok:
+            assert not calc_dir.exists(), "calc_dir already exists."
+        calc_dir.mkdir()
+        # input
+        input_file_path: pathlib.Path = calc_dir / "input.rd"
+        self.export_input(input_file_path, mask_info)
+        # config
+        config_file_path: pathlib.Path = calc_dir / "config.rd"
+        with open(config_file_path, "w") as f:
+            for key in lax_config.keys():
+                f.write(f"{key} {lax_config[key]}\n")
+        
+        assert ("MPIGridX" in lax_config) and ("MPIGridY" in lax_config) and ("MPIGridZ" in lax_config)
+        num_process = lax_config["MPIGridX"] * lax_config["MPIGridY"] * lax_config["MPIGridZ"]
+        cmd = f"mpiexec.hydra -np {num_process} {lax_cmd} < /dev/null >& out"
+        lax_process = subprocess.Popen(cmd, cwd = calc_dir, shell = True)
+        time.sleep(5)
+        if print_lax:
+            tail_process = subprocess.Popen(f"tail -F out", cwd = calc_dir, shell = True)
+            while lax_process.poll() is None:
+                time.sleep(1)
+            tail_process.kill()
+        dumppos_paths = list(calc_dir.glob("./dump.pos.*"))
+        dumppos_paths.sort(reverse = True)
+        assert len(dumppos_paths) != 0, "dumpposが生成されていません"
+        optimized_dumppos_path = dumppos_paths[0]
+        self.import_dumppos(optimized_dumppos_path)
 
