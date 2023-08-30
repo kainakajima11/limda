@@ -5,6 +5,7 @@ import subprocess
 import os
 import time
 from typing import Union
+import torch
 
 try:
     from ase.build import molecule
@@ -381,4 +382,56 @@ class Calculate(
         assert len(dumppos_paths) != 0, "dumpposが生成されていません"
         optimized_dumppos_path = dumppos_paths[0]
         self.import_dumppos(optimized_dumppos_path)
+
+#---------------------------------------------------------------------------------------------
+    def allegro(self,
+                cut_off: float,
+                device: Union[str, torch.DeviceObjType],
+                allegro_model: torch.jit._script.RecursiveScriptModule,
+                ) -> None:
+        """Allegroを使って、sfに入っている原子の座標に対して推論を行い、
+        ポテンシャルエネルギーと原子に働く力を計算する
+        Allegroによって予測されたポテンシャルエネルギーはsf.pred_potential_energyに入る
+        Allegroによって予測されたそれぞれの原子にかかる力はsf.atoms.loc[:, ["pred_fx", "pred_fy", "pred_fz"]]に入る
+        Parameters
+        ----------
+            cut_off: float
+                原子の相互作用のカットオフ半径
+            device: Union[str, torch.DeviceObjType]
+                どのデバイスでAllegroの計算を行うか, "cpu" or "cuda"
+            allegro_model: torch.jit._script.RecursiveScriptModule
+                frozenされたAllegroを読み込んだモデル
+                pathではないことに注意
+        """
+
+        if type(device) == str:
+            device = torch.device(device)
+
+        cell = np.array(self.cell, dtype=np.float32)
+        pos = np.array(self.atoms[["x","y","z"]].values, dtype=np.float32)
+        atom_types = np.array(self.atoms["type"].values)
+        atom_types -= 1
+        cut_off = np.array(cut_off, dtype=np.float32)
+
+        edge_index = [[],[]]
+        edge_index = self.get_edge_idx(cut_off=cut_off)
+        edge_index = np.array(edge_index)
+
+        pos_tensor = torch.tensor(pos, device=device)
+        edge_index_tensor = torch.tensor(edge_index, device=device)
+        cell_tensor = torch.tensor(cell, device=device)
+        atom_types_tensor = torch.tensor(atom_types, device=device)
+        cut_off_tensor = torch.tensor(cut_off, device=device)
+
+        output = allegro_model(
+            pos_tensor,
+            edge_index_tensor,
+            cell_tensor,
+            atom_types_tensor,
+            cut_off_tensor,
+        )
+
+        self.atoms[['pred_fx', 'pred_fy', 'pred_fz']] = output['force'].cpu().detach().numpy()
+        self.atoms['pred_potential_energy'] = output['atomic_energy'].cpu().detach().numpy()
+        self.pred_potential_energy = output['total_energy'].cpu().detach().item()
 
