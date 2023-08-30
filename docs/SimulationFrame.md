@@ -18,7 +18,8 @@ Columns
 - id : 原子のid
 - type : 原子のtype, 1-indexed
 - x, y, z : 原子のx, y, z座標
-- fx, fy, fz : 原子のx, y, z方向の速度 
+- fx, fy, fz : 原子のx, y, z方向の力
+- pred_fx, pred_fy, pred_fz : 原子のNNPによって予測された力
 ### cell
 セルのx,y,z方向の大きさが入ったnumpy配列
 ### atom_symbol_to_type
@@ -31,6 +32,8 @@ Columns
 laichなどで扱うstep数、int
 ### potential_energy
 sfのポテンシャルエネルギー、float
+### pred_potential_energy
+sfをNNPで推論して得られたエネルギー、float
 <a id="anchor2"></a>
 # メソッド
 <a id="anchor3"></a>
@@ -71,6 +74,48 @@ sfの密度を返します。
 ## ImportFrame
 [実際のコード](https://github.com/kainakajima11/limda/blob/main/src/limda/import_frame.py)
 <a id="anchor5"></a>
+
+### import_input()
+引数：読み込むinputfileのpath, Union[str,pathlib.Path]<br>
+input fileを読み込みます。<br>
+
+### import_para_from_list()
+引数：元素記号のリスト(ex. ["C", "H", "O", "N", "Si"]) list[str] <br>
+元素記号からatom_symbol_to_type, atom_type_to_symbol, atom_type_to_massを作成します。<br>
+
+### import_para_from_str()
+引数：元素記号を空白で区切ったstr (ex. "C H O N Si")<br>
+機能はimport_para_from_listと同じです。
+
+### import_car()
+引数：car fileのpath, Union[str,pathlib.Path]<br>
+car fileを読み込みます。
+
+### import_dumppos()
+引数：dumppos fileのpath, Union[str,pathlib.Path]<br>
+dumppos fileを読み込みます。
+
+### import_mol()
+引数：読み込む分子の式、str
+ase ライブラリを用いて、分子を読み込みます。
+
+### import_from_poscar()
+引数：POSCARのpath
+POSCARから原子の種類と個数がlist[int]で返される。
+
+### import_xyz()
+引数：xyz fileのpath, Union[str,pathlib.Path]
+xyz fileを読み込む
+
+### import_file()
+引数：読み込むfileの名前,str
+読み込むfileの名前から、fileの種類を分類し読み込む。<br>
+読み込めるファイルは
+- input file ("input"から始まる)
+- dump pos file ("dump"で始まるか"pos"で終わる)
+- xyz file ("xyz"で終わる)
+- car file ("car"で終わる)
+
 ## ExportFrame
 [実際のコード](https://github.com/kainakajima11/limda/blob/main/src/limda/export_frame.py)
 <a id="anchor6"></a>
