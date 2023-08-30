@@ -261,7 +261,7 @@ class ExportFrame(
         # 0-indexed
         self.atoms.index = self.atoms.index - 1
 #--------------------------------------------------------------
-    def export_input(self, ofn: Union[str,pathlib.Path]="input.rd", mask_info: list[str] = [])->None:
+    def export_input(self, ofn: Union[str,pathlib.Path] = "input.rd", mask_info: list[str] = [])->None:
         """input.rdを作成する。
         Parameters
         ----------

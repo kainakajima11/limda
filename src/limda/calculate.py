@@ -133,7 +133,8 @@ class Calculate(
               laich_cmd: str ='laich',
               laich_config :dict=None,
               print_laich: bool=False,
-              exist_ok=False):
+              exist_ok=False,
+              mask_info: list[str] = None):
         """LaichでMD,または構造最適化を実行する。
         Parameters
         ----------
@@ -158,7 +159,7 @@ class Calculate(
             para_file_path = pathlib.Path(para_file_path)
         input_file_path = calc_dir / 'input.rd'
         config_file_path = calc_dir / 'config.rd'
-        self.export_input(input_file_path)
+        self.export_input(input_file_path, mask_info)
         with open(config_file_path, 'w') as f:
             for key in laich_config.keys():
                 f.write(f"{key} {laich_config[key]}\n")
@@ -176,8 +177,9 @@ class Calculate(
         time.sleep(5)
         if print_laich:
             tail_process = subprocess.Popen(f'tail -F out', cwd=calc_dir, shell=True)
-            while laich_process.poll() is None:
-                time.sleep(1)
+        while laich_process.poll() is None:
+            time.sleep(1)
+        if print_laich:
             tail_process.kill()
 
         dumppos_paths = list(calc_dir.glob('./dump.pos.*'))
@@ -328,11 +330,11 @@ class Calculate(
 #---------------------------------------------------------------------
     def lax(self,
             calc_dir: str = "lax_calc",
-            lax_cmd: Union[pathlib.Path,str] = "lax/src/build/lax", #laxが完成したら変える.
+            lax_cmd: str = "lax",
             lax_config: dict = None,
             print_lax: bool = False,
             exist_ok = False,
-            mask_info: list[str] = []):
+            mask_info: list[str] = []): #引数にOMPTHREADNUM: int = 1
         """
         laxでMDを実行する.
         Parameters
@@ -370,8 +372,9 @@ class Calculate(
         time.sleep(5)
         if print_lax:
             tail_process = subprocess.Popen(f"tail -F out", cwd = calc_dir, shell = True)
-            while lax_process.poll() is None:
-                time.sleep(1)
+        while lax_process.poll() is None:
+            time.sleep(1)
+        if print_lax:
             tail_process.kill()
         dumppos_paths = list(calc_dir.glob("./dump.pos.*"))
         dumppos_paths.sort(reverse = True)
