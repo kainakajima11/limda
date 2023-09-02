@@ -72,8 +72,8 @@ sfをx,y,z方向に指定数だけつなげたものに拡張します。
 sfの密度を返します。
 <a id="anchor4"></a>
 ## ImportFrame
+主にファイルを読み込んでsfにデータを入れるメソッドが入っています。<br>
 [実際のコード](https://github.com/kainakajima11/limda/blob/main/src/limda/import_frame.py)
-<a id="anchor5"></a>
 
 ### import_input()
 引数：読み込むinputfileのpath, Union[str,pathlib.Path]<br>
@@ -115,9 +115,58 @@ xyz fileを読み込む
 - dump pos file ("dump"で始まるか"pos"で終わる)
 - xyz file ("xyz"で終わる)
 - car file ("car"で終わる)
-
+  
+<a id="anchor5"></a>
 ## ExportFrame
+主にsfのデータをファイルに出力するメソッドが入っています。<br>
 [実際のコード](https://github.com/kainakajima11/limda/blob/main/src/limda/export_frame.py)
+
+### export_vasp_poscar()
+引数：出力するファイル名、コメント、scaling_factor(VASP参照)<br>
+vaspの計算に必要なPOSCARを作成します。<br>
+sfのデータが使われます。
+
+### export_vasp_poscar_from_contcar()
+引数：出力するファイル名、CONTCARのpath<br>
+vaspの計算に必要なPOSCARを作成します。<br>
+sfのデータではなく、CONTCARを指定して、それをPOSCARにします。<br>
+
+### export_vasp_incar()
+引数；出力するファイル名、計算条件が入ったconfig<br>
+vaspの計算に必要なINCARを作成します。<br>
+
+### export_vasp_kpoints()
+引数：出力するファイル名、コメント、kpoints<br>
+vaspの計算に必要なKPOINTSを作成します。
+
+### export_vasp_iconst()
+引数：出力するファイル名、iconstの情報が入ったconfig<br>
+vaspの計算で使われるICONSTを作成します。
+
+### export_vasp_potcar()
+引数：出力するファイル名、POTCARのpath<br>
+vaspの計算に必要なPOTCARを作成します。
+
+### export_dumppos()
+引数：出力するファイル名、ステップ数、出力する列の種類 <br>
+sfをdump.pos 形式のファイルとして出力します。
+
+### export_input()
+引数：出力するファイル名　<br>
+sfをinput.rd の形式のファイルとしてを出力します。
+
+### export_xyz()
+引数：出力するファイル名、出力する列の種類、構造の名前<br>
+sfをxyzの形式のファイルとして出力します。
+
+### export_file()
+引数：出力するファイルの名前
+sfを出力するファイル名から形式を判断して、出力します。<br>
+出力できるファイルの形式
+- input file ("input" で始まる)
+- dump.pos file ("dump"で始まる or "pos"で終わる)
+- xyz file ("xyz"で終わる)
+
 <a id="anchor6"></a>
 ## Calculate
 [実際のコード](https://github.com/kainakajima11/limda/blob/main/src/limda/calculate.py)
