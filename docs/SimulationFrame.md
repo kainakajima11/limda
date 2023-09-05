@@ -1,7 +1,10 @@
 # SimulationFrame (sf)
 sfについての簡単な説明です。<br>
 詳しい内容は実際のコードやdocstringを見て下さい。
-
+```python
+sf = SimulationFrame() # ただsfをSimulationFrameとして定義
+sf = SimulationFrame("C H O") # 定義と同時にsf.import_para_from_str()を実行
+```
 ## 目次
 - [変数](#anchor1)<br>
 - [メソッド](#anchor2)
@@ -82,9 +85,11 @@ input fileを読み込みます。<br>
 ### import_car()
 car fileを読み込みます。
 
-### import_dumppos()
+### import_dumppos() 
 dumppos fileを読み込みます。
-
+```python
+sf.import_dumppos("/nfshome17/knakajima/dump/dump.pos.100") # dump.pos fileのpathを指定
+```
 ### import_mol()
 ase ライブラリを用いて、分子を読み込みます。
 
@@ -154,7 +159,20 @@ Laichの計算を実行します。<br>
 
 ### packmol()
 Packmolの計算を実行します.<br>
-
+```python
+# H2Oを詰めます # セル全体に30個ランダムに詰める.
+sf_h2o = SimulationFrame("C H O") 
+sf_h2o.import_mol("H2O") 
+xyz_condition = [
+    [0.7, 0.7, 0.7, sf.cell[0] - 0.7, sf.cell[1] - 0.7, sf.cell[2] - 0.7], # packする範囲を指定 # 端には配置しないようにする 
+]
+sf.packmol(sf_list=[sf_h2o],
+            pack_num_list=[30], # 詰める分子の個数
+            tolerance=1.7, # それぞれの水分子は最低1.7Å離れて配置される
+            xyz_condition=xyz_condition, # packする範囲条件
+            print_packmol=True, # packmolの標準出力を表示するか
+            seed=-1) # シード値 # -1 はランダム
+```
 ### lax()
 laxの計算を実行します.<br>
 
