@@ -184,3 +184,29 @@ sfに入っている原子の座標などから、かかる力とポテンシャ
 <a id="anchor7"></a>
 ## AnalyzeFrame
 [実際のコード](https://github.com/kainakajima11/limda/blob/main/src/limda/analyse_frame.py)
+
+### get_neighbor_list()
+sfに対する、隣接リストを作成し、返します。<br>
+neighor_listの形式はlist[list[int]です.<br>
+配列のi番目の要素はi番目の原子と隣接する原子のidxの配列です.<br>
+原子のタイプごとに長さを指定して結合リストを作ることもできます.<br>
+
+### get_edge_idx()
+隣接リストをallegroのデータセットの形式にしたもの(edge_idx)を返します。<br>
+edge_idxはlist[list[int, int]]で、配列の要素は大きさ2の配列であり、<br>
+[a,b]のときa番目の原子とb番目の原子は隣接してることを表します。
+
+### count_molecules()
+sf内に何の分子が何個存在するかを返します。<br>
+dict[str, int]の形式で返され
+H2O1 : 3 であれば,水分子が3個あることを表します。<br>
+
+### count_bonds()
+sf内に何の結合が何個あるかを返します。<br>
+dict[str, int]の形式で返され、
+H-O : 2 であれば水素酸素結合が2つ存在することを表します。
+
+### count_coord_numbers()
+sf内の原子の配位数の数を返します。
+list[dict[int,int]]の形式で返され、i番目の配列が、{1 : 2, 2 : 3}であれば、<br>
+i番目のタイプの原子は1配位が2つ、2配位が3つあることを表します.<br>
