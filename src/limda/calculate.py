@@ -119,7 +119,7 @@ class Calculate(
         if place == "kbox":
             cmd = f'mpiexec -np {num_process} {vasp_command} > stdout'
         elif place.upper() == "MASAMUNE":
-            cmd = f'aprun -n {num_process} -N {num_process / num_nodes} -j 1 {vasp_command} > stdout'
+            cmd = f'aprun -n {num_process} -N {int(num_process / num_nodes)} -j 1 {vasp_command} > stdout'
         vasp_md_process = subprocess.Popen(cmd, cwd=calc_directory, shell=True)
         time.sleep(5)
         if print_vasp:
@@ -135,6 +135,8 @@ class Calculate(
               laich_config :dict=None,
               print_laich: bool=False,
               exist_ok=False,
+              place :str = "kbox",
+              num_nodes: int = 1,
               mask_info: list[str] = None):
         """LaichでMD,または構造最適化を実行する。
         Parameters
@@ -172,8 +174,13 @@ class Calculate(
                 pass
 
         num_process = laich_config["MPIGridX"]*laich_config["MPIGridY"]*laich_config["MPIGridZ"]
+        assert num_process%num_nodes == 0, "Invalid num_nodes"
 
-        cmd = f"mpiexec.hydra -np {num_process} {laich_cmd} < /dev/null >& out"
+        if place == "kbox":
+            cmd = f"mpiexec.hydra -np {num_process} {laich_cmd} < /dev/null >& out"
+        elif place.upper() == "MASAMUNE":
+            cmd = f'aprun -n {num_process} -N {int(num_process / num_nodes)} -j 1 {laich_cmd} > stdout'
+
         laich_process = subprocess.Popen(cmd, cwd=calc_dir, shell=True)
         time.sleep(5)
         if print_laich:
@@ -335,6 +342,8 @@ class Calculate(
             lax_config: dict = None,
             print_lax: bool = False,
             exist_ok = False,
+            place :str = "kbox",
+            num_nodes: int = 1,
             mask_info: list[str] = []): #引数にOMPTHREADNUM: int = 1
         """
         laxでMDを実行する.
@@ -368,7 +377,13 @@ class Calculate(
         
         assert ("MPIGridX" in lax_config) and ("MPIGridY" in lax_config) and ("MPIGridZ" in lax_config)
         num_process = lax_config["MPIGridX"] * lax_config["MPIGridY"] * lax_config["MPIGridZ"]
-        cmd = f"mpiexec.hydra -np {num_process} {lax_cmd} < /dev/null >& out"
+        assert num_process%num_nodes == 0, "Invalid num_nodes"
+
+        if place == "kbox":
+            cmd = f"mpiexec.hydra -np {num_process} {lax_cmd} < /dev/null >& out"
+        elif place.upper() == "MASAMUNE":
+            cmd = f'aprun -n {num_process} -N {int(num_process / num_nodes)} -j 1 {lax_cmd} > stdout'
+            
         lax_process = subprocess.Popen(cmd, cwd = calc_dir, shell = True)
         time.sleep(5)
         if print_lax:
