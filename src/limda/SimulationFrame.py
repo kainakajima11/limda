@@ -38,7 +38,7 @@ class SimulationFrame(
         このフレームが持つポテンシャルエネルギー, 単位はeV
     """
     atoms: pd.DataFrame
-    cell: np.array # shape:[3]
+    cell: np.ndarray[float] # shape:[3]
     atom_symbol_to_type: dict[str, int]
     atom_type_to_symbol : dict[int, str]
     atom_type_to_mass : dict[int, float]
@@ -88,7 +88,7 @@ class SimulationFrame(
         """
         return set(self.atoms['type'])
 #----------------------------------------------
-    def wrap_atoms(self) -> None: #ky
+    def wrap_atoms(self) -> None:
         """
         セルの外にはみ出している原子をセルの中に入れる。
         """
@@ -309,9 +309,11 @@ class SimulationFrame(
         """
         assert new_cell or magnification,"new_cellかmagnificationのどちらかを指定してください"
         assert not (new_cell and magnification), "new_cellかmagnificationのどちらかを指定してください"
+        assert magnification or len(new_cell) == 3, "正しい形式でnew_cellを指定してください"
         if magnification:
             new_cell = magnification*self.cell
-        self.atoms[["x", "y", "z"]] *= new_cell/self.cell
+        for i, dim in enumerate(["x", "y", "z"]):
+            self.atoms[dim] *= new_cell[i]/self.cell[i]
         self.cell = new_cell
 #--------------------------------------------------
     def make_empty_space(self,

@@ -119,7 +119,7 @@ class Calculate(
         if place == "kbox":
             cmd = f'mpiexec -np {num_process} {vasp_command} > stdout'
         elif place.upper() == "MASAMUNE":
-            cmd = f'aprun -n {num_process} -N {num_process / num_nodes} -j 1 {vasp_command} > stdout'
+            cmd = f'aprun -n {num_process} -N {int(num_process / num_nodes)} -j 1 {vasp_command} > stdout'
         vasp_md_process = subprocess.Popen(cmd, cwd=calc_directory, shell=True)
         time.sleep(5)
         if print_vasp:
@@ -134,7 +134,10 @@ class Calculate(
               laich_cmd: str ='laich',
               laich_config :dict=None,
               print_laich: bool=False,
-              exist_ok=False):
+              exist_ok=False,
+              place :str = "kbox",
+              num_nodes: int = 1,
+              mask_info: list[str] = None):
         """LaichでMD,または構造最適化を実行する。
         Parameters
         ----------
@@ -159,7 +162,7 @@ class Calculate(
             para_file_path = pathlib.Path(para_file_path)
         input_file_path = calc_dir / 'input.rd'
         config_file_path = calc_dir / 'config.rd'
-        self.export_input(input_file_path)
+        self.export_input(input_file_path, mask_info)
         with open(config_file_path, 'w') as f:
             for key in laich_config.keys():
                 f.write(f"{key} {laich_config[key]}\n")
@@ -171,14 +174,20 @@ class Calculate(
                 pass
 
         num_process = laich_config["MPIGridX"]*laich_config["MPIGridY"]*laich_config["MPIGridZ"]
+        assert num_process%num_nodes == 0, "Invalid num_nodes"
 
-        cmd = f"mpiexec.hydra -np {num_process} {laich_cmd} < /dev/null >& out"
+        if place == "kbox":
+            cmd = f"mpiexec.hydra -np {num_process} {laich_cmd} < /dev/null >& out"
+        elif place.upper() == "MASAMUNE":
+            cmd = f'aprun -n {num_process} -N {int(num_process / num_nodes)} -j 1 {laich_cmd} > stdout'
+
         laich_process = subprocess.Popen(cmd, cwd=calc_dir, shell=True)
         time.sleep(5)
         if print_laich:
             tail_process = subprocess.Popen(f'tail -F out', cwd=calc_dir, shell=True)
-            while laich_process.poll() is None:
-                time.sleep(1)
+        while laich_process.poll() is None:
+            time.sleep(1)
+        if print_laich:
             tail_process.kill()
 
         dumppos_paths = list(calc_dir.glob('./dump.pos.*'))
@@ -326,6 +335,68 @@ class Calculate(
         p.wait()
         # import result
         self.import_xyz(packmol_tmp_dir / "packmol_mixture_result.xyz")
+#---------------------------------------------------------------------
+    def lax(self,
+            calc_dir: str = "lax_calc",
+            lax_cmd: str = "lax",
+            lax_config: dict = None,
+            print_lax: bool = False,
+            exist_ok = False,
+            place :str = "kbox",
+            num_nodes: int = 1,
+            mask_info: list[str] = []): #引数にOMPTHREADNUM: int = 1
+        """
+        laxでMDを実行する.
+        Parameters
+        ----------
+        calc_dir
+            計算が行なわれるディレクトリ、ここにdumpposが出力されます。
+        lax_cmd
+            laxの実行ファイルのpath
+        lax_config
+            laxのconfig fileに書き出される変数のdict
+        print_lax
+            out fileを出力するか
+        exist_ok
+            calc_dirが存在するときに計算を行うか
+        mask_info
+            input fileにそのまま出力されるmoveやpressの情報
+        """
+        calc_dir = pathlib.Path(calc_dir)
+        if not exist_ok:
+            assert not calc_dir.exists(), "calc_dir already exists."
+        calc_dir.mkdir()
+        # input
+        input_file_path: pathlib.Path = calc_dir / "input.rd"
+        self.export_input(input_file_path, mask_info)
+        # config
+        config_file_path: pathlib.Path = calc_dir / "config.rd"
+        with open(config_file_path, "w") as f:
+            for key in lax_config.keys():
+                f.write(f"{key} {lax_config[key]}\n")
+        
+        assert ("MPIGridX" in lax_config) and ("MPIGridY" in lax_config) and ("MPIGridZ" in lax_config)
+        num_process = lax_config["MPIGridX"] * lax_config["MPIGridY"] * lax_config["MPIGridZ"]
+        assert num_process%num_nodes == 0, "Invalid num_nodes"
+
+        if place == "kbox":
+            cmd = f"mpiexec.hydra -np {num_process} {lax_cmd} < /dev/null >& out"
+        elif place.upper() == "MASAMUNE":
+            cmd = f'aprun -n {num_process} -N {int(num_process / num_nodes)} -j 1 {lax_cmd} > stdout'
+            
+        lax_process = subprocess.Popen(cmd, cwd = calc_dir, shell = True)
+        time.sleep(5)
+        if print_lax:
+            tail_process = subprocess.Popen(f"tail -F out", cwd = calc_dir, shell = True)
+        while lax_process.poll() is None:
+            time.sleep(1)
+        if print_lax:
+            tail_process.kill()
+        dumppos_paths = list(calc_dir.glob("./dump.pos.*"))
+        dumppos_paths.sort(reverse = True)
+        assert len(dumppos_paths) != 0, "dumpposが生成されていません"
+        optimized_dumppos_path = dumppos_paths[0]
+        self.import_dumppos(optimized_dumppos_path)
 
 #---------------------------------------------------------------------------------------------
     def allegro(self,

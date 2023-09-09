@@ -261,29 +261,35 @@ class ExportFrame(
         # 0-indexed
         self.atoms.index = self.atoms.index - 1
 #--------------------------------------------------------------
-    def export_input(self, ofn: Union[str,pathlib.Path]="input.rd")->None:
+    def export_input(self, ofn: Union[str,pathlib.Path] = "input.rd", mask_info: list[str] = [])->None:
         """input.rdを作成する。
         Parameters
         ----------
         ofn: Union[str, Path]
             input fileの名前
+        mask_info: list[str]
+            mask変数に対して、move,pressを行いたいときに出力する情報
+            lax,laichの正しい書式で行ごとに要素にしてください。
         """
         for dim in range(3):
             if self.cell[dim] == 0:
                 print(f"warning : cell[{dim}] is not defined")
                 print(f"warning : cell[{dim}] has been initialized to 0")
                 self.cell[dim] = 0.0
-        atom_type_set = self.get_atom_type_set()
         header_line = [
             f"#cellx {0.0}  {self.cell[0]}\n",
             f"#celly {0.0}  {self.cell[1]}\n",
             f"#cellz {0.0}  {self.cell[2]}\n\n",
-            f"#masses {len(atom_type_set)}\n",
+            f"#masses {len(self.atom_type_to_mass)}\n"
         ]
-        for atom_type in atom_type_set:
-            header_line.append(
-                f"{atom_type} {self.atom_type_to_mass[atom_type]}\n"
-            )
+        for typ, mass in self.atom_type_to_mass.items():
+            header_line.append(f"{typ} {mass}\n")
+
+        if mask_info:
+            header_line.append("\n")
+            for info in mask_info:
+                header_line.append(f"{info}\n")
+        
         header_line.append("\n")
         header_line.append(f"#atoms {self.get_total_atoms()}\n")
 
