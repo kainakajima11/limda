@@ -17,7 +17,7 @@ Cython=0.29.24
 ## Install
 ソースコードをコピーした後、Cythonコードを用いるためのコンパイルが必要です。
 ```
-git clone git@github.com:knak-9/limda.git
+git clone git@github.com:kainakajima11/limda.git
 cd .limda/src/limda
 python3 setup.py build_ext --inplace
 ```
