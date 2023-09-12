@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import random
+from copy import deepcopy
 import sys
 import os
 from .import_frame import ImportFrame
@@ -294,7 +295,7 @@ class SimulationFrame(
 
         magmom_str = magmom_str[:-1]
         return magmom_str
-#-------------------------------------------------------
+#------------------------------------------------------------------
     def change_lattice_const(self,
                              new_cell: np.array(np.float32) = None,
                              magnification: np.float32 = None):
@@ -315,15 +316,44 @@ class SimulationFrame(
         for i, dim in enumerate(["x", "y", "z"]):
             self.atoms[dim] *= new_cell[i]/self.cell[i]
         self.cell = new_cell
-#--------------------------------------------------
+#----------------------------------------------------------------------------------------------------
     def make_empty_space(self,
-                        empty_length: float = 10.0):
-        """z方向に空白部分を作ります.
-            Parameter
-            ---------
+                        empty_length: float = 10.0,
+                        direction: str = "z",
+                        both_direction: bool = True):
+        """cellに真空部分を作ります.
+        Arguments
+        ---------
             empty_length: float
-                空白部分のz方向の長さです。
-                半分ずつ+z方向と-z方向に空間が作られます。
+                真空部分の長さ
+            direction: str
+                どの方向に真空部分を作るか("x" or "y" or "z")
+            both_direction: bool
+                Trueならば+方向と-方向に半分ずつスペースができる
         """
-        self.cell[2] += empty_length
-        self.atoms["z"] += empty_length / 2
+        assert direction == "x" or direction == "y" or direction == "z", "Incorrect direction"
+        dim = {"x" : 0 , "y" : 1, "z" : 2}
+        self.cell[dim[direction]] += empty_length
+        if both_direction:
+            self.atoms[direction] += empty_length / 2
+#---------------------------------------------------------------------------------------------------
+    def mirroring_atoms(self, direction: str = "z"):
+        """
+        指定した方向に、原子を反転して結合します.
+
+        Argument
+        --------
+            direction : str 
+                どの方向にmirroringするか ("x" or "y" or "z")
+        """
+        assert direction == "x" or direction == "y" or direction == "z", "Incorrect direction"
+        # make mirror sf
+        sf_mirror = deepcopy(self)
+        dim = {"x" : 0 , "y" : 1, "z" : 2}
+        sf_mirror.atoms[direction] *= -1
+        sf_mirror.atoms[direction] += sf_mirror.cell[dim[direction]]
+        sf_mirror.wrap_atoms()
+        # concat
+        self.atoms[direction] += self.cell[dim[direction]]
+        self.cell[dim[direction]] *= 2
+        self.concat_atoms(sf_mirror)
