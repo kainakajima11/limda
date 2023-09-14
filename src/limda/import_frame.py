@@ -154,10 +154,10 @@ class ImportFrame(
                 if len(spline) == 0:
                     continue
                 if spline[0] == "ITEM:" and spline[1] == "BOX":
-                    self.cell = [None, None, None]
+                    self.cell = np.array([None, None, None])
                     for dim in range(3):
                         spline = ifp.readline().split()
-                        self.cell[dim] = float(spline[1])
+                        self.cell[dim] = np.float64(spline[1])
                     current_row += 3
                     continue
                 if spline[0] == "ITEM:" and spline[1] == 'ATOMS':
