@@ -267,7 +267,7 @@ class ImportFrame(
         self.atoms = pd.DataFrame(data=atom_data, index=index)
         self.atoms.sort_index(inplace=True)
 #-------------------------------------------------------------
-    def import_file(self, import_filename):
+    def import_file(self, import_filename: Union[str, pathlib.Path]):
         """
         file名から、適切な形式fileを読み込みます.
         Parameters
@@ -275,13 +275,16 @@ class ImportFrame(
         import_filename: str 
             読み込むファイル名
         """
-        if import_filename.startswith('input'):
+        import_filename = pathlib.Path(import_filename)
+        import_file_basename = import_filename.name
+
+        if import_file_basename.startswith('input'):
             self.import_input(import_filename)
-        elif import_filename.startswith("dump") or import_filename.endswith("pos"):
+        elif import_file_basename.startswith("dump") or import_file_basename.endswith("pos"):
             self.import_dumppos(import_filename)
-        elif import_filename.endswith("car"):
+        elif import_file_basename.endswith("xyz"):
             self.import_xyz(import_filename)
-        elif import_filename.endswith("car"):
+        elif import_file_basename.endswith("car"):
             self.import_car(import_filename)
         else:
             raise RuntimeError("適切なfile名にしてください.")
