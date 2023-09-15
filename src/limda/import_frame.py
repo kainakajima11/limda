@@ -154,10 +154,10 @@ class ImportFrame(
                 if len(spline) == 0:
                     continue
                 if spline[0] == "ITEM:" and spline[1] == "BOX":
-                    self.cell = [None, None, None]
+                    self.cell = np.array([None, None, None])
                     for dim in range(3):
                         spline = ifp.readline().split()
-                        self.cell[dim] = float(spline[1])
+                        self.cell[dim] = np.float64(spline[1])
                     current_row += 3
                     continue
                 if spline[0] == "ITEM:" and spline[1] == 'ATOMS':
@@ -267,7 +267,7 @@ class ImportFrame(
         self.atoms = pd.DataFrame(data=atom_data, index=index)
         self.atoms.sort_index(inplace=True)
 #-------------------------------------------------------------
-    def import_file(self, import_filename):
+    def import_file(self, import_filename: Union[str, pathlib.Path]):
         """
         file名から、適切な形式fileを読み込みます.
         Parameters
@@ -275,13 +275,16 @@ class ImportFrame(
         import_filename: str 
             読み込むファイル名
         """
-        if import_filename.startswith('input'):
+        import_filename = pathlib.Path(import_filename)
+        import_file_basename = import_filename.name
+
+        if import_file_basename.startswith('input'):
             self.import_input(import_filename)
-        elif import_filename.startswith("dump") or import_filename.endswith("pos"):
+        elif import_file_basename.startswith("dump") or import_file_basename.endswith("pos"):
             self.import_dumppos(import_filename)
-        elif import_filename.endswith("car"):
+        elif import_file_basename.endswith("xyz"):
             self.import_xyz(import_filename)
-        elif import_filename.endswith("car"):
+        elif import_file_basename.endswith("car"):
             self.import_car(import_filename)
         else:
             raise RuntimeError("適切なfile名にしてください.")
