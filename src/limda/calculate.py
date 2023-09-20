@@ -379,6 +379,12 @@ class Calculate(
         num_process = lax_config["MPIGridX"] * lax_config["MPIGridY"] * lax_config["MPIGridZ"]
         assert num_process%num_nodes == 0, "Invalid num_nodes"
 
+        assert ("OMPGridX" in lax_config) and ("OMPGridY" in lax_config) and ("OMPGridZ" in lax_config)
+        omp_num_threads = lax_config["OMPGridX"] * lax_config["OMPGridY"] * lax_config["OMPGridZ"]
+        assert omp_num_threads >= 1
+        if omp_num_threads > 1:
+            os.environ["OMP_NUM_THREADS"] = f"{omp_num_threads}"
+
         if place == "kbox":
             cmd = f"mpiexec.hydra -np {num_process} {lax_cmd} < /dev/null >& out"
         elif place.upper() == "MASAMUNE":
@@ -398,6 +404,8 @@ class Calculate(
         optimized_dumppos_path = dumppos_paths[0]
         self.import_dumppos(optimized_dumppos_path)
 
+        if omp_num_threads > 1:
+            os.environ["OMP_NUM_THREADS"] = "1"
 #---------------------------------------------------------------------------------------------
     def allegro(self,
                 cut_off: float,
