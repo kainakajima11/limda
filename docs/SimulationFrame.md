@@ -193,29 +193,52 @@ print(sf.density())
 
 ### import_input()
 input fileを読み込みます。<br>
+```python3
+sf.import_input("/nfshome17/knakajima/work/input.rd")
+```
 
 ### import_para_from_list()
 指定した元素記号からatom_symbol_to_type, atom_type_to_symbol, atom_type_to_massを作成します。<br>
 ['C', 'H', 'O']のように引数はlist
+```python3
+sf.import_para_from_list(["Cr", "Mn", "Fe", "Co", "Ni"])
+```
 ### import_para_from_str()
 機能はimport_para_from_listと同じです。
 "C H O"のように引数は空白区切りのstr
+```python3
+sf.import_para_from_list("Cr Mn Fe Co Ni")
+```
 ### import_car()
 car fileを読み込みます。
-
+```python3
+sf.import_car("/nfshome17/knakajima/work/Ni.car")
+```
 ### import_dumppos() 
 dumppos fileを読み込みます。
 ```python
-sf.import_dumppos("/nfshome17/knakajima/dump/dump.pos.100") # dump.pos fileのpathを指定
+sf.import_dumppos("/nfshome17/knakajima/work/dump.pos.100") 
 ```
 ### import_mol()
 ase ライブラリを用いて、分子を読み込みます。
-
+```python3
+sf.import_mol("H2O") # 取り込みたい分子式をstr型で
+```
 ### import_from_poscar()
-POSCARから原子の種類と個数がlist[int]で返される。
+POSCARからその構造の原子のlist[int]が返される。
+```python3
+# Crが2つ,Niが4つ入った構造の時
+print(sf.import_from_poscar("/nfshome17/knakajima/work/CrNi/CrNi_0/POSCAR"))
+```
+```
+[1, 1, 5, 5, 5, 5]
+```
 
 ### import_xyz()
 xyz fileを読み込む
+```python3
+sf.import_xyz("/nfshome17/knakajima/work/a.xyz")
+```
 
 ### import_file()
 指定した読み込むfileの名前から、fileの種類を分類し読み込む。<br>
@@ -224,7 +247,10 @@ xyz fileを読み込む
 - dump pos file ("dump"で始まるか"pos"で終わる)
 - xyz file ("xyz"で終わる)
 - car file ("car"で終わる)
-  
+```python3
+sf.import_file("/nfshome17/knakajima/work/Ni.car") # carで終わっているのでcar fileとしてimportされる.
+sf.import_file("/nfshome17/knakajima/work/dump.pos.100") # dumpで始まっているのでdumppos fileとしてimportされる
+```
 <a id="anchor5"></a>
 ## ExportFrame
 主にsfのデータをファイルに出力するメソッドが入っています。<br>
