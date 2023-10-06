@@ -33,7 +33,8 @@ class ImportFrames(
                 simulation_frames[step_idx][['x', 'y', 'z']] : 原子の座標
                 simulation_frames[step_idx][['fx', 'fy', 'fz']] : 原子にかかる力
                 simulation_frames[step_idx].potential_energy : ポテンシャルエネルギー
-                simulation_frames[step_idx].cell : セルの大きさ
+                simulation_frames[step_idx].cell : セルサイズ
+                simulation_frames[step_idx].stress_tensor : ストレステンソル
         """
         calc_directory = pathlib.Path(calc_directory)
         first_sf = SimulationFrame()
@@ -45,8 +46,9 @@ class ImportFrames(
             splines = list(map(lambda l:l.split(), lines))
 
         for line_idx, spline in enumerate(splines):
-            if len(spline) == 0:
+            if len(spline) <= 1:
                 continue
+
             if len(spline) == 3 and spline[0] == "POSITION" and spline[1] == "TOTAL-FORCE":
                 sf = SimulationFrame()
                 sf.atom_symbol_to_type = self.atom_symbol_to_type
@@ -66,6 +68,10 @@ class ImportFrames(
 
                 sf.atoms = pd.DataFrame(atoms_dict)
                 sf.potential_energy = float(splines[potential_energy_idx][4])
+                sf.stress_tensor = np.empty(6, dtype=np.float32)
+                for tensor_element_idx in range(6):
+                    sf.stress_tensor[tensor_element_idx] = float(splines[stress_tensor_idx][tensor_element_idx + 1])
+                    sf.stress_tensor[tensor_element_idx] *= C.KB_TO_EV_PER_ANGSTROM_3
                 self.sf.append(sf)  
  
             if len(splines[line_idx]) == 6 and splines[line_idx][0] == "direct" \
@@ -77,6 +83,10 @@ class ImportFrames(
                 splines[line_idx][1] == "without" and \
                 splines[line_idx][2] == "entropy":
                 potential_energy_idx = line_idx 
+
+            if len(splines[line_idx]) == 7 and splines[line_idx][0] == "Total+kin.":
+                stress_tensor_idx = line_idx
+                    
 #---------------------------------------------------------------------------------------------------
     def import_dumpposes(self, dir_name:Union[str, pathlib.Path]=None, step_nums:list[int]=None, skip_num: int=None):
         """Laichで計算したdumpposを複数読み込む

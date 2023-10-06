@@ -45,6 +45,7 @@ class SimulationFrame(
     atom_type_to_mass : dict[int, float]
     step_num: int
     potential_energy: float
+    stress_tensor: list[float] # [XX, YY, ZZ, XY, YZ, ZX]
     pred_potential_energy: float
     pred_virial_tensor: list[float]
 #--------------------------------------
@@ -56,8 +57,9 @@ class SimulationFrame(
         self.atom_type_to_mass = None
         self.step_num = None
         self.potential_energy = None
-        self.pred_potential_energy = None,
-        self.pred_virial_tensor = np.empty((3,3)),
+        self.stress_tensor = None
+        self.pred_potential_energy = None
+        self.pred_stress_tensor = None
         if para:
             self.import_para_from_str(para)
 #-------------------------------------

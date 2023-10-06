@@ -459,5 +459,5 @@ class Calculate(
         self.atoms['pred_potential_energy'] = output['atomic_energy'].cpu().detach().numpy()
         self.pred_potential_energy = output['total_energy'].cpu().detach().item()
         if flag_calc_virial:
-            self.pred_virial_tensor = output['virial'].cpu().detach().numpy()
+            self.pred_stress_tensor = output['stress'].cpu().detach().numpy()
 
