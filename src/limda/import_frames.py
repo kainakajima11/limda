@@ -67,11 +67,16 @@ class ImportFrames(
                         atoms_dict[atoms_dict_keys[key_idx+1]].append(float(splines[line_idx+2+atom_idx][key_idx]))
 
                 sf.atoms = pd.DataFrame(atoms_dict)
+                # potential_energy
                 sf.potential_energy = float(splines[potential_energy_idx][4])
-                sf.stress_tensor = np.empty(6, dtype=np.float32)
-                for tensor_element_idx in range(6):
-                    sf.stress_tensor[tensor_element_idx] = float(splines[stress_tensor_idx][tensor_element_idx + 1])
-                    sf.stress_tensor[tensor_element_idx] *= C.KB_TO_EV_PER_ANGSTROM_3
+                # virial tensor
+                sf.virial_tensor = np.empty((3, 3), dtype=np.float32)
+                for i in range(3):
+                    sf.virial_tensor[i][i] = -1 * float(splines[virial_tensor_idx][i+1])
+                for i in range(3):
+                    sf.virial_tensor[i][(i+1)%3] = -1 * float(splines[virial_tensor_idx][i+4])
+                    sf.virial_tensor[(i+1)%3][i] = -1 * float(splines[virial_tensor_idx][i+4])
+
                 self.sf.append(sf)  
  
             if len(splines[line_idx]) == 6 and splines[line_idx][0] == "direct" \
@@ -84,8 +89,8 @@ class ImportFrames(
                 splines[line_idx][2] == "entropy":
                 potential_energy_idx = line_idx 
 
-            if len(splines[line_idx]) == 7 and splines[line_idx][0] == "Total+kin.":
-                stress_tensor_idx = line_idx
+            if len(splines[line_idx]) == 7 and splines[line_idx][0] == "Total":
+                virial_tensor_idx = line_idx
                     
 #---------------------------------------------------------------------------------------------------
     def import_dumpposes(self, dir_name:Union[str, pathlib.Path]=None, step_nums:list[int]=None, skip_num: int=None):

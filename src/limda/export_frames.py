@@ -70,7 +70,8 @@ class ExportFrames(
             data["atom_types"] -= 1
             data["cut_off"] = np.array(cut_off, dtype=np.float32)
             data["potential_energy"] = np.array(self.sf[sf_idx].potential_energy, dtype=np.float32)
-            data["stress"] = np.array(self.sf[sf_idx].stress_tensor, dtype=np.float32)
+            # data["stress"] = np.array(self.sf[sf_idx].stress_tensor, dtype=np.float32)
+            data["virial"] = np.array(self.sf[sf_idx].virial_tensor, dtype=np.float32)
 
             edge_index = [[],[]]
             edge_index = self.sf[sf_idx].get_edge_idx(cut_off=cut_off)
@@ -90,3 +91,60 @@ class ExportFrames(
         if test_size is not None:
             with open(test_frames_path, "wb") as f:
                 pickle.dump(test_frames, f)
+#---------------------------------------------------------------------
+    def export_lammps_dumpposes(self, ofn: str, out_columns=None) -> None:
+            """lammps形式のdumpposを出力する
+            Parameters
+            ----------
+                ofn: str
+                    lammps形式のdumpposの出力先
+                out_columns: List[str]
+                    sdat.atomsのどのカラムを出力するのか
+                    デフォルトは['type', 'x', 'y', 'z']
+            """
+            if out_columns is None:
+                out_columns = ['type', 'x', 'y', 'z']
+
+            with open(ofn, 'w') as f:
+                f.write('')
+
+            for step_idx in trange(len(self.step_nums), desc='[exporting lammps dumpposes]'):
+                header = []
+                header.append(f'ITEM: TIMESTEP\n')
+                header.append(f'{self.step_nums[step_idx]}\n')
+                header.append(f'ITEM: NUMBER OF ATOMS\n')
+                header.append(f'{self.sdat[step_idx].get_total_atoms()}\n')
+                header.append(f'ITEM: BOX BOUNDS xy xz yz pp pp pp\n')
+                header.append(f'0.0000000000000000e+00 {self.sdat[step_idx].cell[0]:.16e} 0.0000000000000000e+00\n')
+                header.append(f'0.0000000000000000e+00 {self.sdat[step_idx].cell[1]:.16e} 0.0000000000000000e+00\n')
+                header.append(f'0.0000000000000000e+00 {self.sdat[step_idx].cell[2]:.16e} 0.0000000000000000e+00\n')
+                header.append(f'ITEM: ATOMS id {" ".join(out_columns)}\n')
+
+                with open(ofn, 'a') as f:
+                    f.writelines(header)
+                
+                # 1-index
+                self.sf[step_idx].atoms.index += 1
+                self.sf[step_idx].atoms.to_csv(ofn, columns=out_columns, sep=' ', header=None, mode='a')
+                # 0-index
+                self.sf[step_idx].atoms.index -= 1
+    #--------------------------------------------------------------------------------
+    def concat_simulation_frames(self, sfs_list:list):
+        """sfsを結合する
+        Parameters
+        ----------
+            sfs_list : list[SimulationFrames]
+                結合するsfsのリスト, 
+        Note
+        ----
+            concat_sfsメソッドを使用するSimulationFramesは
+            import_para()後のを使う
+        """
+        self.sf = []
+        for outer_sfs in simulation_frames_list:
+            self.sf.extend(outer_sfs.sf)
+        
+        self.step_nums = list(range(len(self.sdat)))
+        self.step_num_to_step_idx = {
+            step_num:step_idx for step_idx, step_num in enumerate(range(len(self.step_nums)))
+        }
