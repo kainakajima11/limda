@@ -95,5 +95,3 @@ ATOM_SYMBOL_TO_MASS:dict[str,float] = {
 }
 
 AVOGADORO_CONST:float = 6.02214076 * (10 ** 23) #avogadro constant
-
-KB_TO_EV_PER_ANGSTROM_3:float = 1 / 1602.176634 # kBr -> eV/A^3

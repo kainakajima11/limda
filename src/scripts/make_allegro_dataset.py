@@ -51,7 +51,7 @@ if __name__=='__main__':
 
             sfs = SimulationFrames()
             sfs.import_para_from_list(config["para_list"])
-            sfs.import_vasp(vasp_dir) # todo : get_virial
+            sfs.import_vasp(vasp_dir)
 
             if config['test_size'] == 0:
                 sfs.export_allegro_frames(config['train_dataset_dir'] / vasp_dir.parent.name, 
