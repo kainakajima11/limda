@@ -70,7 +70,6 @@ class ExportFrames(
             data["atom_types"] -= 1
             data["cut_off"] = np.array(cut_off, dtype=np.float32)
             data["potential_energy"] = np.array(self.sf[sf_idx].potential_energy, dtype=np.float32)
-            # data["stress"] = np.array(self.sf[sf_idx].stress_tensor, dtype=np.float32)
             data["virial"] = np.array(self.sf[sf_idx].virial_tensor, dtype=np.float32)
 
             edge_index = [[],[]]
