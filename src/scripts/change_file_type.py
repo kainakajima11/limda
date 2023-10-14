@@ -26,3 +26,4 @@ if __name__ == '__main__':
     sf.import_para_from_str(args.para_str)
     sf.import_file(args.file_name)
     sf.export_file(args.output_file_name)
+    

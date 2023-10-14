@@ -361,3 +361,4 @@ class SimulationFrame(
         self.atoms[direction] += self.cell[dim[direction]]
         self.cell[dim[direction]] *= 2
         self.concat_atoms(sf_mirror)
+        

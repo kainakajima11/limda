@@ -67,3 +67,4 @@ if __name__=='__main__':
                                         test_size=config['test_size'], 
                                         test_output_dir=config['test_dataset_dir'] / vasp_dir.parent.name, test_output_file_name=f"{vasp_dir.name}"
                                         )
+                                        
