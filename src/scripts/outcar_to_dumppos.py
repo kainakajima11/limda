@@ -21,6 +21,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("target_dir", help="OUTCARファイルがあるフォルダ")
     parser.add_argument('para_list', help='原子のリスト.例えば、C H O N Si など', nargs='+', type=str)
+    args = parser.parse_args()
 
     target_dir = pathlib.Path(args.target_dir)
     para_list = args.para_list
@@ -41,7 +42,9 @@ if __name__ == "__main__":
         if not len(outcar_paths) == 1:
             sfs.export_lammps_dumpposes(vasp_dir / "md.pos")
 
-        sfs_list.appened(sfs)
+        sfs_list.append(sfs)
 
+    sfs_output_all_frames = SimulationFrames()
+    sfs_output_all_frames.import_para_from_list(para_list)
     sfs_output_all_frames.concat_sfs(sfs_list)
-    sfs_output_all_frames.export_lammps_dummposes(target_dir / "md.pos")
+    sfs_output_all_frames.export_lammps_dumpposes(target_dir / "md.pos")

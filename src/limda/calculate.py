@@ -320,7 +320,7 @@ class Calculate(
         # export xyz file
         if self.atoms is not None and self.get_total_atoms() >= 1:
             self.export_xyz(packmol_tmp_dir / "this_sf.xyz", structure_name="this_sf")
-
+        print(sf_list)
         for frame_idx in range(len(sf_list)):
             sf_list[frame_idx].export_xyz(packmol_tmp_dir / f"sf_idx_{frame_idx}.xyz",
                                           structure_name=f"sf_idx_{frame_idx}")

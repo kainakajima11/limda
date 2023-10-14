@@ -2,6 +2,7 @@ import pathlib
 import os
 import numpy as np
 import pickle
+from tqdm import trange
 from .export_frame import ExportFrame
 class ExportFrames(
     ExportFrame
@@ -60,7 +61,7 @@ class ExportFrames(
         train_frames = []
         test_frames = []
         if shuffle:
-            self.shuffle_sf(seed=seed)
+            self.shuffle_sfs(seed=seed)
         for sf_idx in range(len(self)):
             data = {}
             data["cell"] = np.array(self.sf[sf_idx].cell, dtype=np.float32)
@@ -107,16 +108,16 @@ class ExportFrames(
             with open(ofn, 'w') as f:
                 f.write('')
 
-            for step_idx in trange(len(self.step_nums), desc='[exporting lammps dumpposes]'):
+            for step_idx in trange(len(self.sf), desc='[exporting lammps dumpposes]'):
                 header = []
                 header.append(f'ITEM: TIMESTEP\n')
-                header.append(f'{self.step_nums[step_idx]}\n')
+                header.append(f'{step_idx}\n')
                 header.append(f'ITEM: NUMBER OF ATOMS\n')
-                header.append(f'{self.sdat[step_idx].get_total_atoms()}\n')
+                header.append(f'{self.sf[step_idx].get_total_atoms()}\n')
                 header.append(f'ITEM: BOX BOUNDS xy xz yz pp pp pp\n')
-                header.append(f'0.0000000000000000e+00 {self.sdat[step_idx].cell[0]:.16e} 0.0000000000000000e+00\n')
-                header.append(f'0.0000000000000000e+00 {self.sdat[step_idx].cell[1]:.16e} 0.0000000000000000e+00\n')
-                header.append(f'0.0000000000000000e+00 {self.sdat[step_idx].cell[2]:.16e} 0.0000000000000000e+00\n')
+                header.append(f'0.0000000000000000e+00 {self.sf[step_idx].cell[0]:.16e} 0.0000000000000000e+00\n')
+                header.append(f'0.0000000000000000e+00 {self.sf[step_idx].cell[1]:.16e} 0.0000000000000000e+00\n')
+                header.append(f'0.0000000000000000e+00 {self.sf[step_idx].cell[2]:.16e} 0.0000000000000000e+00\n')
                 header.append(f'ITEM: ATOMS id {" ".join(out_columns)}\n')
 
                 with open(ofn, 'a') as f:

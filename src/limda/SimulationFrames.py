@@ -36,6 +36,7 @@ class SimulationFrames(
 #----------------------
     def __init__(self, para: str=""):
         self.sf:list[SimulationFrame] = []
+        self.step_nums = None
         self.atom_symbol_to_type: dict[str, int] = None
         self.atom_type_to_symbol : dict[int, str] = None
         self.atom_type_to_mass : dict[int, float] = None
@@ -50,7 +51,7 @@ class SimulationFrames(
 #----------------------------- 
     def __getitem__(self, key):
         """sfs = SimulationFrames()
-        sfs[step_idx]でsfs.sdat[step_idx]を得ることができる
+        sfs[step_idx]でsfs.sf[step_idx]を得ることができる
         """
         return self.sf[key]
 #------------------------------------
@@ -154,6 +155,7 @@ class SimulationFrames(
                 cut_off: float,
                 device: Union[str, torch.DeviceObjType],
                 allegro_model: torch.jit._script.RecursiveScriptModule,
+                flag_calc_virial:bool = False,
                 ) -> None:
         """sfsのもつすべてのSimulationFrameに対して、以下を行う
         Allegroを使って、sfに入っている原子の座標に対して推論を行い、
@@ -171,9 +173,11 @@ class SimulationFrames(
                 pathではないことに注意
         """
         for frame_idx in range(len(self.sf)):
-            self.sf[frame_idx].allegro(cut_off=cut_off, device=device, allegro_model=allegro_model)
-
-    
+            self.sf[frame_idx].allegro(cut_off=cut_off,
+                                       device=device,
+                                       allegro_model=allegro_model,
+                                       flag_calc_virial=flag_calc_virial)
+  
     def concat_force_and_pred_force(self, 
                                     reduce_direction: bool = False,
                                     ) -> pd.DataFrame:
@@ -255,3 +259,4 @@ class SimulationFrames(
             })
 
         return pot_and_pred_pot
+        

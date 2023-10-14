@@ -288,3 +288,4 @@ class ImportFrame(
             self.import_car(import_filename)
         else:
             raise RuntimeError("適切なfile名にしてください.")
+            

@@ -72,10 +72,17 @@ class ImportFrames(
                 # virial tensor
                 sf.virial_tensor = np.empty((3, 3), dtype=np.float32)
                 for i in range(3):
+<<<<<<< HEAD
+                    sf.virial_tensor[i][i] = float(splines[virial_tensor_idx][i+1])
+                for i in range(3):
+                    sf.virial_tensor[i][(i+1)%3] = float(splines[virial_tensor_idx][i+4])
+                    sf.virial_tensor[(i+1)%3][i] = float(splines[virial_tensor_idx][i+4])
+=======
                     sf.virial_tensor[i][i] = -1 * float(splines[virial_tensor_idx][i+1])
                 for i in range(3):
                     sf.virial_tensor[i][(i+1)%3] = -1 * float(splines[virial_tensor_idx][i+4])
                     sf.virial_tensor[(i+1)%3][i] = -1 * float(splines[virial_tensor_idx][i+4])
+>>>>>>> main
 
                 self.sf.append(sf)  
  
