@@ -111,7 +111,10 @@ class ExportFrames(
             for step_idx in trange(len(self.sf), desc='[exporting lammps dumpposes]'):
                 header = []
                 header.append(f'ITEM: TIMESTEP\n')
-                header.append(f'{step_idx}\n')
+                if self.sf[step_idx].step_num is None:
+                    header.append(f'{step_idx}\n')
+                else:
+                    header.append(f'{self.sf[step_idx].step_num}\n')
                 header.append(f'ITEM: NUMBER OF ATOMS\n')
                 header.append(f'{self.sf[step_idx].get_total_atoms()}\n')
                 header.append(f'ITEM: BOX BOUNDS xy xz yz pp pp pp\n')

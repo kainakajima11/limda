@@ -36,7 +36,6 @@ class SimulationFrames(
 #----------------------
     def __init__(self, para: str=""):
         self.sf:list[SimulationFrame] = []
-        self.step_nums = None
         self.atom_symbol_to_type: dict[str, int] = None
         self.atom_type_to_symbol : dict[int, str] = None
         self.atom_type_to_mass : dict[int, float] = None
