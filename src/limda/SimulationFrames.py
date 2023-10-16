@@ -80,9 +80,8 @@ class SimulationFrames(
             for step_idx in range(len(outer_sfs)):
                 self.sf.append(outer_sfs.sf[step_idx])
         
-        step_nums = list(range(len(self.sf)))
-        for step_idx, step_num in enumerate(tqdm(step_nums)):
-            self.sf[step_idx].step_num = step_num
+        for step_idx, frame in enumerate(self.sf):
+            frame.step_num = step_idx
 #-------------------------------------------------------------------
     def split_sfs_specified_list_size(self, list_size: int)->list:
         """sfsを複数のsfsに分け, sfsのlistを返す。
@@ -259,19 +258,3 @@ class SimulationFrames(
             })
 
         return pot_and_pred_pot
-#--------------------------------------------------------------------------------------------------
-    def concat_simulation_frames(self, sfs_list:list):
-        """sfsを結合する
-        Parameters
-        ----------
-            sfs_list : list[SimulationFrames]
-                結合するsfsのリスト, 
-        Note
-        ----
-            concat_sfsメソッドを使用するSimulationFramesは
-            import_para()後のを使う
-        """
-        self.sf = []
-        for outer_sfs in simulation_frames_list:
-            self.sf.extend(outer_sfs.sf)
-        
