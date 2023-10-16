@@ -34,7 +34,7 @@ class ImportFrames(
                 simulation_frames[step_idx][['fx', 'fy', 'fz']] : 原子にかかる力
                 simulation_frames[step_idx].potential_energy : ポテンシャルエネルギー
                 simulation_frames[step_idx].cell : セルサイズ
-                simulation_frames[step_idx].stress_tensor : ストレステンソル
+                simulation_frames[step_idx].virial_tensor : ストレステンソル
         """
         calc_directory = pathlib.Path(calc_directory)
         first_sf = SimulationFrame()
