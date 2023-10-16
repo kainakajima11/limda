@@ -45,9 +45,9 @@ class SimulationFrame(
     atom_type_to_mass : dict[int, float]
     step_num: int
     potential_energy: float
-    virial_tensor: list[float]
+    virial_tensor: np.ndarray[float]
     pred_potential_energy: float
-    pred_virial_tensor: list[float]
+    pred_virial_tensor: np.ndarray[float]
 #--------------------------------------
     def __init__(self, para: str = ""):
         self.atoms = None

@@ -132,22 +132,3 @@ class ExportFrames(
                 # 0-index
                 self.sf[step_idx].atoms.index -= 1
     #--------------------------------------------------------------------------------
-    def concat_simulation_frames(self, sfs_list:list):
-        """sfsを結合する
-        Parameters
-        ----------
-            sfs_list : list[SimulationFrames]
-                結合するsfsのリスト, 
-        Note
-        ----
-            concat_sfsメソッドを使用するSimulationFramesは
-            import_para()後のを使う
-        """
-        self.sf = []
-        for outer_sfs in simulation_frames_list:
-            self.sf.extend(outer_sfs.sf)
-        
-        self.step_nums = list(range(len(self.sdat)))
-        self.step_num_to_step_idx = {
-            step_num:step_idx for step_idx, step_num in enumerate(range(len(self.step_nums)))
-        }

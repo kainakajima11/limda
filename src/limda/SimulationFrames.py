@@ -176,7 +176,8 @@ class SimulationFrames(
                                        device=device,
                                        allegro_model=allegro_model,
                                        flag_calc_virial=flag_calc_virial)
-  
+
+#---------------------------------------------------------------------------------------------- 
     def concat_force_and_pred_force(self, 
                                     reduce_direction: bool = False,
                                     ) -> pd.DataFrame:
@@ -233,7 +234,7 @@ class SimulationFrames(
             return force_and_pred_force_reduced
         else:
             return force_and_pred_force
-    
+#----------------------------------------------------------------------------------------------
     def concat_pot_and_pred_pot(self) -> pd.DataFrame:
         """それぞれのSimulationFrameが持つポテンシャルエネルギーと
         Allegroによって予測されたポテンシャルエネルギーという一つのDataFrameを作る
@@ -258,4 +259,19 @@ class SimulationFrames(
             })
 
         return pot_and_pred_pot
+#--------------------------------------------------------------------------------------------------
+    def concat_simulation_frames(self, sfs_list:list):
+        """sfsを結合する
+        Parameters
+        ----------
+            sfs_list : list[SimulationFrames]
+                結合するsfsのリスト, 
+        Note
+        ----
+            concat_sfsメソッドを使用するSimulationFramesは
+            import_para()後のを使う
+        """
+        self.sf = []
+        for outer_sfs in simulation_frames_list:
+            self.sf.extend(outer_sfs.sf)
         
