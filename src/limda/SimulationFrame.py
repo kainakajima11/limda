@@ -361,4 +361,37 @@ class SimulationFrame(
         self.atoms[direction] += self.cell[dim[direction]]
         self.cell[dim[direction]] *= 2
         self.concat_atoms(sf_mirror)
+#-----------------------------------------------------------------------------------------------------
+    def shuffle_type_by_part(self, segment_num:list[int], type_ratio:list[int]):
+        """
+        xyzで区切られた領域に対して、原子タイプをシャッフルする。
+        -> 大きい系で、原子タイプの比率が偏ることがないようにする。
+
+        Arrguments
+        ----------
+            segment_num_num:list[int]
+                [x,y,z]方向に何個領域を区切るか
+            type_ratio:list[int]
+                原子タイプの割合
+        """     
+        assert len(segment_num) == 3, "segment_num is incorrrect form"
+        assert len(type_ratio) == len(self.atom_symbol_to_type), "type_ratio is incorrect form"
+
+        new_atoms = pd.DataFrame(columns=self.atoms.columns.to_list())
         
+        segment_num = np.array(segment_num, dtype=np.int32)
+        seg_length = self.cell / segment_num 
+
+        which_segment = np.array([0 for _ in range(len(self))])
+        which_segment += self.atoms["x"] // seg_length[0]
+        which_segment += self.atoms["y"] // seg_length[1] * segment_num[0]
+        which_segment += self.atoms["z"] // seg_length[2] * segment_num[0] * segment_num[1] 
+
+        for segment_id in range(np.prod(segment_num)):
+            shuffled_seg = deepcopy(self)
+            shuffled_seg.atoms = shuffled_seg.atoms[which_segment == segment_id]
+            shuffled_seg.shuffle_type(type_ratio)
+            new_atoms = pd.concat([new_atoms, shuffled_seg.atoms])
+
+        new_atoms = new_atoms.reset_index(drop=True)
+        self.atoms = new_atoms        
