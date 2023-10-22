@@ -2,6 +2,7 @@ import pathlib
 import os
 import numpy as np
 import pickle
+from tqdm import trange
 from .export_frame import ExportFrame
 class ExportFrames(
     ExportFrame
@@ -60,7 +61,7 @@ class ExportFrames(
         train_frames = []
         test_frames = []
         if shuffle:
-            self.shuffle_sf(seed=seed)
+            self.shuffle_sfs(seed=seed)
         for sf_idx in range(len(self)):
             data = {}
             data["cell"] = np.array(self.sf[sf_idx].cell, dtype=np.float32)
@@ -70,6 +71,7 @@ class ExportFrames(
             data["atom_types"] -= 1
             data["cut_off"] = np.array(cut_off, dtype=np.float32)
             data["potential_energy"] = np.array(self.sf[sf_idx].potential_energy, dtype=np.float32)
+            data["virial"] = np.array(self.sf[sf_idx].virial_tensor, dtype=np.float32)
 
             edge_index = [[],[]]
             edge_index = self.sf[sf_idx].get_edge_idx(cut_off=cut_off)
@@ -89,3 +91,44 @@ class ExportFrames(
         if test_size is not None:
             with open(test_frames_path, "wb") as f:
                 pickle.dump(test_frames, f)
+#---------------------------------------------------------------------
+    def export_lammps_dumpposes(self, ofn: str, out_columns=None) -> None:
+            """lammps形式のdumpposを出力する
+            Parameters
+            ----------
+                ofn: str
+                    lammps形式のdumpposの出力先
+                out_columns: List[str]
+                    sdat.atomsのどのカラムを出力するのか
+                    デフォルトは['type', 'x', 'y', 'z']
+            """
+            if out_columns is None:
+                out_columns = ['type', 'x', 'y', 'z']
+
+            with open(ofn, 'w') as f:
+                f.write('')
+
+            for step_idx in trange(len(self.sf), desc='[exporting lammps dumpposes]'):
+                header = []
+                header.append(f'ITEM: TIMESTEP\n')
+                if self.sf[step_idx].step_num is None:
+                    header.append(f'{step_idx}\n')
+                else:
+                    header.append(f'{self.sf[step_idx].step_num}\n')
+                header.append(f'ITEM: NUMBER OF ATOMS\n')
+                header.append(f'{self.sf[step_idx].get_total_atoms()}\n')
+                header.append(f'ITEM: BOX BOUNDS xy xz yz pp pp pp\n')
+                header.append(f'0.0000000000000000e+00 {self.sf[step_idx].cell[0]:.16e} 0.0000000000000000e+00\n')
+                header.append(f'0.0000000000000000e+00 {self.sf[step_idx].cell[1]:.16e} 0.0000000000000000e+00\n')
+                header.append(f'0.0000000000000000e+00 {self.sf[step_idx].cell[2]:.16e} 0.0000000000000000e+00\n')
+                header.append(f'ITEM: ATOMS id {" ".join(out_columns)}\n')
+
+                with open(ofn, 'a') as f:
+                    f.writelines(header)
+                
+                # 1-index
+                self.sf[step_idx].atoms.index += 1
+                self.sf[step_idx].atoms.to_csv(ofn, columns=out_columns, sep=' ', header=None, mode='a')
+                # 0-index
+                self.sf[step_idx].atoms.index -= 1
+    #--------------------------------------------------------------------------------

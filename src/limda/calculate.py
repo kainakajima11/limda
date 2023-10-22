@@ -320,7 +320,7 @@ class Calculate(
         # export xyz file
         if self.atoms is not None and self.get_total_atoms() >= 1:
             self.export_xyz(packmol_tmp_dir / "this_sf.xyz", structure_name="this_sf")
-
+        print(sf_list)
         for frame_idx in range(len(sf_list)):
             sf_list[frame_idx].export_xyz(packmol_tmp_dir / f"sf_idx_{frame_idx}.xyz",
                                           structure_name=f"sf_idx_{frame_idx}")
@@ -344,7 +344,8 @@ class Calculate(
             exist_ok = False,
             place :str = "kbox",
             num_nodes: int = 1,
-            mask_info: list[str] = []): #引数にOMPTHREADNUM: int = 1
+            mask_info: list[str] = [],
+            omp_num_threads :int = 1):
         """
         laxでMDを実行する.
         Parameters
@@ -379,6 +380,10 @@ class Calculate(
         num_process = lax_config["MPIGridX"] * lax_config["MPIGridY"] * lax_config["MPIGridZ"]
         assert num_process%num_nodes == 0, "Invalid num_nodes"
 
+        assert omp_num_threads >= 1, "omp_num_threads must be an integer greater than or equal to 1"
+        if omp_num_threads > 1:
+            os.environ["OMP_NUM_THREADS"] = f"{omp_num_threads}"
+
         if place == "kbox":
             cmd = f"mpiexec.hydra -np {num_process} {lax_cmd} < /dev/null >& out"
         elif place.upper() == "MASAMUNE":
@@ -398,11 +403,14 @@ class Calculate(
         optimized_dumppos_path = dumppos_paths[0]
         self.import_dumppos(optimized_dumppos_path)
 
+        if omp_num_threads > 1:
+            os.environ["OMP_NUM_THREADS"] = "1"
 #---------------------------------------------------------------------------------------------
     def allegro(self,
                 cut_off: float,
                 device: Union[str, torch.DeviceObjType],
                 allegro_model: torch.jit._script.RecursiveScriptModule,
+                flag_calc_virial = False,
                 ) -> None:
         """Allegroを使って、sfに入っている原子の座標に対して推論を行い、
         ポテンシャルエネルギーと原子に働く力を計算する
@@ -444,9 +452,12 @@ class Calculate(
             cell_tensor,
             atom_types_tensor,
             cut_off_tensor,
+            flag_calc_virial,
         )
 
         self.atoms[['pred_fx', 'pred_fy', 'pred_fz']] = output['force'].cpu().detach().numpy()
         self.atoms['pred_potential_energy'] = output['atomic_energy'].cpu().detach().numpy()
         self.pred_potential_energy = output['total_energy'].cpu().detach().item()
+        if flag_calc_virial:
+            self.pred_virial_tensor = output['virial'].cpu().detach().numpy()
 

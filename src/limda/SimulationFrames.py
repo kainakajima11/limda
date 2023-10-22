@@ -50,7 +50,7 @@ class SimulationFrames(
 #----------------------------- 
     def __getitem__(self, key):
         """sfs = SimulationFrames()
-        sfs[step_idx]でsfs.sdat[step_idx]を得ることができる
+        sfs[step_idx]でsfs.sf[step_idx]を得ることができる
         """
         return self.sf[key]
 #------------------------------------
@@ -80,9 +80,8 @@ class SimulationFrames(
             for step_idx in range(len(outer_sfs)):
                 self.sf.append(outer_sfs.sf[step_idx])
         
-        step_nums = list(range(len(self.sf)))
-        for step_idx, step_num in enumerate(tqdm(step_nums)):
-            self.sf[step_idx].step_num = step_num
+        for step_idx, frame in enumerate(self.sf):
+            frame.step_num = step_idx
 #-------------------------------------------------------------------
     def split_sfs_specified_list_size(self, list_size: int)->list:
         """sfsを複数のsfsに分け, sfsのlistを返す。
@@ -154,6 +153,7 @@ class SimulationFrames(
                 cut_off: float,
                 device: Union[str, torch.DeviceObjType],
                 allegro_model: torch.jit._script.RecursiveScriptModule,
+                flag_calc_virial:bool = False,
                 ) -> None:
         """sfsのもつすべてのSimulationFrameに対して、以下を行う
         Allegroを使って、sfに入っている原子の座標に対して推論を行い、
@@ -171,9 +171,12 @@ class SimulationFrames(
                 pathではないことに注意
         """
         for frame_idx in range(len(self.sf)):
-            self.sf[frame_idx].allegro(cut_off=cut_off, device=device, allegro_model=allegro_model)
+            self.sf[frame_idx].allegro(cut_off=cut_off,
+                                       device=device,
+                                       allegro_model=allegro_model,
+                                       flag_calc_virial=flag_calc_virial)
 
-    
+#---------------------------------------------------------------------------------------------- 
     def concat_force_and_pred_force(self, 
                                     reduce_direction: bool = False,
                                     ) -> pd.DataFrame:
@@ -230,7 +233,7 @@ class SimulationFrames(
             return force_and_pred_force_reduced
         else:
             return force_and_pred_force
-    
+#----------------------------------------------------------------------------------------------
     def concat_pot_and_pred_pot(self) -> pd.DataFrame:
         """それぞれのSimulationFrameが持つポテンシャルエネルギーと
         Allegroによって予測されたポテンシャルエネルギーという一つのDataFrameを作る

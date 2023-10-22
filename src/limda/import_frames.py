@@ -33,7 +33,8 @@ class ImportFrames(
                 simulation_frames[step_idx][['x', 'y', 'z']] : 原子の座標
                 simulation_frames[step_idx][['fx', 'fy', 'fz']] : 原子にかかる力
                 simulation_frames[step_idx].potential_energy : ポテンシャルエネルギー
-                simulation_frames[step_idx].cell : セルの大きさ
+                simulation_frames[step_idx].cell : セルサイズ
+                simulation_frames[step_idx].virial_tensor : ストレステンソル
         """
         calc_directory = pathlib.Path(calc_directory)
         first_sf = SimulationFrame()
@@ -45,8 +46,9 @@ class ImportFrames(
             splines = list(map(lambda l:l.split(), lines))
 
         for line_idx, spline in enumerate(splines):
-            if len(spline) == 0:
+            if len(spline) <= 1:
                 continue
+
             if len(spline) == 3 and spline[0] == "POSITION" and spline[1] == "TOTAL-FORCE":
                 sf = SimulationFrame()
                 sf.atom_symbol_to_type = self.atom_symbol_to_type
@@ -65,7 +67,16 @@ class ImportFrames(
                         atoms_dict[atoms_dict_keys[key_idx+1]].append(float(splines[line_idx+2+atom_idx][key_idx]))
 
                 sf.atoms = pd.DataFrame(atoms_dict)
+                # potential_energy
                 sf.potential_energy = float(splines[potential_energy_idx][4])
+                # virial tensor
+                sf.virial_tensor = np.empty((3, 3), dtype=np.float32)
+                for i in range(3):
+                    sf.virial_tensor[i][i] = float(splines[virial_tensor_idx][i+1])
+                for i in range(3):
+                    sf.virial_tensor[i][(i+1)%3] = float(splines[virial_tensor_idx][i+4])
+                    sf.virial_tensor[(i+1)%3][i] = float(splines[virial_tensor_idx][i+4])
+
                 self.sf.append(sf)  
  
             if len(splines[line_idx]) == 6 and splines[line_idx][0] == "direct" \
@@ -77,6 +88,10 @@ class ImportFrames(
                 splines[line_idx][1] == "without" and \
                 splines[line_idx][2] == "entropy":
                 potential_energy_idx = line_idx 
+
+            if len(splines[line_idx]) == 7 and splines[line_idx][0] == "Total":
+                virial_tensor_idx = line_idx
+                    
 #---------------------------------------------------------------------------------------------------
     def import_dumpposes(self, dir_name:Union[str, pathlib.Path]=None, step_nums:list[int]=None, skip_num: int=None):
         """Laichで計算したdumpposを複数読み込む
