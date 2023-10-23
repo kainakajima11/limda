@@ -277,9 +277,9 @@ class ExportFrame(
                 print(f"warning : cell[{dim}] has been initialized to 0")
                 self.cell[dim] = 0.0
         header_line = [
-            f"#cellx {0.0}  {self.cell[0]}\n",
-            f"#celly {0.0}  {self.cell[1]}\n",
-            f"#cellz {0.0}  {self.cell[2]}\n\n",
+            f"#cellx {0.000000}  {self.cell[0]}\n",
+            f"#celly {0.000000}  {self.cell[1]}\n",
+            f"#cellz {0.000000}  {self.cell[2]}\n\n",
             f"#masses {len(self.atom_type_to_mass)}\n"
         ]
         for typ, mass in self.atom_type_to_mass.items():

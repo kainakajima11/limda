@@ -394,4 +394,25 @@ class SimulationFrame(
             new_atoms = pd.concat([new_atoms, shuffled_seg.atoms])
 
         new_atoms = new_atoms.reset_index(drop=True)
-        self.atoms = new_atoms        
+        self.atoms = new_atoms      
+#---------------------------------------------------------------------------------------------------
+    def slide_atoms(self, slide_length:list[float], change_cellsize:bool = True):
+        """
+        xyz方向それぞれに原子を平行移動させる。
+        
+        Arguments
+        ------------------
+            slide_length: list[float]
+                [x, y, z] 方向にどれだけスライドさせるか
+            change_cellsize: bool
+                スライドに伴い,cellサイズを変更するか
+                ex. x方向に 1 だけ移動-> x方向 の cellsize を1増加させる.
+        """
+        assert len(slide_length) == 3, "Specify the slide_length for the [x, y, z] direction"
+
+        self.atoms["x"] += slide_length[0]
+        self.atoms["y"] += slide_length[1]
+        self.atoms["z"] += slide_length[2]
+
+        if change_cellsize:
+            self.cell += np.array(slide_length)
