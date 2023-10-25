@@ -26,6 +26,7 @@ PYTHON PATH に $HOME/limda/src を追加してください。
 ```
 #bashの場合 -> $HOME/.bashrcに下記を追記
 export PYTHONPATH="$PYTHONPATH:$HOME/limda/src"
+export PATH="${PATH}:$HOME/limda/src/scripts" # to use limda scripts
 ```
 ## How to update
 各自ブランチを作りpull requestをしてください。<br>
