@@ -4,7 +4,7 @@ import pathlib
 import random
 import os
 from tqdm import tqdm, trange
-from typing import Union
+from typing import Union, Any
 import torch
 from .import_frames import ImportFrames
 from .export_frames import ExportFrames
@@ -33,14 +33,15 @@ class SimulationFrames(
     atom_symbol_to_type: dict[str, int]
     atom_type_to_symbol : dict[int, str]
     atom_type_to_mass : dict[int, float]
+    limda_default: dict[str, Any]
 #----------------------
     def __init__(self, para: str=""):
         self.sf:list[SimulationFrame] = []
         self.atom_symbol_to_type: dict[str, int] = None
         self.atom_type_to_symbol : dict[int, str] = None
         self.atom_type_to_mass : dict[int, float] = None
-        if para:
-            self.import_para_from_str(para)
+        self.import_limda_default()
+        self.import_para_from_str(para)
 #---------------------
     def __len__(self):
         """

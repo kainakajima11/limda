@@ -4,6 +4,7 @@ import random
 from copy import deepcopy
 import sys
 import os
+from typing import Any
 from .import_frame import ImportFrame
 from .export_frame import ExportFrame
 from .calculate import Calculate
@@ -48,6 +49,7 @@ class SimulationFrame(
     virial_tensor: np.ndarray[float]
     pred_potential_energy: float
     pred_virial_tensor: np.ndarray[float]
+    limda_default: dict[str, Any]
 #--------------------------------------
     def __init__(self, para: str = ""):
         self.atoms = None
@@ -60,8 +62,8 @@ class SimulationFrame(
         self.virial_tensor = None
         self.pred_potential_energy = None
         self.pred_virial_tensor = None
-        if para:
-            self.import_para_from_str(para)
+        self.import_limda_default()
+        self.import_para_from_str(para)
 #-------------------------------------
     def __getitem__(self, key) -> pd.DataFrame:
         """

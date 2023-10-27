@@ -1,9 +1,10 @@
 import pandas as pd
 import numpy as np
-from typing import Union
+from typing import Union, Any
 import pathlib 
 import re
 import sys
+import yaml
 import limda.const as C
 
 class ImportFrame(
@@ -18,9 +19,18 @@ class ImportFrame(
     atom_type_to_symbol : dict[int, str]
     atom_type_to_mass : dict[int, float]
     step_num: int
+    limda_default: dict[str, Any]
 #----------------------
     def __init__(self):
         pass
+#----------------------------------
+    def import_limda_default(self):
+        """limdaのデフォルトファイル(.limda.yaml)を読み込む
+        """
+        limda_dot_path = pathlib.Path.home() / ".limda.yaml"
+        if pathlib.Path.exists(limda_dot_path):
+            with open(limda_dot_path, "r") as f:
+                self.limda_default = yaml.safe_load(f)
 #-----------------------------------------------------------------------   
     def import_input(self, file_path: Union[str, pathlib.Path]) -> None: #ky
         """Laichのinputファイルを読み込み、
@@ -94,6 +104,9 @@ class ImportFrame(
             の場合、Cの原子のタイプが1, Hの原子のタイプが2, Oの原子のタイプが3, Nの原子のタイプが4となる
 
         """ 
+        if len(atom_symbol_list) == 0:
+            assert "para" in self.limda_default
+            atom_symbol_list = self.limda_default["para"]
         atom_symbol_to_type = {}
         type_list = [i for i in range(1, len(atom_symbol_list)+1)]
         atom_symbol_to_type = {key: val for key, val in zip(atom_symbol_list, type_list)}
