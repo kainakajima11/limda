@@ -9,6 +9,7 @@ import torch
 from .import_frames import ImportFrames
 from .export_frames import ExportFrames
 from .SimulationFrame import SimulationFrame
+from . import Default as D
 
 class SimulationFrames(
     ImportFrames,
@@ -39,8 +40,13 @@ class SimulationFrames(
         self.atom_symbol_to_type: dict[str, int] = None
         self.atom_type_to_symbol : dict[int, str] = None
         self.atom_type_to_mass : dict[int, float] = None
+
+        D.set_default()
+
         if para:
             self.import_para_from_str(para)
+        elif D.PARA is not None:
+            self.import_para_from_list(D.PARA)
 #---------------------
     def __len__(self):
         """

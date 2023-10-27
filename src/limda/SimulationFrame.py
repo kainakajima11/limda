@@ -4,11 +4,13 @@ import random
 from copy import deepcopy
 import sys
 import os
+import pathlib
 from .import_frame import ImportFrame
 from .export_frame import ExportFrame
 from .calculate import Calculate
 from .analize_frame import AnalizeFrame
 from . import const as C
+from . import Default as D
 
 class SimulationFrame(
     ImportFrame,
@@ -49,7 +51,7 @@ class SimulationFrame(
     pred_potential_energy: float
     pred_virial_tensor: np.ndarray[float]
 #--------------------------------------
-    def __init__(self, para: str = ""):
+    def __init__(self, para: str = "", set_default = True):
         self.atoms = None
         self.cell = None
         self.atom_symbol_to_type = None
@@ -60,8 +62,13 @@ class SimulationFrame(
         self.virial_tensor = None
         self.pred_potential_energy = None
         self.pred_virial_tensor = None
+
+        D.set_default()
+
         if para:
             self.import_para_from_str(para)
+        elif D.PARA is not None:
+            self.import_para_from_list(D.PARA)
 #-------------------------------------
     def __getitem__(self, key) -> pd.DataFrame:
         """
