@@ -154,9 +154,11 @@ class ImportFrame(
                 if len(spline) == 0:
                     continue
                 if spline[0] == "ITEM:" and spline[1] == "BOX":
+                    slide_cell_length = np.array([None, None, None])
                     self.cell = np.array([None, None, None])
                     for dim in range(3):
                         spline = ifp.readline().split()
+                        slide_cell_length[dim] = np.float64(spline[0])
                         self.cell[dim] = np.float64(spline[1])
                     current_row += 3
                     continue
@@ -173,8 +175,11 @@ class ImportFrame(
 
         self.atoms.index = self.atoms.index - 1
         self.atoms.sort_index(inplace=True)
+
+        if not np.all(slide_cell_length):
+            self.slide_atoms(-1 * slide_cell_length)
 #------------------------------------------
-    def import_mol(self, molecular_fomula): #ky
+    def import_mol(self, molecular_fomula):
             '''分子式から原子配置を読み込む
             Parameters
             ----------
