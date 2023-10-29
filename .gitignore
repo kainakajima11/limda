@@ -160,5 +160,6 @@ cython_debug/
 #.idea/
 
 neighbor.cpp
+analyze_mols.cpp
 *.so
 .nfs*
