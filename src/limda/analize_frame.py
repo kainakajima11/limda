@@ -13,6 +13,18 @@ class AnalizeFrame:
     def get_neighbor_list(
         self, mode: str, cut_off: float = None, bond_length: list[list[float]] = None
     ) -> list[list[int]]:
+        """neighbor list を作成する
+        Parameters
+        ----------
+            mode: str
+                "bond_length"または"cut_off"
+                mode = "bond_length"とした場合はneighbor listを結合種の長さ(bond_length)によって作成する
+                mode = "cut_off"とした場合はneighbor listをカットオフによって作成する
+            cut_off: float
+                カットオフ半径
+            bond_length: list[list[float]]
+                結合の長さ
+        """
         assert mode == "bond_length" or mode == "cut_off", "Please configure mode"
         atom_type_num = len(self.atom_symbol_to_type)
         if mode == "bond_length":
@@ -53,18 +65,101 @@ class AnalizeFrame:
         mode: str = "bond_length",
         cut_off: float = None,
         bond_length: list[list[float]] = None,
-    ):
+    ) -> list[list[int]]:
+        """分子ごとに原子のidを取得する
+        例えば、水分子が3個とアンモニアが1個あるときは
+        [[0, 1, 2],  # 水分子
+        [3, 4, 5],　  # 水分子
+        [6, 7, 8],  # 水分子
+        [9, 10, 11, 12]] # アンモニア
+        Parameters
+        ----------
+            mode: str
+                "bond_length"または"cut_off"
+                mode = "bond_length"とした場合はneighbor listを結合種の長さ(bond_length)によって作成する
+                mode = "cut_off"とした場合はneighbor listをカットオフによって作成する
+            cut_off: float
+                カットオフ半径
+            bond_length: list[list[float]]
+                結合の長さ
+        """
         neighbor_list = self.get_neighbor_list(
             mode=mode, cut_off=cut_off, bond_length=bond_length
         )
         return get_mols_list_using_cython(neighbor_list, self.get_total_atoms())
+
+    def get_mols_dict(
+        self,
+        mode: str = "bond_length",
+        cut_off: float = None,
+        bond_length: list[list[float]] = None,
+    ) -> dict[str, list[list[int]]]:
+        """分子ごとに原子のidを取得する
+        例えば、水分子が3個とアンモニアが1個あるときは
+        {"H2O1":[[0, 1, 2], [3, 4, 5], [6, 7, 8]],
+         "H3N1":[[9, 10, 11, 12]]}
+        Parameters
+        ----------
+            mode: str
+                "bond_length"または"cut_off"
+                mode = "bond_length"とした場合はneighbor listを結合種の長さ(bond_length)によって作成する
+                mode = "cut_off"とした場合はneighbor listをカットオフによって作成する
+            cut_off: float
+                カットオフ半径
+            bond_length: list[list[float]]
+                結合の長さ
+        """
+
+        mols_list = self.get_mols_list(
+            mode=mode, cut_off=cut_off, bond_length=bond_length
+        )
+        mols_dict_tmp: dict[tuple(int), list[list[int]]] = {}
+        atom_types: np.ndarray[int] = self.atoms["type"].values
+
+        for mol in mols_list:
+            atom_type_count: list[int] = [
+                0 for _ in range(len(self.atom_type_to_symbol))
+            ]
+            for atom_idx in mol:
+                atom_type_count[atom_types[atom_idx] - 1] += 1
+            atom_type_count_tuple = tuple(atom_type_count)
+            if atom_type_count_tuple not in mols_dict_tmp:
+                mols_dict_tmp[atom_type_count_tuple] = []
+            mols_dict_tmp[atom_type_count_tuple].append(mol)
+
+        mols_dict: dict[str, list[list[int]]] = {}
+        for atom_type_count, mols in mols_dict_tmp.items():
+            mol_str = ""
+            for atom_type in range(len(self.atom_type_to_symbol)):
+                if atom_type_count[atom_type] == 0:
+                    continue
+                mol_str += f"{self.atom_type_to_symbol[atom_type + 1]}{atom_type_count[atom_type]}"
+
+            mols_dict[mol_str] = mols
+
+        return mols_dict
 
     def count_mols(
         self,
         mode: str = "bond_length",
         cut_off: float = None,
         bond_length: list[list[float]] = None,
-    ):
+    ) -> dict[str, int]:
+        """分子数を数える
+        例えば、水分子が3個とアンモニアが1個あるときは
+        {"H2O1":3,
+         "H3N1":1}
+        Parameters
+        ----------
+            mode: str
+                "bond_length"または"cut_off"
+                mode = "bond_length"とした場合はneighbor listを結合種の長さ(bond_length)によって作成する
+                mode = "cut_off"とした場合はneighbor listをカットオフによって作成する
+            cut_off: float
+                カットオフ半径
+            bond_length: list[list[float]]
+                結合の長さ
+        """
         mols_list = self.get_mols_list(
             mode=mode, cut_off=cut_off, bond_length=bond_length
         )
@@ -88,10 +183,7 @@ class AnalizeFrame:
             for atom_type in range(len(self.atom_type_to_symbol)):
                 if atom_type_count[atom_type] == 0:
                     continue
-                if mol_str == "":
-                    mol_str = f"{self.atom_type_to_symbol[atom_type + 1]}{atom_type_count[atom_type]}"
-                else:
-                    mol_str += f" {self.atom_type_to_symbol[atom_type + 1]}{atom_type_count[atom_type]}"
+                mol_str += f"{self.atom_type_to_symbol[atom_type + 1]}{atom_type_count[atom_type]}"
 
             mols_count[mol_str] = count
 

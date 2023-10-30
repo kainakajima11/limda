@@ -130,8 +130,6 @@ cdef vector[vector[int]] make_neighbor_list(vector[int] atoms_type,
     append_mesh = get_append_mesh(catoms, append_mesh, atom_num)
     neighbor_list.resize(atom_num)
     neighbor_list = search_neighbors(catoms, append_mesh, mesh_size, neighbor_list, bond_length, cell)
-    for idx in range(atom_num):
-        neighbor_list[idx] = sorted(neighbor_list[idx])
     return neighbor_list
 #------------------------------------------------------------------------------------------------------------------
 def get_neighbor_list_using_cython(vector[int] atoms_type,
