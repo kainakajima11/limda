@@ -74,7 +74,7 @@ class ExportFrames(
             data["virial"] = np.array(self.sf[sf_idx].virial_tensor, dtype=np.float32)
 
             edge_index = [[],[]]
-            edge_index = self.sf[sf_idx].get_edge_idx(cut_off=cut_off)
+            edge_index = self.sf[sf_idx].get_edge_index(cut_off=cut_off)
 
             data["edge_index"] = np.array(edge_index)
             if test_size is not None:
