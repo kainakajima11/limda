@@ -188,3 +188,64 @@ class AnalizeFrame:
             mols_count[mol_str] = count
 
         return mols_count
+
+    def count_bonds(
+        self,
+        mode: str = "bond_length",
+        cut_off: float = None,
+        bond_length: list[list[float]] = None,
+    ) -> dict[str, int]:
+        """結合数を数える
+        例えば、水分子が3個あるときは
+        {"H-O": 9, "H-H": 0, "O-O": 0}
+        Parameters
+        ----------
+            mode: str
+                "bond_length"または"cut_off"
+                mode = "bond_length"とした場合はneighbor listを結合種の長さ(bond_length)によって作成する
+                mode = "cut_off"とした場合はneighbor listをカットオフによって作成する
+            cut_off: float
+                カットオフ半径
+            bond_length: list[list[float]]
+                結合の長さ
+        """
+        neighbor_list = self.get_neighbor_list(
+            mode=mode, cut_off=cut_off, bond_length=bond_length
+        )
+        atom_types = self.atoms["type"].values
+        count_bonds_list = [
+            [0 for _ in range(len(self.atom_symbol_to_type))]
+                for _ in range(len(self.atom_symbol_to_type))
+        ]
+        for atom_i_idx in range(self.get_total_atoms()):
+            atom_i_type = atom_types[atom_i_idx]
+            for atom_j_idx in neighbor_list[atom_i_idx]:
+                if atom_i_idx < atom_j_idx:
+                    atom_j_type = atom_types[atom_j_idx]
+                    count_bonds_list[atom_i_type - 1][atom_j_type - 1] += 1
+        count_bonds_dict = {}
+        for atom_i_type in range(1, len(self.atom_symbol_to_type) + 1):
+            for atom_j_type in range(atom_i_type, len(self.atom_symbol_to_type) + 1):
+                bond = f"{self.atom_type_to_symbol[atom_i_type]}-{self.atom_type_to_symbol[atom_j_type]}"
+                count_bonds_dict[bond] = count_bonds_list[atom_i_type - 1][
+                    atom_j_type - 1
+                ]
+        return count_bonds_dict
+
+    def get_edge_index(self, cut_off: float) -> list[list[int]]:
+        """allegroのedge_indexを作成します。
+        edge_index : list[list[int]]でshapeは[2, num_edges]
+                     原子i -> 原子j のみ(i < j)はいっていて、原子j -> 原子i は入っていない
+        Parameters
+        ----------
+        cut_off: float
+            edgeとしてみなす最大距離
+        """
+        neighbor_list = self.get_neighbor_list(mode="cut_off", cut_off=cut_off)
+        edge_index = [[], []]
+        for atom_idx in range(self.get_total_atoms()):
+            for neighbor_atom_idx in neighbor_list[atom_idx]:
+                if atom_idx < neighbor_atom_idx:
+                    edge_index[0].append(atom_idx)
+                    edge_index[1].append(neighbor_atom_idx)
+        return edge_index

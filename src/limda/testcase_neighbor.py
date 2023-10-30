@@ -42,8 +42,8 @@ def neighbor_test_case(num: int):
         neighbor_list_py = sf.get_neighbor_list_test(bond_length)
         print(neighbor_list_cy == neighbor_list_py, "neighbor")
         cut_off = bond_length[0][0]
-        d = sf.get_edge_idx(cut_off)
-        D = sf.Get_edge_idx(mode = "C", cut_off = cut_off)
+        d = sf.get_edge_index(cut_off)
+        D = sf.Get_edge_index(mode = "C", cut_off = cut_off)
         print(d==D, "edge")
         d = sf.count_bonds(bond_length = bond_length)
         D = sf.Count_bonds(mode = "B", bond_length = bond_length)

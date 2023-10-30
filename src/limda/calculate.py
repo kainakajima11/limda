@@ -437,7 +437,7 @@ class Calculate(
         cut_off = np.array(cut_off, dtype=np.float32)
 
         edge_index = [[],[]]
-        edge_index = self.get_edge_idx(cut_off=cut_off)
+        edge_index = self.get_edge_index(cut_off=cut_off)
         edge_index = np.array(edge_index)
 
         pos_tensor = torch.tensor(pos, device=device)
