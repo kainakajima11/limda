@@ -8,14 +8,14 @@ from typing import Any
 from .import_frame import ImportFrame
 from .export_frame import ExportFrame
 from .calculate import Calculate
-from .analize_frame import AnalizeFrame
+from .analyze_frame import AnalyzeFrame
 from . import const as C
 
 class SimulationFrame(
     ImportFrame,
     ExportFrame,
     Calculate,
-    AnalizeFrame,
+    AnalyzeFrame,
 ):
     """シミュレーションしたデータを読み込み、書き込み、分析するためのクラス
     一つのフレームを扱う

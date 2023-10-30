@@ -5,7 +5,7 @@ from .neighbor import get_neighbor_list_using_cython
 from .analyze_mols import get_mols_list_using_cython
 
 
-class AnalizeFrame:
+class AnalyzeFrame:
     def __init__(self):
         pass
 

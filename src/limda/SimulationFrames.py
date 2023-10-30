@@ -9,10 +9,12 @@ import torch
 from .import_frames import ImportFrames
 from .export_frames import ExportFrames
 from .SimulationFrame import SimulationFrame
+from .analyze_frames import AnalyzeFrames
 
 class SimulationFrames(
     ImportFrames,
-    ExportFrames
+    ExportFrames,
+    AnalyzeFrames,
 ):
     """シミュレーションしたデータを読み込み、書き込み、分析するためのクラス
     複数のフレームを同時に扱う
@@ -259,3 +261,15 @@ class SimulationFrames(
             })
 
         return pot_and_pred_pot
+    
+    def get_step_nums(self) -> list[int]:
+        """ステップ数のリストを作る
+        """
+        step_nums = []
+        for frame_idx in range(len(self.sf)):
+            if self.sf[frame_idx] is not None:
+                step_num = self.sf[frame_idx].step_num
+            else:
+                step_num = frame_idx
+            step_nums.append(step_num)
+        return step_nums
