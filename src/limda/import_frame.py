@@ -296,7 +296,7 @@ class ImportFrame(
         import_filename = pathlib.Path(import_filename)
         import_file_basename = import_filename.name
 
-        if import_file_basename.startswith('input'):
+        if "input" in import_file_basename:
             self.import_input(import_filename)
         elif import_file_basename.startswith("dump") or import_file_basename.endswith("pos"):
             self.import_dumppos(import_filename)

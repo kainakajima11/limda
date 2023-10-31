@@ -361,7 +361,7 @@ class ExportFrame(
         Example
             input file - inputで始まる
         """
-        if export_file_name.startswith('input'):
+        if "input" in export_file_name:
             self.export_input(export_file_name)
         elif export_file_name.startswith('dump') or export_file_name.endswith('pos'):
             self.export_dumppos(export_file_name)
