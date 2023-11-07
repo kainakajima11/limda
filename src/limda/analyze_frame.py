@@ -69,7 +69,7 @@ class AnalyzeFrame:
         """分子ごとに原子のidを取得する
         例えば、水分子が3個とアンモニアが1個あるときは
         [[0, 1, 2],  # 水分子
-        [3, 4, 5],　  # 水分子
+        [3, 4, 5],  # 水分子
         [6, 7, 8],  # 水分子
         [9, 10, 11, 12]] # アンモニア
         Parameters
@@ -249,3 +249,17 @@ class AnalyzeFrame:
                     edge_index[0].append(atom_idx)
                     edge_index[1].append(neighbor_atom_idx)
         return edge_index
+#----------------------------------------------------------------------------------------
+    def get_sum_of_momentums(self)->np.ndarray[float]:
+        """
+        各方向の運動量の合計を計算する.
+
+        Return
+        ------
+            momentum_sum : np.ndarray[float]
+                運動量の合計 [x, y, z]
+        """
+        mass = np.array([self.atom_type_to_mass[typ] for typ in self.atoms["type"]])
+        momentums = np.array([self.atoms["vx"], self.atoms["vy"], self.atoms["vz"]]) * mass
+        return np.sum(momentums, axis=1)
+        

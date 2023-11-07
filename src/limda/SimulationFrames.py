@@ -276,7 +276,7 @@ class SimulationFrames(
         Note
         ----
             virial_tensor, pred_virial_tensorの単位はeVだが、
-            返されるdfはeV/Å^3の次元(圧力)なことに注意
+            返されるdfはstressでeV/Å^3の次元なことに注意
         """
         stress_list = []
         pred_stress_list = []
