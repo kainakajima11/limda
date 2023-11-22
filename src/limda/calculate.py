@@ -4,7 +4,7 @@ from tqdm import tqdm
 import subprocess
 import os
 import time
-from typing import Union
+from typing import Union, Dict
 import torch
 
 try:
@@ -411,7 +411,7 @@ class Calculate(
                 device: Union[str, torch.DeviceObjType],
                 allegro_model: torch.jit._script.RecursiveScriptModule,
                 flag_calc_virial = False,
-                ) -> None:
+                ) -> Dict[str, torch.Tensor]:
         """Allegroを使って、sfに入っている原子の座標に対して推論を行い、
         ポテンシャルエネルギーと原子に働く力を計算する
         Allegroによって予測されたポテンシャルエネルギーはsf.pred_potential_energyに入る
@@ -461,3 +461,4 @@ class Calculate(
         if flag_calc_virial:
             self.pred_virial_tensor = output['virial'].cpu().detach().numpy()
 
+        return output
