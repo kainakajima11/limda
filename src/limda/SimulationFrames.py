@@ -261,7 +261,41 @@ class SimulationFrames(
             })
 
         return pot_and_pred_pot
-    
+#----------------------------------------------------------------------------------------------    
+    def concat_virial_and_pred_virial(self, onlydiag : bool = False) -> pd.DataFrame:
+        """
+        sfsにある構造の,virial_tensorとpred_virial_tensorをまとめたdfを作成する。
+        Augument
+        --------
+            onlydiag : bool = False
+                対角成分のみのdfを作成するか
+        Return
+        ------
+            stress_and_pred_stress : pd.DataFrame
+                columnは["stress", "pred_stress"]、行は同じフレームに対応する
+        Note
+        ----
+            virial_tensor, pred_virial_tensorの単位はeVだが、
+            返されるdfはstressでeV/Å^3の次元なことに注意
+        """
+        stress_list = []
+        pred_stress_list = []
+        for frame_idx in range(len(self.sf)):
+            volume = self.sf[frame_idx].cell[0] * self.sf[frame_idx].cell[1] * self.sf[frame_idx].cell[2]
+            for i in range(3):
+                stress_list.append(self.sf[frame_idx].virial_tensor[i][i] / volume)
+                pred_stress_list.append(self.sf[frame_idx].pred_virial_tensor[i][i] / volume)
+            if not onlydiag:
+                for i in range(3):
+                    stress_list.append(self.sf[frame_idx].virial_tensor[i][(i+1)%3] / volume)
+                    pred_stress_list.append(self.sf[frame_idx].pred_virial_tensor[i][(i+1)%3] / volume)
+
+        stress_and_pred_stress = pd.DataFrame({
+                "stress":stress_list,
+                "pred_stress":pred_stress_list
+            })
+        return stress_and_pred_stress
+#---------------------------------------------------------------------------------------------- 
     def get_step_nums(self) -> list[int]:
         """ステップ数のリストを作る
         """
