@@ -213,6 +213,7 @@ class ImportFrames(
             sf.atoms = pd.DataFrame(frame["atom_types"] + 1, columns=["type"])
             sf.atoms[["x", "y", "z"]] = pd.DataFrame(frame["pos"])
             sf.atoms[["fx", "fy", "fz"]] = pd.DataFrame(frame["force"])
+            sf.virial_tensor = frame["virial"]
             self.sf.append(sf)
 
         return frames

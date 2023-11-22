@@ -37,20 +37,23 @@ def neighbor_test_case(num: int):
         atoms_list = list(zip(atoms_type, atoms_x, atoms_y, atoms_z))
         sf.atoms = pd.DataFrame(atoms_list, columns=['type', 'x', 'y', 'z'])       
         sf.cell = cell  
-        neighbor_list_cy = sf.get_neighbor_list(bond_length = bond_length)
+        print(i)
+        neighbor_list_cy = sf.Get_neighbor_list(mode = "B", bond_length = bond_length)
         neighbor_list_py = sf.get_neighbor_list_test(bond_length)
-        
-        if neighbor_list_cy == neighbor_list_py:
-            t_cnt += 1
-        else:
-            print("-----------------miss---------------------")
-            print(f"bond_length\n{bond_length[0]}\n{bond_length[1]}\n{bond_length[2]}")
-            print(f"cell | {cell}")
-            print(f"atom_num | {atom_num}")
-            print("------------------------------------------")
-
-        print(i, flush = True)
-    print(f"result : correct ratio is {t_cnt} / {num}")
+        print(neighbor_list_cy == neighbor_list_py, "neighbor")
+        cut_off = bond_length[0][0]
+        d = sf.get_edge_index(cut_off)
+        D = sf.Get_edge_index(mode = "C", cut_off = cut_off)
+        print(d==D, "edge")
+        d = sf.count_bonds(bond_length = bond_length)
+        D = sf.Count_bonds(mode = "B", bond_length = bond_length)
+        print(d==D, "bonds")
+        d = sf.count_molecules(bond_length = bond_length)
+        D = sf.Count_molecules(mode ="B", bond_length = bond_length)
+        print(d==D, "mols")
+        d = sf.count_coord_numbers(bond_length = bond_length)
+        D = sf.Count_coord_numbers(mode = "B", bond_length = bond_length)
+        print(d==D, "coords")
 
 # 実行         
-neighbor_test_case(3300)
+neighbor_test_case(10)

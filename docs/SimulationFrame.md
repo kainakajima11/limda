@@ -335,9 +335,9 @@ neighor_listの形式はlist[list[int]です.<br>
 配列のi番目の要素はi番目の原子と隣接する原子のidxの配列です.<br>
 原子のタイプごとに長さを指定して結合リストを作ることもできます.<br>
 
-### get_edge_idx()
-隣接リストをallegroのデータセットの形式にしたもの(edge_idx)を返します。<br>
-edge_idxはlist[list[int, int]]で、配列の要素は大きさ2の配列であり、<br>
+### get_edge_index()
+隣接リストをallegroのデータセットの形式にしたもの(edge_index)を返します。<br>
+edge_indexはlist[list[int, int]]で、配列の要素は大きさ2の配列であり、<br>
 [a,b]のときa番目の原子とb番目の原子は隣接してることを表します。
 
 ### count_molecules()
