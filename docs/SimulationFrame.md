@@ -265,7 +265,7 @@ vaspの計算に必要なPOSCARを作成します。<br>
 sfのデータではなく、CONTCARを指定して、それをPOSCARにします。<br>
 
 ### export_vasp_incar()
-vaspの計算に必要なINCARを作成します。<br>
+vaspの計算に必要なINCARを作成します。
 
 ### export_vasp_kpoints()
 vaspの計算に必要なKPOINTSを作成します。
@@ -278,26 +278,41 @@ vaspの計算に必要なPOTCARを作成します。
 
 ### export_dumppos()
 sfをdump.pos 形式のファイルとして出力します。
-
+```python3
+sf.export_dumppos("showdump.pos") # showdump.pos fileとして出力
+```
 ### export_input()
 sfをinput.rd の形式のファイルとしてを出力します。
-
+```python3
+sf.export_input("input.rd", mask_info = ["#strain - - - - z 1.0"])
+```
+# mask_infoでpressz,move,strainなどの行を追加できる。
 ### export_xyz()
 sfをxyzの形式のファイルとして出力します。
-
+```python3
+sf.export_xyz("a.xyz")
+```
 ### export_file()
 sfを指定したファイル名から形式を判断して、出力します。<br>
 出力できるファイルの形式
 - input file ("input" で始まる)
 - dump.pos file ("dump"で始まる or "pos"で終わる)
 - xyz file ("xyz"で終わる)
-
+```python3
+sf.export_file("showdump.pos") # == sf.export_dumppos()
+sf.export_file("input.rd") # == sf.export_input()
+```
 <a id="anchor6"></a>
 ## Calculate
 [実際のコード](https://github.com/kainakajima11/limda/blob/main/src/limda/calculate.py)
 ### vasp()
 VASPの計算を実行します.<br>
-
+```python3
+sf.vasp(system_name: str="H2O",
+        step_num: int= 10,
+        incar_config=incar_config)
+# H2O_10というディレクトリ内でincar_configの条件でvaspを回す。
+```
 ### laich()
 Laichの計算を実行します。<br>
 
@@ -319,12 +334,29 @@ sf.packmol(sf_list=[sf_h2o],
 ```
 ### lax()
 laxの計算を実行します.<br>
-
+```python3
+sf.lax(calc_dir = "lax_calc" # 計算が行われるdir
+       lax_cmd = "lax" # lax fileがあるpath
+       lax_config = None # config.rdに必要な内容をdictで渡す.
+       print_lax = False,  # out fileを出力するか
+       exist_ok = False, # calc_dirが存在するときに実行するか
+       mask_info = "" # input.rdに書かれる#pressz、#moveなどの情報
+       # ex. mask_info = [#pressz 1 1 0", "#move 2 x 100 - - - -"] # mask 1にpress, mask 2にxmove
+       )
+```
 ### allegro()
 sfに入っている原子の座標などから、かかる力とポテンシャルエネルギーを予測します.<br>
 力はatomsの["pred_x", "pred_y", "pred_z"]に入ります。<br>
 ポテンシャルエネルギーはpred_potential_energyに入ります。<br>
-
+```python3
+sf.allegro(
+    cut_off = 4.0, #cutoff
+    device = "cuda", #device, 'cpu' or 'cuda'
+    allegro_model = torch.jit.load("allegro_frozen_800000.pth")
+    # frozenされたAllegroを読み込んだモデル # pathではない
+    flag_calc_virial = False, # virialを推論するか
+    )
+```
 <a id="anchor7"></a>
 ## AnalyzeFrame
 [実際のコード](https://github.com/kainakajima11/limda/blob/main/src/limda/analyse_frame.py)
