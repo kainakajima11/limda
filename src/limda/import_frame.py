@@ -143,12 +143,30 @@ class ImportFrame(
                 file_path: Union[str, Path]
                 carfileのpath
         """
-        car_df = pd.read_csv(file_path, names=['symbol+id', 'x', 'y', 'z', 'XXXX', '1', 'xx', 'symbol', '0.000'],
-                         usecols=['x', 'y', 'z', 'symbol'],
-                         skiprows=4,  sep='\s+')
-        self.cell = np.float_(car_df.iloc[0, 0:3]) # cell size部分を抜き取る
-        car_df = car_df[1:].dropna() 
+        input_cell = False # car fileがcellの情報を含んでいるか
+        current_row = 0
+        with open(file_path, 'r') as f:
+            while True:
+                spline = f.readline().split()
+                current_row += 1
+                if len(spline) == 0:
+                    continue
+                if spline[0] == "PBC=ON": # 周期境界がある
+                    input_cell = True
+                if spline[0] == "!DATE":
+                    break
+            if input_cell:
+                spline = f.readline().split()
+                self.cell = np.float_(spline[1:4])
+                current_row += 1
+        car_df = pd.read_csv(file_path,
+                             names = ['symbol+id', 'x', 'y', 'z', 'XXXX', '1', 'xx', 'symbol', '0.000'],
+                             usecols = ['x', 'y', 'z', "symbol"],
+                             skiprows = current_row,
+                             sep = "\s+")
+        car_df = car_df.dropna() 
         car_df.insert(0, 'type', car_df['symbol'].map(self.atom_symbol_to_type)) # type列を作成
+        car_df.index += 1
         self.atoms = car_df[['type', 'x', 'y', 'z']] 
 #-------------------------------------------------------------------------
     def import_dumppos(self, file_path: Union[str, pathlib.Path]) -> None: 
@@ -306,4 +324,27 @@ class ImportFrame(
             self.import_car(import_filename)
         else:
             raise RuntimeError("適切なfile名にしてください.")
-            
+#----------------------------------------------------------------------------------------------
+    def import_cif(self, cif_file_path: Union[str, pathlib.Path]):
+        """
+        cif fileを読み込み
+        cell, atoms, を更新する.
+
+        Augument
+        ---------
+        cif_file_path : Union[str, pathlib.Path]
+            input cif file path
+        """
+        try:
+            from ase.io import read
+        except ImportError as e:
+            print(f"Error importing: {e}")
+
+        # reading cif file using ase
+        cifdata = read(cif_file_path)
+        # cell
+        self.cell = cifdata.cell.array.diagonal().copy()
+        # atoms position
+        self.atoms = pd.DataFrame(cifdata.get_positions(), columns=["x", "y", "z"])
+        # atoms type
+        self.atoms["type"] = np.array([self.atom_symbol_to_type[symbol] for symbol in cifdata.get_chemical_symbols()])             

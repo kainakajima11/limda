@@ -136,8 +136,8 @@ class ImportFrames(
             step_nums = step_nums[::skip_num]
 
         self.sf = [SimulationFrame() for _ in range(len(step_nums))]
-
-        for step_idx, step_num in enumerate(tqdm(step_nums)):
+        
+        for step_idx, step_num in enumerate(tqdm(step_nums, desc='[importing dumpposes]')):
             self.sf[step_idx].step_num = step_num
             self.sf[step_idx].atom_symbol_to_type = self.atom_symbol_to_type
             self.sf[step_idx].atom_type_to_mass = self.atom_type_to_mass

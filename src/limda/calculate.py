@@ -6,6 +6,7 @@ import os
 import time
 from typing import Union, Dict
 import torch
+import shutil
 
 try:
     from ase.build import molecule
@@ -241,7 +242,8 @@ class Calculate(
                 xyz_condition: list[float]=None,
                 seed: int=-1,
                 packmol_cmd: str=f"packmol < {'packmol_mixture_comment.inp'}",
-                print_packmol=False
+                print_packmol=False,
+                exist_ok = False
                 ):
         """packmolで原子を詰める
         Parameters
@@ -284,8 +286,10 @@ class Calculate(
         """
         if xyz_condition is not None:
             assert len(xyz_condition) == len(sf_list), "sf_listとxyz_conditonを同じ長さにしてください."
-        
+
         packmol_tmp_dir = pathlib.Path(packmol_tmp_dir)
+        if packmol_tmp_dir.exists() and exist_ok:
+            shutil.rmtree(packmol_tmp_dir)
         packmol_tmp_dir.mkdir()
 
         first_line = [
