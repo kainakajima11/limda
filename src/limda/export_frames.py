@@ -41,7 +41,9 @@ class ExportFrames(
                        test_size: float=None,
                        test_output_dir: str=None,
                        test_output_file_name: str=None,
-                       exclude_unsuitable_cellsize_frame : bool = False
+                       exclude_unsuitable_cellsize_frame : bool = False,
+                       exclude_unsuitable_force_frame : bool = False,
+                       reference_force_excluding_frame : float = 50.0,
                        ):
         """
         allegro用のデータセットを保存する
@@ -85,13 +87,16 @@ class ExportFrames(
         if shuffle:
             self.shuffle_sfs(seed=seed)
         for sf_idx in range(len(self)):
-            if  exclude_unsuitable_cellsize_frame and np.any(self.sf[sf_idx].cell < 2 * cut_off):
-                print("Exculuded frame which cellsize is smaller than 2 x cutoff\n")
-                continue
             data = {}
             data["cell"] = np.array(self.sf[sf_idx].cell, dtype=np.float32)
+            if  exclude_unsuitable_cellsize_frame and np.any(self.sf[sf_idx].cell < 2 * cut_off):
+                print(f"Exculuded frame : cellsize(={np.min(self.sf[sf_idx].cell)}) is smaller than 2 x cutoff(= {cut_off*2})", flush=True)
+                continue
             data["pos"] = np.array(self.sf[sf_idx].atoms[["x","y","z"]].values, dtype=np.float32)
             data["force"] = np.array(self.sf[sf_idx].atoms[["fx","fy","fz"]].values, dtype=np.float32)
+            if exclude_unsuitable_force_frame and np.abs(data['force']).max().item() > reference_force_excluding_frame:
+                print(f"Exculuded frame : force(={np.abs(data['force']).max().item()}) is larger than reference value of force(={reference_force_excluding_frame})", flush=True)
+                continue
             data["atom_types"] = np.array(self.sf[sf_idx].atoms["type"].values)
             data["atom_types"] -= 1
             data["cut_off"] = np.array(cut_off, dtype=np.float32)
