@@ -41,8 +41,30 @@ class ExportFrames(
                        test_size: float=None,
                        test_output_dir: str=None,
                        test_output_file_name: str=None,
+                       exclude_unsuitable_cellsize_frame : bool = False
                        ):
-        """allegro用のデータセットを保存する
+        """
+        allegro用のデータセットを保存する
+        Parameters
+        ----------
+            output_dir : str
+                出力する場所
+            output_file_name : str
+                出力するfile名 {output_file_name}.pickle が出力される
+            cut_off : float
+                cutoff距離
+            shuffle : bool
+                フレームをシャッフルするか
+            seed : int
+                シャッフルするときのシード値
+            test_size : float
+                test用にする割合
+            test_output_dir : str
+                test用 : 出力される場所
+            test_output_file_name : str
+                test用 : 出力されるfile名
+            exclude_unsuitable_cellsize_frame : bool
+                cutoff x 2 以下のセルサイズを持つフレームを除外するか  
         """
         if test_size is not None:
             assert 0.0 <= test_size <= 1.0
@@ -63,6 +85,9 @@ class ExportFrames(
         if shuffle:
             self.shuffle_sfs(seed=seed)
         for sf_idx in range(len(self)):
+            if  exclude_unsuitable_cellsize_frame and np.any(self.sf[sf_idx].cell < 2 * cut_off):
+                print("Exculuded frame which cellsize is smaller than 2 x cutoff\n")
+                continue
             data = {}
             data["cell"] = np.array(self.sf[sf_idx].cell, dtype=np.float32)
             data["pos"] = np.array(self.sf[sf_idx].atoms[["x","y","z"]].values, dtype=np.float32)
