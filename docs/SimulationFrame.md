@@ -348,6 +348,7 @@ sf.lax(calc_dir = "lax_calc" # 計算が行われるdir
 sfに入っている原子の座標などから、かかる力とポテンシャルエネルギーを予測します.<br>
 力はatomsの["pred_x", "pred_y", "pred_z"]に入ります。<br>
 ポテンシャルエネルギーはpred_potential_energyに入ります。<br>
+Virialテンソルの値はpred_virial_tensorに入ります。3 x 3 <br>
 ```python3
 sf.allegro(
     cut_off = 4.0, #cutoff
@@ -365,18 +366,28 @@ sf.allegro(
 sfに対する、隣接リストを作成し、返します。<br>
 neighor_listの形式はlist[list[int]です.<br>
 配列のi番目の要素はi番目の原子と隣接する原子のidxの配列です.<br>
-原子のタイプごとに長さを指定して結合リストを作ることもできます.<br>
-
+mode = "bond_length"ならば元素種類ごとに長さを指定する. <br>
+mode = "cut_off"ならばfloat型の一つの値で長さを定義.
+```python3
+# bond_length # 2元素系
+neighbor_list = sf.get_neighbor_list(mode="bond_length", bond_length=[[1.2, 2.0],[2.0, 2.3]])
+# cut_off
+neighbor_list = sf.get_neighbor_list(mode="cut_off", cut_off=3.4)
+```
 ### get_edge_idx()
 隣接リストをallegroのデータセットの形式にしたもの(edge_idx)を返します。<br>
 edge_idxはlist[list[int, int]]で、配列の要素は大きさ2の配列であり、<br>
 [a,b]のときa番目の原子とb番目の原子は隣接してることを表します。
-
-### count_molecules()
+```python3
+edge_index = sf.get_egde_index(cut_off=3.4)
+```
+### count_mols_dict()
 sf内に何の分子が何個存在するかを返します。<br>
 dict[str, int]の形式で返され
 H2O1 : 3 であれば,水分子が3個あることを表します。<br>
-
+```python3
+mols_dict = sf.get_mols_dict(mode="bond_length", bond_length=[[1.2, 2.0],[2.0, 2.3]])
+```
 ### count_bonds()
 sf内に何の結合が何個あるかを返します。<br>
 dict[str, int]の形式で返され、
