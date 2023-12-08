@@ -67,6 +67,10 @@ class ExportFrames(
                 test用 : 出力されるfile名
             exclude_unsuitable_cellsize_frame : bool
                 cutoff x 2 以下のセルサイズを持つフレームを除外するか  
+            exclude_unsuitable_force_frame : bool
+                forceが基準値(reference_force_excluding_frame)より大きいフレームを除外するか
+            reference_force_excluding_frame : float
+                フレームを除外する力の基準値 (exclude_unsuitable_force_frame == True のとき)
         """
         if test_size is not None:
             assert 0.0 <= test_size <= 1.0

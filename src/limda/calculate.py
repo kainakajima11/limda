@@ -366,6 +366,8 @@ class Calculate(
             calc_dirが存在するときに計算を行うか
         mask_info
             input fileにそのまま出力されるmoveやpressの情報
+        omp_num_threads
+            OMP_NUM_THREADSの値
         """
         calc_dir = pathlib.Path(calc_dir)
         if not exist_ok:

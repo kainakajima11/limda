@@ -126,7 +126,7 @@ class ImportFrame(
             Parameters
             ----------
                 para_atom_symbol_list : list   
-                空白区切りの原子の文字列
+                    空白区切りの原子の文字列
 
             Example
             -------
@@ -141,7 +141,7 @@ class ImportFrame(
             Parameter
             ----------
                 file_path: Union[str, Path]
-                carfileのpath
+                    carfileのpath
         """
         input_cell = False # car fileがcellの情報を含んでいるか
         current_row = 0
