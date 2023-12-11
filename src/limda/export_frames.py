@@ -41,9 +41,9 @@ class ExportFrames(
                        test_size: float=None,
                        test_output_dir: str=None,
                        test_output_file_name: str=None,
-                       exclude_unsuitable_cellsize_frame : bool = False,
-                       exclude_unsuitable_force_frame : bool = False,
-                       reference_force_excluding_frame : float = 50.0,
+                       exclude_unsuitable_cellsize_frame : bool = True,
+                       exclude_unsuitable_force_frame : bool = True,
+                       minimum_unsuitable_force : float = 50.0,
                        ):
         """
         allegro用のデータセットを保存する
@@ -68,8 +68,8 @@ class ExportFrames(
             exclude_unsuitable_cellsize_frame : bool
                 cutoff x 2 以下のセルサイズを持つフレームを除外するか  
             exclude_unsuitable_force_frame : bool
-                forceが基準値(reference_force_excluding_frame)より大きいフレームを除外するか
-            reference_force_excluding_frame : float
+                forceが基準値(minimum_unsuitable_force)より大きいフレームを除外するか
+            minimum_unsuitable_force : float
                 フレームを除外する力の基準値 (exclude_unsuitable_force_frame == True のとき)
         """
         if test_size is not None:
@@ -98,8 +98,8 @@ class ExportFrames(
                 continue
             data["pos"] = np.array(self.sf[sf_idx].atoms[["x","y","z"]].values, dtype=np.float32)
             data["force"] = np.array(self.sf[sf_idx].atoms[["fx","fy","fz"]].values, dtype=np.float32)
-            if exclude_unsuitable_force_frame and np.abs(data['force']).max().item() > reference_force_excluding_frame:
-                print(f"Exculuded frame : force(={np.abs(data['force']).max().item()}) is larger than reference value of force(={reference_force_excluding_frame})", flush=True)
+            if exclude_unsuitable_force_frame and np.abs(data['force']).max().item() > minimum_unsuitable_force:
+                print(f"Exculuded frame : force(={np.abs(data['force']).max().item()}) is larger than reference value of force(={minimum_unsuitable_force})", flush=True)
                 continue
             data["atom_types"] = np.array(self.sf[sf_idx].atoms["type"].values)
             data["atom_types"] -= 1

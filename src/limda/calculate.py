@@ -197,43 +197,6 @@ class Calculate(
         optimized_dumppos_path = dumppos_paths[0]
         self.import_dumppos(optimized_dumppos_path)
 #------------------------------------------------------------------------------------------
-# laich_config = {
-#     "Mode": "MD"
-#     "ForceField": "Reaxff",
-#     "XYZFile": "input.rd",
-#     "ParaFile": "para.rd",
-#     "TimeStep": 0.25,
-#     "TotalStep": 10000,
-#     "ObserveStep": 1,
-#     "FileStep": 1000,
-#     "BondStep": 1000,
-#     "SaveRestartStep": 10000,
-#     "NPUGS": 1,
-#     "NNPModelPath": "script_model.pth",
-#     "WEIGHTPATH": './script_model.pth',
-#     "MPIGridX": 1,
-#     "MPIGridY": 1,
-#     "MPIGridZ": 1,
-#     "CUTOFF": 10.0,
-#     "MARGIN": 1.0,
-#     "GhostFactor": 20.0,
-#     # MD Mode
-#     "NNPModelPath": "script_model.pth",
-#     "OMPGridX": 1,
-#     "OMPGridY": 1,
-#     "OMPGridZ": 1,
-#     "ShowMask": 1,
-#     "ReadVelocity": 0,
-#     "Thermo": "Langevin",
-#     "AimTemp": 300.0,
-#     "InitTemp": 300.0,
-#     "FinalTemp": 300.0,
-#     "ThermoFreq": 0.005,
-#     # OPT Mode
-#     "DelR": 0.0001,
-#     "MaxR": 0.1
-# }
-#---------------------------------------------------------------------------------------------
     def packmol(self,
                 sf_list: list,
                 pack_num_list: list[int],
@@ -243,7 +206,7 @@ class Calculate(
                 seed: int=-1,
                 packmol_cmd: str=f"packmol < {'packmol_mixture_comment.inp'}",
                 print_packmol=False,
-                exist_ok = False
+                exist_ok = True
                 ):
         """packmolで原子を詰める
         Parameters

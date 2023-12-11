@@ -335,11 +335,7 @@ class ImportFrame(
         cif_file_path : Union[str, pathlib.Path]
             input cif file path
         """
-        try:
-            from ase.io import read
-        except ImportError as e:
-            print(f"Error importing: {e}")
-
+        from ase.io import read
         # reading cif file using ase
         cifdata = read(cif_file_path)
         # cell

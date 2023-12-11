@@ -24,6 +24,7 @@ if __name__ == "__main__":
     assert args.dir_path is not None, "dir_pathを設定してください"
 
     sfs = SimulationFrames()
-    sfs.import_para_from_str(args.para_str)
+    if args.para_str:
+        sfs.import_para_from_str(args.para_str)
     sfs.import_dumpposes(dir_name=args.dir_path, skip_num=args.skip_num)
     sfs.export_lammps_dumpposes(args.output_file_name)
