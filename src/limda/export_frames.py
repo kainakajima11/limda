@@ -41,9 +41,9 @@ class ExportFrames(
                        test_size: float=None,
                        test_output_dir: str=None,
                        test_output_file_name: str=None,
-                       exclude_unsuitable_cellsize_frame : bool = True,
-                       exclude_unsuitable_force_frame : bool = True,
-                       minimum_unsuitable_force : float = 50.0,
+                       exclude_too_small_cell : bool = True,
+                       exclude_too_large_force : bool = True,
+                       max_allowable_force : float = 50.0,
                        ):
         """
         allegro用のデータセットを保存する
@@ -65,11 +65,11 @@ class ExportFrames(
                 test用 : 出力される場所
             test_output_file_name : str
                 test用 : 出力されるfile名
-            exclude_unsuitable_cellsize_frame : bool
+            exclude_too_small_cell : bool
                 cutoff x 2 以下のセルサイズを持つフレームを除外するか  
-            exclude_unsuitable_force_frame : bool
-                forceが基準値(minimum_unsuitable_force)より大きいフレームを除外するか
-            minimum_unsuitable_force : float
+            exclude_too_large_force : bool
+                forceが基準値(max_allowable_force)より大きいフレームを除外するか
+            max_allowable_force : float
                 フレームを除外する力の基準値 (exclude_unsuitable_force_frame == True のとき)
         """
         if test_size is not None:
@@ -93,13 +93,13 @@ class ExportFrames(
         for sf_idx in range(len(self)):
             data = {}
             data["cell"] = np.array(self.sf[sf_idx].cell, dtype=np.float32)
-            if  exclude_unsuitable_cellsize_frame and np.any(self.sf[sf_idx].cell < 2 * cut_off):
+            if  exclude_too_small_cell and np.any(self.sf[sf_idx].cell < 2 * cut_off):
                 print(f"Exculuded frame : cellsize(={np.min(self.sf[sf_idx].cell)}) is smaller than 2 x cutoff(= {cut_off*2})", flush=True)
                 continue
             data["pos"] = np.array(self.sf[sf_idx].atoms[["x","y","z"]].values, dtype=np.float32)
             data["force"] = np.array(self.sf[sf_idx].atoms[["fx","fy","fz"]].values, dtype=np.float32)
-            if exclude_unsuitable_force_frame and np.abs(data['force']).max().item() > minimum_unsuitable_force:
-                print(f"Exculuded frame : force(={np.abs(data['force']).max().item()}) is larger than reference value of force(={minimum_unsuitable_force})", flush=True)
+            if exclude_too_large_force and np.abs(data['force']).max().item() > max_allowable_force:
+                print(f"Exculuded frame : force(={np.abs(data['force']).max().item()}) is larger than reference value of force(={max_allowable_force})", flush=True)
                 continue
             data["atom_types"] = np.array(self.sf[sf_idx].atoms["type"].values)
             data["atom_types"] -= 1
