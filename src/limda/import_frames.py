@@ -66,7 +66,7 @@ class ImportFrames(
                 continue
 
             if len(spline) == 3 and spline[0] == "POSITION" and spline[1] == "TOTAL-FORCE":
-                if iteration == NELM:
+                if iteration >= NELM:
                     continue
                 sf = SimulationFrame()
                 sf.atom_symbol_to_type = self.atom_symbol_to_type
