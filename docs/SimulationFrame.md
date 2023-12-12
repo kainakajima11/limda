@@ -265,7 +265,7 @@ vaspの計算に必要なPOSCARを作成します。<br>
 sfのデータではなく、CONTCARを指定して、それをPOSCARにします。<br>
 
 ### export_vasp_incar()
-vaspの計算に必要なINCARを作成します。<br>
+vaspの計算に必要なINCARを作成します。
 
 ### export_vasp_kpoints()
 vaspの計算に必要なKPOINTSを作成します。
@@ -278,26 +278,41 @@ vaspの計算に必要なPOTCARを作成します。
 
 ### export_dumppos()
 sfをdump.pos 形式のファイルとして出力します。
-
+```python3
+sf.export_dumppos("showdump.pos") # showdump.pos fileとして出力
+```
 ### export_input()
 sfをinput.rd の形式のファイルとしてを出力します。
-
+```python3
+sf.export_input("input.rd", mask_info = ["#strain - - - - z 1.0"])
+```
+# mask_infoでpressz,move,strainなどの行を追加できる。
 ### export_xyz()
 sfをxyzの形式のファイルとして出力します。
-
+```python3
+sf.export_xyz("a.xyz")
+```
 ### export_file()
 sfを指定したファイル名から形式を判断して、出力します。<br>
 出力できるファイルの形式
 - input file ("input" で始まる)
 - dump.pos file ("dump"で始まる or "pos"で終わる)
 - xyz file ("xyz"で終わる)
-
+```python3
+sf.export_file("showdump.pos") # == sf.export_dumppos()
+sf.export_file("input.rd") # == sf.export_input()
+```
 <a id="anchor6"></a>
 ## Calculate
 [実際のコード](https://github.com/kainakajima11/limda/blob/main/src/limda/calculate.py)
 ### vasp()
 VASPの計算を実行します.<br>
-
+```python3
+sf.vasp(system_name: str="H2O",
+        step_num: int= 10,
+        incar_config=incar_config)
+# H2O_10というディレクトリ内でincar_configの条件でvaspを回す。
+```
 ### laich()
 Laichの計算を実行します。<br>
 
@@ -319,12 +334,30 @@ sf.packmol(sf_list=[sf_h2o],
 ```
 ### lax()
 laxの計算を実行します.<br>
-
+```python3
+sf.lax(calc_dir = "lax_calc" # 計算が行われるdir
+       lax_cmd = "lax" # lax fileがあるpath
+       lax_config = None # config.rdに必要な内容をdictで渡す.
+       print_lax = False,  # out fileを出力するか
+       exist_ok = False, # calc_dirが存在するときに実行するか
+       mask_info = "" # input.rdに書かれる#pressz、#moveなどの情報
+       # ex. mask_info = [#pressz 1 1 0", "#move 2 x 100 - - - -"] # mask 1にpress, mask 2にxmove
+       )
+```
 ### allegro()
 sfに入っている原子の座標などから、かかる力とポテンシャルエネルギーを予測します.<br>
 力はatomsの["pred_x", "pred_y", "pred_z"]に入ります。<br>
 ポテンシャルエネルギーはpred_potential_energyに入ります。<br>
-
+Virialテンソルの値はpred_virial_tensorに入ります。3 x 3 <br>
+```python3
+sf.allegro(
+    cut_off = 4.0, #cutoff
+    device = "cuda", #device, 'cpu' or 'cuda'
+    allegro_model = torch.jit.load("allegro_frozen_800000.pth")
+    # frozenされたAllegroを読み込んだモデル # pathではない
+    flag_calc_virial = False, # virialを推論するか
+    )
+```
 <a id="anchor7"></a>
 ## AnalyzeFrame
 [実際のコード](https://github.com/kainakajima11/limda/blob/main/src/limda/analyse_frame.py)
@@ -333,18 +366,28 @@ sfに入っている原子の座標などから、かかる力とポテンシャ
 sfに対する、隣接リストを作成し、返します。<br>
 neighor_listの形式はlist[list[int]です.<br>
 配列のi番目の要素はi番目の原子と隣接する原子のidxの配列です.<br>
-原子のタイプごとに長さを指定して結合リストを作ることもできます.<br>
-
-### get_edge_index()
-隣接リストをallegroのデータセットの形式にしたもの(edge_index)を返します。<br>
-edge_indexはlist[list[int, int]]で、配列の要素は大きさ2の配列であり、<br>
+mode = "bond_length"ならば元素種類ごとに長さを指定する. <br>
+mode = "cut_off"ならばfloat型の一つの値で長さを定義.
+```python3
+# bond_length # 2元素系
+neighbor_list = sf.get_neighbor_list(mode="bond_length", bond_length=[[1.2, 2.0],[2.0, 2.3]])
+# cut_off
+neighbor_list = sf.get_neighbor_list(mode="cut_off", cut_off=3.4)
+```
+### get_edge_idx()
+隣接リストをallegroのデータセットの形式にしたもの(edge_idx)を返します。<br>
+edge_idxはlist[list[int, int]]で、配列の要素は大きさ2の配列であり、<br>
 [a,b]のときa番目の原子とb番目の原子は隣接してることを表します。
-
-### count_molecules()
+```python3
+edge_index = sf.get_egde_index(cut_off=3.4)
+```
+### count_mols_dict()
 sf内に何の分子が何個存在するかを返します。<br>
 dict[str, int]の形式で返され
 H2O1 : 3 であれば,水分子が3個あることを表します。<br>
-
+```python3
+mols_dict = sf.get_mols_dict(mode="bond_length", bond_length=[[1.2, 2.0],[2.0, 2.3]])
+```
 ### count_bonds()
 sf内に何の結合が何個あるかを返します。<br>
 dict[str, int]の形式で返され、
