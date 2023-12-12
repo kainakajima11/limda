@@ -9,7 +9,7 @@ class AnalyzeFrame:
     def __init__(self):
         pass
 
-    # ---------------------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------
     def get_neighbor_list(
         self, mode: str, cut_off: float = None, bond_length: list[list[float]] = None
     ) -> list[list[int]]:
@@ -59,7 +59,7 @@ class AnalyzeFrame:
             cell=self.cell,
         )
         return neighbor_list
-
+#----------------------------------------------------------------------------------------
     def get_mols_list(
         self,
         mode: str = "bond_length",
@@ -87,7 +87,7 @@ class AnalyzeFrame:
             mode=mode, cut_off=cut_off, bond_length=bond_length
         )
         return get_mols_list_using_cython(neighbor_list, self.get_total_atoms())
-
+#----------------------------------------------------------------------------------------
     def get_mols_dict(
         self,
         mode: str = "bond_length",
@@ -138,7 +138,7 @@ class AnalyzeFrame:
             mols_dict[mol_str] = mols
 
         return mols_dict
-
+#----------------------------------------------------------------------------------------
     def count_mols(
         self,
         mode: str = "bond_length",
@@ -188,7 +188,7 @@ class AnalyzeFrame:
             mols_count[mol_str] = count
 
         return mols_count
-
+#----------------------------------------------------------------------------------------
     def count_bonds(
         self,
         mode: str = "bond_length",
@@ -231,7 +231,7 @@ class AnalyzeFrame:
                     atom_j_type - 1
                 ]
         return count_bonds_dict
-
+#----------------------------------------------------------------------------------------
     def get_edge_index(self, cut_off: float) -> list[list[int]]:
         """allegroのedge_indexを作成します。
         edge_index : list[list[int]]でshapeは[2, num_edges]
