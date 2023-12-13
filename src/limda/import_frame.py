@@ -1,9 +1,10 @@
 import pandas as pd
 import numpy as np
-from typing import Union
+from typing import Union, Any
 import pathlib 
 import re
 import sys
+import yaml
 import limda.const as C
 
 class ImportFrame(
@@ -18,9 +19,18 @@ class ImportFrame(
     atom_type_to_symbol : dict[int, str]
     atom_type_to_mass : dict[int, float]
     step_num: int
+    limda_default: dict[str, Any]
 #----------------------
     def __init__(self):
         pass
+#----------------------------------
+    def import_limda_default(self):
+        """limdaのデフォルトファイル(.limda.yaml)を読み込む
+        """
+        limda_dot_path = pathlib.Path.home() / ".limda.yaml"
+        if pathlib.Path.exists(limda_dot_path):
+            with open(limda_dot_path, "r") as f:
+                self.limda_default = yaml.safe_load(f)
 #-----------------------------------------------------------------------   
     def import_input(self, file_path: Union[str, pathlib.Path]) -> None: #ky
         """Laichのinputファイルを読み込み、
@@ -94,6 +104,9 @@ class ImportFrame(
             の場合、Cの原子のタイプが1, Hの原子のタイプが2, Oの原子のタイプが3, Nの原子のタイプが4となる
 
         """ 
+        if len(atom_symbol_list) == 0:
+            assert "para" in self.limda_default
+            atom_symbol_list = self.limda_default["para"]
         atom_symbol_to_type = {}
         type_list = [i for i in range(1, len(atom_symbol_list)+1)]
         atom_symbol_to_type = {key: val for key, val in zip(atom_symbol_list, type_list)}
@@ -113,7 +126,7 @@ class ImportFrame(
             Parameters
             ----------
                 para_atom_symbol_list : list   
-                空白区切りの原子の文字列
+                    空白区切りの原子の文字列
 
             Example
             -------
@@ -128,14 +141,32 @@ class ImportFrame(
             Parameter
             ----------
                 file_path: Union[str, Path]
-                carfileのpath
+                    carfileのpath
         """
-        car_df = pd.read_csv(file_path, names=['symbol+id', 'x', 'y', 'z', 'XXXX', '1', 'xx', 'symbol', '0.000'],
-                         usecols=['x', 'y', 'z', 'symbol'],
-                         skiprows=4,  sep='\s+')
-        self.cell = np.float_(car_df.iloc[0, 0:3]) # cell size部分を抜き取る
-        car_df = car_df[1:].dropna() 
+        input_cell = False # car fileがcellの情報を含んでいるか
+        current_row = 0
+        with open(file_path, 'r') as f:
+            while True:
+                spline = f.readline().split()
+                current_row += 1
+                if len(spline) == 0:
+                    continue
+                if spline[0] == "PBC=ON": # 周期境界がある
+                    input_cell = True
+                if spline[0] == "!DATE":
+                    break
+            if input_cell:
+                spline = f.readline().split()
+                self.cell = np.float_(spline[1:4])
+                current_row += 1
+        car_df = pd.read_csv(file_path,
+                             names = ['symbol+id', 'x', 'y', 'z', 'XXXX', '1', 'xx', 'symbol', '0.000'],
+                             usecols = ['x', 'y', 'z', "symbol"],
+                             skiprows = current_row,
+                             sep = "\s+")
+        car_df = car_df.dropna() 
         car_df.insert(0, 'type', car_df['symbol'].map(self.atom_symbol_to_type)) # type列を作成
+        car_df.index += 1
         self.atoms = car_df[['type', 'x', 'y', 'z']] 
 #-------------------------------------------------------------------------
     def import_dumppos(self, file_path: Union[str, pathlib.Path]) -> None: 
@@ -283,7 +314,7 @@ class ImportFrame(
         import_filename = pathlib.Path(import_filename)
         import_file_basename = import_filename.name
 
-        if import_file_basename.startswith('input'):
+        if "input" in import_file_basename:
             self.import_input(import_filename)
         elif import_file_basename.startswith("dump") or import_file_basename.endswith("pos"):
             self.import_dumppos(import_filename)
@@ -293,4 +324,23 @@ class ImportFrame(
             self.import_car(import_filename)
         else:
             raise RuntimeError("適切なfile名にしてください.")
-            
+#----------------------------------------------------------------------------------------------
+    def import_cif(self, cif_file_path: Union[str, pathlib.Path]):
+        """
+        cif fileを読み込み
+        cell, atoms, を更新する.
+
+        Augument
+        ---------
+        cif_file_path : Union[str, pathlib.Path]
+            input cif file path
+        """
+        from ase.io import read
+        # reading cif file using ase
+        cifdata = read(cif_file_path)
+        # cell
+        self.cell = cifdata.cell.array.diagonal().copy()
+        # atoms position
+        self.atoms = pd.DataFrame(cifdata.get_positions(), columns=["x", "y", "z"])
+        # atoms type
+        self.atoms["type"] = np.array([self.atom_symbol_to_type[symbol] for symbol in cifdata.get_chemical_symbols()])             

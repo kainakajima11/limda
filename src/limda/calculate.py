@@ -4,8 +4,9 @@ from tqdm import tqdm
 import subprocess
 import os
 import time
-from typing import Union
+from typing import Union, Dict
 import torch
+import shutil
 
 try:
     from ase.build import molecule
@@ -196,43 +197,6 @@ class Calculate(
         optimized_dumppos_path = dumppos_paths[0]
         self.import_dumppos(optimized_dumppos_path)
 #------------------------------------------------------------------------------------------
-# laich_config = {
-#     "Mode": "MD"
-#     "ForceField": "Reaxff",
-#     "XYZFile": "input.rd",
-#     "ParaFile": "para.rd",
-#     "TimeStep": 0.25,
-#     "TotalStep": 10000,
-#     "ObserveStep": 1,
-#     "FileStep": 1000,
-#     "BondStep": 1000,
-#     "SaveRestartStep": 10000,
-#     "NPUGS": 1,
-#     "NNPModelPath": "script_model.pth",
-#     "WEIGHTPATH": './script_model.pth',
-#     "MPIGridX": 1,
-#     "MPIGridY": 1,
-#     "MPIGridZ": 1,
-#     "CUTOFF": 10.0,
-#     "MARGIN": 1.0,
-#     "GhostFactor": 20.0,
-#     # MD Mode
-#     "NNPModelPath": "script_model.pth",
-#     "OMPGridX": 1,
-#     "OMPGridY": 1,
-#     "OMPGridZ": 1,
-#     "ShowMask": 1,
-#     "ReadVelocity": 0,
-#     "Thermo": "Langevin",
-#     "AimTemp": 300.0,
-#     "InitTemp": 300.0,
-#     "FinalTemp": 300.0,
-#     "ThermoFreq": 0.005,
-#     # OPT Mode
-#     "DelR": 0.0001,
-#     "MaxR": 0.1
-# }
-#---------------------------------------------------------------------------------------------
     def packmol(self,
                 sf_list: list,
                 pack_num_list: list[int],
@@ -241,7 +205,8 @@ class Calculate(
                 xyz_condition: list[float]=None,
                 seed: int=-1,
                 packmol_cmd: str=f"packmol < {'packmol_mixture_comment.inp'}",
-                print_packmol=False
+                print_packmol=False,
+                exist_ok = True
                 ):
         """packmolで原子を詰める
         Parameters
@@ -284,8 +249,10 @@ class Calculate(
         """
         if xyz_condition is not None:
             assert len(xyz_condition) == len(sf_list), "sf_listとxyz_conditonを同じ長さにしてください."
-        
+
         packmol_tmp_dir = pathlib.Path(packmol_tmp_dir)
+        if packmol_tmp_dir.exists() and exist_ok:
+            shutil.rmtree(packmol_tmp_dir)
         packmol_tmp_dir.mkdir()
 
         first_line = [
@@ -362,6 +329,8 @@ class Calculate(
             calc_dirが存在するときに計算を行うか
         mask_info
             input fileにそのまま出力されるmoveやpressの情報
+        omp_num_threads
+            OMP_NUM_THREADSの値
         """
         calc_dir = pathlib.Path(calc_dir)
         if not exist_ok:
@@ -411,7 +380,7 @@ class Calculate(
                 device: Union[str, torch.DeviceObjType],
                 allegro_model: torch.jit._script.RecursiveScriptModule,
                 flag_calc_virial = False,
-                ) -> None:
+                ) -> Dict[str, torch.Tensor]:
         """Allegroを使って、sfに入っている原子の座標に対して推論を行い、
         ポテンシャルエネルギーと原子に働く力を計算する
         Allegroによって予測されたポテンシャルエネルギーはsf.pred_potential_energyに入る
@@ -437,7 +406,7 @@ class Calculate(
         cut_off = np.array(cut_off, dtype=np.float32)
 
         edge_index = [[],[]]
-        edge_index = self.get_edge_idx(cut_off=cut_off)
+        edge_index = self.get_edge_index(cut_off=cut_off)
         edge_index = np.array(edge_index)
 
         pos_tensor = torch.tensor(pos, device=device)
@@ -461,3 +430,4 @@ class Calculate(
         if flag_calc_virial:
             self.pred_virial_tensor = output['virial'].cpu().detach().numpy()
 
+        return output

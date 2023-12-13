@@ -4,17 +4,18 @@ import random
 from copy import deepcopy
 import sys
 import os
+from typing import Any
 from .import_frame import ImportFrame
 from .export_frame import ExportFrame
 from .calculate import Calculate
-from .analize_frame import AnalizeFrame
+from .analyze_frame import AnalyzeFrame
 from . import const as C
 
 class SimulationFrame(
     ImportFrame,
     ExportFrame,
     Calculate,
-    AnalizeFrame,
+    AnalyzeFrame,
 ):
     """シミュレーションしたデータを読み込み、書き込み、分析するためのクラス
     一つのフレームを扱う
@@ -22,7 +23,7 @@ class SimulationFrame(
     Attributes
     ----------
     atoms : pd.DataFrame
-        原子のtype, 座標, 速度, 加速度, 力, type, 電荷などを含むpandasのDataFrame
+        原子のtype, 座標, 速度, 加速度, 力, type, NNPによる力の推論値などを含むpandasのDataFrame
         原子のタイプは1-indexed
     cell : np.array
         cellの大きさが入ったarray, shape:[3]
@@ -35,8 +36,14 @@ class SimulationFrame(
         原子のtypeをkey, 原子の質量(g/mol)をvalueとするdict
     step_num: int
         MDした時のこのSimulationFrameが持つステップ数
-    potential_energy: int
+    potential_energy: float
         このフレームが持つポテンシャルエネルギー, 単位はeV
+    pred_potential_energy: float
+        NNPにより推論したときのポテンシャルエネルギー,単位はeV
+    virial_tensor : np.array[float] 
+        このフレームの持つvirialテンソル, 単位はeV, shape:(3,3)
+    pred_virial_tensor : np.array[float] 
+        NNPにより推論したときのvirialテンソル, 単位はeV, shape:(3,3)
     """
     atoms: pd.DataFrame
     cell: np.ndarray[float] # shape:[3]
@@ -48,6 +55,7 @@ class SimulationFrame(
     virial_tensor: np.ndarray[float]
     pred_potential_energy: float
     pred_virial_tensor: np.ndarray[float]
+    limda_default: dict[str, Any]
 #--------------------------------------
     def __init__(self, para: str = ""):
         self.atoms = None
@@ -60,8 +68,8 @@ class SimulationFrame(
         self.virial_tensor = None
         self.pred_potential_energy = None
         self.pred_virial_tensor = None
-        if para:
-            self.import_para_from_str(para)
+        self.import_limda_default()
+        self.import_para_from_str(para)
 #-------------------------------------
     def __getitem__(self, key) -> pd.DataFrame:
         """
@@ -162,7 +170,7 @@ class SimulationFrame(
             if reindex:
                 self.atoms.reset_index(drop=True, inplace=True)
 #-------------------------------------------------------------------------------------------
-    def density(self, x_max=None, x_min=None, y_max=None, y_min=None,z_max=None,z_min=None): #k
+    def density(self, x_min=None, x_max=None, y_min=None, y_max=None,z_min=None,z_max=None):
         """セル内の密度を計算する関数
         Parameters
         ----------
@@ -185,14 +193,17 @@ class SimulationFrame(
         """
         x_mx = x_max if x_max is not None else self.cell[0]
         x_mn = x_min if x_min is not None else 0
+        assert 0 <= x_mn and x_mx <= self.cell[0], 'set correct x_max and x_min'
         assert x_mx >= x_mn, 'set correct x_max and x_min'
 
         y_mx = y_max if y_max is not None else self.cell[1]
         y_mn = y_min if y_min is not None else 0
+        assert 0 <= y_mn and y_mx <= self.cell[1], 'set correct y_max and y_min'
         assert y_mx >= y_mn, 'set correct y_max and y_min'
 
         z_mx = z_max if z_max is not None else self.cell[2]
         z_mn = z_min if z_min is not None else 0
+        assert 0 <= z_mn and z_mx <= self.cell[2], 'set correct z_max and z_min'
         assert z_mx >= z_mn, 'set correct z_max and z_min'
 
         # 体積(cm^3)

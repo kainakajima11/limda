@@ -4,15 +4,17 @@ import pathlib
 import random
 import os
 from tqdm import tqdm, trange
-from typing import Union
+from typing import Union, Any
 import torch
 from .import_frames import ImportFrames
 from .export_frames import ExportFrames
 from .SimulationFrame import SimulationFrame
+from .analyze_frames import AnalyzeFrames
 
 class SimulationFrames(
     ImportFrames,
-    ExportFrames
+    ExportFrames,
+    AnalyzeFrames,
 ):
     """シミュレーションしたデータを読み込み、書き込み、分析するためのクラス
     複数のフレームを同時に扱う
@@ -33,14 +35,15 @@ class SimulationFrames(
     atom_symbol_to_type: dict[str, int]
     atom_type_to_symbol : dict[int, str]
     atom_type_to_mass : dict[int, float]
+    limda_default: dict[str, Any]
 #----------------------
     def __init__(self, para: str=""):
         self.sf:list[SimulationFrame] = []
         self.atom_symbol_to_type: dict[str, int] = None
         self.atom_type_to_symbol : dict[int, str] = None
         self.atom_type_to_mass : dict[int, float] = None
-        if para:
-            self.import_para_from_str(para)
+        self.import_limda_default()
+        self.import_para_from_str(para)
 #---------------------
     def __len__(self):
         """
@@ -258,3 +261,49 @@ class SimulationFrames(
             })
 
         return pot_and_pred_pot
+#----------------------------------------------------------------------------------------------    
+    def concat_virial_and_pred_virial(self, onlydiag : bool = False) -> pd.DataFrame:
+        """
+        sfsにある構造の,virial_tensorとpred_virial_tensorをまとめたdfを作成する。
+        Augument
+        --------
+            onlydiag : bool = False
+                対角成分のみのdfを作成するか
+        Return
+        ------
+            stress_and_pred_stress : pd.DataFrame
+                columnは["stress", "pred_stress"]、行は同じフレームに対応する
+        Note
+        ----
+            virial_tensor, pred_virial_tensorの単位はeVだが、
+            返されるdfはstressでeV/Å^3の次元なことに注意
+        """
+        stress_list = []
+        pred_stress_list = []
+        for frame_idx in range(len(self.sf)):
+            volume = self.sf[frame_idx].cell[0] * self.sf[frame_idx].cell[1] * self.sf[frame_idx].cell[2]
+            for i in range(3):
+                stress_list.append(self.sf[frame_idx].virial_tensor[i][i] / volume)
+                pred_stress_list.append(self.sf[frame_idx].pred_virial_tensor[i][i] / volume)
+            if not onlydiag:
+                for i in range(3):
+                    stress_list.append(self.sf[frame_idx].virial_tensor[i][(i+1)%3] / volume)
+                    pred_stress_list.append(self.sf[frame_idx].pred_virial_tensor[i][(i+1)%3] / volume)
+
+        stress_and_pred_stress = pd.DataFrame({
+                "stress":stress_list,
+                "pred_stress":pred_stress_list
+            })
+        return stress_and_pred_stress
+#---------------------------------------------------------------------------------------------- 
+    def get_step_nums(self) -> list[int]:
+        """ステップ数のリストを作る
+        """
+        step_nums = []
+        for frame_idx in range(len(self.sf)):
+            if self.sf[frame_idx] is not None:
+                step_num = self.sf[frame_idx].step_num
+            else:
+                step_num = frame_idx
+            step_nums.append(step_num)
+        return step_nums

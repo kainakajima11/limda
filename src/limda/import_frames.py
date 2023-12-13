@@ -1,9 +1,10 @@
 import pandas as pd
 import numpy as np
 import pickle
-from typing import Union
+from typing import Union, Any
 import pathlib
 from typing import Tuple
+import yaml
 from tqdm import tqdm, trange
 from . import const as C
 from .import_frame import ImportFrame
@@ -19,14 +20,24 @@ class ImportFrames(
 #-----------------------
     def __init__(self):
         pass
+#----------------------------------
+    def import_limda_default(self):
+        """limdaのデフォルトファイル(.limda.yaml)を読み込む
+        """
+        limda_dot_path = pathlib.Path.home() / ".limda.yaml"
+        if pathlib.Path.exists(limda_dot_path):
+            with open(limda_dot_path, "r") as f:
+                self.limda_default = yaml.safe_load(f)
 #----------------------------------------------------------------------------------------------
-    def import_vasp(self, calc_directory: Union[str, pathlib.Path]):
+    def import_vasp(self, calc_directory: Union[str, pathlib.Path], NELM : int = None):
         """vaspで計算した第一原理MDファイルから、
         原子の座標, cellの大きさ, 原子にかかる力, ポテンシャルエネルギーを読み込む
         Parameters
         ----------
             calc_directory: str
                 vaspで計算したディレクトリ
+            NELM: int
+                最大のIteration回数, 最大のiteration回数に達したframeはimportしない
         Note
         ----
             読み込んだデータ
@@ -34,8 +45,13 @@ class ImportFrames(
                 simulation_frames[step_idx][['fx', 'fy', 'fz']] : 原子にかかる力
                 simulation_frames[step_idx].potential_energy : ポテンシャルエネルギー
                 simulation_frames[step_idx].cell : セルサイズ
-                simulation_frames[step_idx].virial_tensor : ストレステンソル
+                simulation_frames[step_idx].virial_tensor : virialテンソル
         """
+        if NELM is None:
+            if "NELM" in self.limda_default:
+                    NELM = self.limda_default["NELM"]
+            else:
+                NELM = 1e6
         calc_directory = pathlib.Path(calc_directory)
         first_sf = SimulationFrame()
         first_sf.atom_symbol_to_type = self.atom_symbol_to_type
@@ -50,6 +66,8 @@ class ImportFrames(
                 continue
 
             if len(spline) == 3 and spline[0] == "POSITION" and spline[1] == "TOTAL-FORCE":
+                if iteration >= NELM:
+                    continue
                 sf = SimulationFrame()
                 sf.atom_symbol_to_type = self.atom_symbol_to_type
                 sf.atom_type_to_mass = self.atom_type_to_mass
@@ -91,7 +109,10 @@ class ImportFrames(
 
             if len(splines[line_idx]) == 7 and splines[line_idx][0] == "Total":
                 virial_tensor_idx = line_idx
-                    
+
+            if len(splines[line_idx]) == 5 and splines[line_idx][0] == "---------------------------------------" \
+                and splines[line_idx][1] == "Iteration":
+                iteration = int(splines[line_idx][3][:-1])
 #---------------------------------------------------------------------------------------------------
     def import_dumpposes(self, dir_name:Union[str, pathlib.Path]=None, step_nums:list[int]=None, skip_num: int=None):
         """Laichで計算したdumpposを複数読み込む
@@ -127,8 +148,8 @@ class ImportFrames(
             step_nums = step_nums[::skip_num]
 
         self.sf = [SimulationFrame() for _ in range(len(step_nums))]
-
-        for step_idx, step_num in enumerate(tqdm(step_nums)):
+        
+        for step_idx, step_num in enumerate(tqdm(step_nums, desc='[importing dumpposes]')):
             self.sf[step_idx].step_num = step_num
             self.sf[step_idx].atom_symbol_to_type = self.atom_symbol_to_type
             self.sf[step_idx].atom_type_to_mass = self.atom_type_to_mass
@@ -148,6 +169,9 @@ class ImportFrames(
             の場合、Cの原子のタイプが1, Hの原子のタイプが2, Oの原子のタイプが3, Nの原子のタイプが4となる
 
         """ 
+        if len(atom_symbol_list) == 0:
+            assert "para" in self.limda_default
+            atom_symbol_list = self.limda_default["para"]
         atom_symbol_to_type = {}
         type_list = [i for i in range(1, len(atom_symbol_list)+1)]
         atom_symbol_to_type = {key: val for key, val in zip(atom_symbol_list, type_list)}
@@ -201,6 +225,7 @@ class ImportFrames(
             sf.atoms = pd.DataFrame(frame["atom_types"] + 1, columns=["type"])
             sf.atoms[["x", "y", "z"]] = pd.DataFrame(frame["pos"])
             sf.atoms[["fx", "fy", "fz"]] = pd.DataFrame(frame["force"])
+            sf.virial_tensor = frame["virial"]
             self.sf.append(sf)
 
         return frames
