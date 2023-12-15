@@ -204,9 +204,9 @@ class Calculate(
                 packmol_tmp_dir: Union[str,pathlib.Path]="./packmol_tmp",
                 xyz_condition: list[float]=None,
                 seed: int=-1,
-                packmol_cmd: str=f"packmol < {'packmol_mixture_comment.inp'}",
-                print_packmol=False,
-                exist_ok = True
+                packmol_cmd: str="packmol",
+                print_packmol: bool=False,
+                exist_ok: bool=True
                 ):
         """packmolで原子を詰める
         Parameters
@@ -244,16 +244,14 @@ class Calculate(
         ----
             周期境界条件の場合は端まで詰めると計算が回らなくなるので注意.
             境界には間を開けることを推奨
-
-            この関数を使うには、$ packmol のみでコマンドが使えるようにパスを通しておく必要がある
         """
         if xyz_condition is not None:
             assert len(xyz_condition) == len(sf_list), "sf_listとxyz_conditonを同じ長さにしてください."
 
         packmol_tmp_dir = pathlib.Path(packmol_tmp_dir)
-        if packmol_tmp_dir.exists() and exist_ok:
-            shutil.rmtree(packmol_tmp_dir)
-        packmol_tmp_dir.mkdir()
+        if packmol_tmp_dir.exists() and not exist_ok:
+            raise RuntimeError(f"packmol_tmp_dir ({packmol_tmp_dir}) exists")
+        packmol_tmp_dir.mkdir(parents=True, exist_ok=exist_ok)
 
         first_line = [
             f"tolerance {tolerance}\n",
@@ -287,16 +285,16 @@ class Calculate(
         # export xyz file
         if self.atoms is not None and self.get_total_atoms() >= 1:
             self.export_xyz(packmol_tmp_dir / "this_sf.xyz", structure_name="this_sf")
-        print(sf_list)
+
         for frame_idx in range(len(sf_list)):
             sf_list[frame_idx].export_xyz(packmol_tmp_dir / f"sf_idx_{frame_idx}.xyz",
                                           structure_name=f"sf_idx_{frame_idx}")
         
         # run packmol
         if print_packmol:
-            p = subprocess.Popen(packmol_cmd, cwd=packmol_tmp_dir, shell=True, )
+            p = subprocess.Popen(f"{packmol_cmd} < packmol_mixture_comment.inp", cwd=packmol_tmp_dir, shell=True, )
         else:
-            p = subprocess.Popen(packmol_cmd, cwd=packmol_tmp_dir, shell=True,
+            p = subprocess.Popen(f"{packmol_cmd} < packmol_mixture_comment.inp", cwd=packmol_tmp_dir, shell=True,
                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         p.wait()
@@ -314,7 +312,7 @@ class Calculate(
             mask_info: list[str] = [],
             omp_num_threads :int = 1):
         """
-        laxでMDを実行する.
+        laxを実行する.
         Parameters
         ----------
         calc_dir
@@ -333,9 +331,9 @@ class Calculate(
             OMP_NUM_THREADSの値
         """
         calc_dir = pathlib.Path(calc_dir)
-        if not exist_ok:
-            assert not calc_dir.exists(), "calc_dir already exists."
-        calc_dir.mkdir()
+        if calc_dir.exists() and not exist_ok:
+            raise RuntimeError(f"calc_dir ({calc_dir}) exists")
+        calc_dir.mkdir(parents=True, exist_ok=exist_ok)
         # input
         input_file_path: pathlib.Path = calc_dir / "input.rd"
         self.export_input(input_file_path, mask_info)
@@ -344,9 +342,13 @@ class Calculate(
         with open(config_file_path, "w") as f:
             for key in lax_config.keys():
                 f.write(f"{key} {lax_config[key]}\n")
-        
-        assert ("MPIGridX" in lax_config) and ("MPIGridY" in lax_config) and ("MPIGridZ" in lax_config)
-        num_process = lax_config["MPIGridX"] * lax_config["MPIGridY"] * lax_config["MPIGridZ"]
+        if "MPIGridX" not in lax_config:
+            lax_config["MPIGridX"] = 1
+        if "MPIGridY" not in lax_config:
+            lax_config["MPIGridY"] = 1
+        if "MPIGridZ" not in lax_config:
+            lax_config["MPIGridZ"] = 1
+        num_process = int(lax_config["MPIGridX"]) * int(lax_config["MPIGridY"]) * int(lax_config["MPIGridZ"])
         assert num_process%num_nodes == 0, "Invalid num_nodes"
 
         assert omp_num_threads >= 1, "omp_num_threads must be an integer greater than or equal to 1"
@@ -356,7 +358,7 @@ class Calculate(
         if place == "kbox":
             cmd = f"mpiexec.hydra -np {num_process} {lax_cmd} < /dev/null >& out"
         elif place.upper() == "MASAMUNE":
-            cmd = f'aprun -n {num_process} -N {int(num_process / num_nodes)} -j 1 {lax_cmd} > stdout'
+            cmd = f'aprun -n {num_process} -N {int(num_process / num_nodes)} -j 1 {lax_cmd} > out'
             
         lax_process = subprocess.Popen(cmd, cwd = calc_dir, shell = True)
         time.sleep(5)
