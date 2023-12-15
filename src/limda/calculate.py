@@ -155,9 +155,9 @@ class Calculate(
             exist_ok: bool
         """
         calc_dir = pathlib.Path(calc_dir)
-        if not exist_ok:
-            assert not calc_dir.exists(), "calc_dir exists."
-        calc_dir.mkdir()
+        if calc_dir.exists() and not exist_ok:
+            raise RuntimeError(f"calc_dir ({calc_dir}) exists")
+        calc_dir.mkdir(parents=True, exist_ok=exist_ok)
 
         if para_file_path is not None:
             para_file_path = pathlib.Path(para_file_path)
