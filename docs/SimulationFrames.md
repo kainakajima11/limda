@@ -1,7 +1,12 @@
 # SimulationFrames (sfs)
 sfsについての簡単な説明です。<br>
 詳しい内容は実際のコードやdocstringを見て下さい。
-
+```python3
+from limda import SimulationFrames # import
+sfs = SimulationFrames() # define sfs
+sfs.import_dumpposes("/nfshome17/knakajima/sfstest") # 複数のframeをinput
+# /nfshome17/knakajima/sfstest には dump.pos.0 dump.pos.100 dump.pos.200 がある.
+```
 ## 目次
 - [変数](#anchor1)<br>
 - [メソッド](#anchor2)
@@ -10,14 +15,26 @@ sfsについての簡単な説明です。<br>
   - [ExportFrames](#anchor5)
 <a id="anchor1"></a>
 # 変数 
-### sf
-SimulationFrameのlist
-### atom_symbol_to_type
+## sf
+sfsが何個のフレームを持つか, SimulationFrameのlist
+## atom_symbol_to_type
 キーを元素記号、値をtypeとするdict
+```python3
+print(sfs.atom_symbol_to_type)
+# {'Cr': 1, 'Mn': 2, 'Fe': 3, 'Co': 4, 'Ni': 5, 'H': 6, 'O': 7}
+```
 ### atom_type_to_symbol
 キーをtype、値を原子の質量とするdict
+```python3
+print(sfs.atom_type_to_symbol)
+# {1: 'Cr', 2: 'Mn', 3: 'Fe', 4: 'Co', 5: 'Ni', 6: 'H', 7: 'O'}
+```
 ### atom_type_to_mass
 キーをtype、値を原子の質量とするdict
+```python3
+print(sfs.atom_type_to_mass)
+# {1: 51.9961, 2: 54.938045, 3: 55.845, 4: 58.933195, 5: 58.6934, 6: 1.00794, 7: 15.9994}
+```
 <a id="anchor2"></a>
 # メソッド
 <a id="anchor3"></a>
@@ -31,18 +48,41 @@ sfs.sf[step数]と同じ<br>
 
 ### shuffle_sfs
 sfs.sfをシャッフルする。<br>
-
+```python3
+for frame_i in sfs.sf:
+    print(frame_i.step_num) # 0 100 200
+sfs.shuffle_sfs()
+for frame_i in sfs.sf:
+    print(frame_i.step_num) # 100 200 0
+```
 ### concat_sfs
 sfsのlistを引数とし、それらを結合する.
-
+```python3
+sfs = SimulationFrames()
+sfs_1 = SimulationFrames()
+sfs_1.import_dumpposes("/nfshome17/knakajima/work/md/npt_test/sfstest")
+sfs_2 = SimulationFrames()
+sfs_2.import_dumpposes("/nfshome17/knakajima/work/md/npt_test/sfstest")
+print(len(sfs_1), len(sfs_2)) # 3 3
+sfs.concat_sfs([sfs_1, sfs_2])
+print(len(sfs)) # 6
+```
 ### split_sfs_specified_list_size
 sfsを複数のsfsに分割する。何分割するかを指定.<br>
 返り値として分割されたsfsのリストが得られる。<br>
-
+```python3
+# len(sfs) == 6
+sfs_list = sfs.split_sfs_specified_list_size(3) # 3つのsfsに分割
+print(len(sfs_list[0]), len(sfs_list[1]), len(sfs_list[2])) # 2 2 2 
+```
 ### split_sfs
 sfsを複数のsfsに分割する。一つのsfs.sfの大きさを指定。<br>
 返り値として分割されたsfsのリストが得られる。<br>
-
+```python3
+# len(sfs) == 6
+sfs_list = sfs.split_sfs(3) # 1つのsfsの大きさが3になるように分割
+print(len(sfs_list[0]), len(sfs_list[1])) # 3 3 
+```
 ### allegro
 allegroを用いて、sfs.sfそれぞれのポテンシャルエネルギー･力･virialテンソルを推論する.<br>
 sfs.sf[].pred_potential_energyにポテンシャルエネルギーが、sfs.sf[].loc[:, ["pred_fx", "pred_fy", "pred_fz"]]に力が、sfs.sf[].pred_virial_tensorにvirialテンソルが入る。
