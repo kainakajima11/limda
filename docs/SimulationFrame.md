@@ -297,72 +297,117 @@ sf.import_cif(""/nfshome17/knakajima/work/Cr.cif")
 ```
 
 <a id="anchor5"></a>
-## ExportFrame
+# ExportFrame
 主にsfのデータをファイルに出力するメソッドが入っています。<br>
 [実際のコード](https://github.com/kainakajima11/limda/blob/main/src/limda/export_frame.py)
 
-### export_vasp_poscar()
+## export_vasp_poscar()
 vaspの計算に必要なPOSCARを作成します。<br>
-sfのデータが使われます。
-
-### export_vasp_poscar_from_contcar()
+```python3
+sf.export_vasp_poscar(ofn = "POSCAR",    # 出力されるfileのpath
+                      comment = "",      # 1行目にかかれるコメント
+                      scaling_factor = 1.0)   # 参照vasp wiki
+```
+## export_vasp_poscar_from_contcar()
 vaspの計算に必要なPOSCARを作成します。<br>
-sfのデータではなく、CONTCARを指定して、それをPOSCARにします。<br>
-
+sfのデータではなくCONTCARを指定してそれをPOSCARにします。<br>
+座標と速度を引き継ぐことができます.
+```python3
+sf.export_vasp_poscar_from_contcar(ofn = "POSCAR",    # 出力されるfileのpath
+                                   contcar_path = "../Ni_0/CONTCAR") # 読み込むCONTCARのpath
+```
 ### export_vasp_incar()
 vaspの計算に必要なINCARを作成します。
-
-### export_vasp_kpoints()
+```python3
+sf.export_vasp_incar(ofn="INCAR", # 出力されるfileのpath
+                     config=incar_config) # INCARの中身をdictで指定
+```
+## export_vasp_kpoints()
 vaspの計算に必要なKPOINTSを作成します。
-
-### export_vasp_iconst()
+```python3
+sf.export_vasp_kpoints(ofn="KPOINTS",  # 出力されるfileのpath
+                       comment="",     # 1行目にかかれるコメント
+                       kx=2,           # x方向のk点
+                       ky=2,           # y方向のk点
+                       kz=2)           # z方向のk点
+```
+## export_vasp_iconst()
 vaspの計算で使われるICONSTを作成します。
-
+```python3
+iconst_config = ['LA 1 2 0', 'LA 1 3 0', 'LA 2 3 0'] # cellを直方体固定
+sf.export_vasp_iconst(ofn="ICONST",     # 出力されるfileのpath
+                      config=iconst_config) 
+```
 ### export_vasp_potcar()
 vaspの計算に必要なPOTCARを作成します。
-
-### export_dumppos()
+```python3
+sf.export_vasp_poscar(ofn="POSCAR",  # 出力されるfileのpath
+                      potcar_root="/nfshome15/POTLIST/potpaw_PBE.54") # potcarのpath
+```
+## export_dumppos()
 sfをdump.pos 形式のファイルとして出力します。
 ```python3
-sf.export_dumppos("showdump.pos") # showdump.pos fileとして出力
+sf.export_dumppos(ofn="showdump.pos", # showdump.pos fileとして出力
+                  time_step=100, # 何ステップ目か
+                  out_columns=['type', 'mask', 'x', 'y', 'z']) # 出力されるカラムをlist[str]で指定
 ```
-### export_input()
+## export_input()
 sfをinput.rd の形式のファイルとしてを出力します。
 ```python3
-sf.export_input("input.rd", mask_info = ["#strain - - - - z 1.0"])
+sf.export_input(ofn="input.rd", # input.rdで指定
+                mask_info = ["#strain - - - - z 1.0"]) # moveなどの情報をlist[str]で指定
 ```
-# mask_infoでpressz,move,strainなどの行を追加できる。
-### export_xyz()
+mask_infoの方式は,laich / lax に従うこと.
+
+## export_xyz()
 sfをxyzの形式のファイルとして出力します。
 ```python3
-sf.export_xyz("a.xyz")
+sf.export_xyz(ofn="a.xyz",
+              out_columns=['type', 'x', 'y', 'z'], # 出力されるカラムをlist[str]で指定
+              structure="structure") # 構造の名前を指定できる
 ```
-### export_file()
+## export_file()
 sfを指定したファイル名から形式を判断して、出力します。<br>
 出力できるファイルの形式
 - input file ("input" で始まる)
-- dump.pos file ("dump"で始まる or "pos"で終わる)
+- dump.pos file ("dump" or "pos"が含まれる)
 - xyz file ("xyz"で終わる)
 ```python3
-sf.export_file("showdump.pos") # == sf.export_dumppos()
-sf.export_file("input.rd") # == sf.export_input()
+sf.export_file("showdump.pos") # dump pos fileとして出力
+sf.export_file("input.rd") # input fileとして出力
 ```
 <a id="anchor6"></a>
-## Calculate
+# Calculate
 [実際のコード](https://github.com/kainakajima11/limda/blob/main/src/limda/calculate.py)
-### vasp()
-VASPの計算を実行します.<br>
+## vasp()
+VASPを実行します.<br>
 ```python3
-sf.vasp(system_name: str="H2O",
-        step_num: int= 10,
-        incar_config=incar_config)
-# H2O_10というディレクトリ内でincar_configの条件でvaspを回す。
+sf.vasp(calc_directory="",  # 計算を実行するディレクトリ
+        system_name="Cr",     # 計算する系の名前 
+        step_num= 2,          # 何回目の実行か # この場合 Cr_2 というディレクトリで計算される
+        poscar_comment="",    # poscarの1行目にかかれるコメント
+        poscar_scaling_factor=1.0,  # poscarのscaling factor # vasp wiki参照
+        incar_config=None,   # incarにかかれる条件をdict[str]で指定
+        potcar_root=None,     # potcarのある場所
+        kpoints_comment="",   # kpointsの1行目に書かれるコメント
+        kpoints_kx = 1, # x方向のk点
+        kpoints_ky = 1, # y方向のk点
+        kpoints_kz = 1, # z方向のk点
+        iconst_config = None, # iconstにかかれる情報, NPTの時は指定する
+        vasp_command = "vasp_std", # vaspを実行するためのコマンド
+        print_vasp = True,  # 標準出力をpythonからも表示するかどうか
+        exist_o = False, # Trueなら同名のディレクトリがあったとき上書きして実行する
+        poscar_from_contcar = False, # poscarをcontcarを指定して作成するか
+        contcar_path = "", # contcarのpath 
+        place = "kbox", # 実行環境 "kbox" or "masamune"
+        num_nodes = 1, # 計算ノード数
+        )
 ```
-### laich()
-Laichの計算を実行します。<br>
+## laich()
+Laichを実行します。<br>
 
-### packmol()
-Packmolの計算を実行します.<br>
+## packmol()
+Packmolを実行します.<br>
 ```python
 # H2Oを詰めます # セル全体に30個ランダムに詰める.
 sf_h2o = SimulationFrame("C H O") 
@@ -377,23 +422,23 @@ sf.packmol(sf_list=[sf_h2o],
             print_packmol=True, # packmolの標準出力を表示するか
             seed=-1) # シード値 # -1 はランダム
 ```
-### lax()
-laxの計算を実行します.<br>
+## lax()
+laxを実行します.<br>
 ```python3
 sf.lax(calc_dir = "lax_calc" # 計算が行われるdir
-       lax_cmd = "lax" # lax fileがあるpath
-       lax_config = None # config.rdに必要な内容をdictで渡す.
-       print_lax = False,  # out fileを出力するか
+       lax_cmd = "lax" # laxの実行ファイルのpath # ~/bin/ にあればdefaultでok
+       lax_config = None # config.rdにかかれる条件をdict[str]で指定.
+       print_lax = False,  # 標準出力するか
        exist_ok = False, # calc_dirが存在するときに実行するか
-       mask_info = "" # input.rdに書かれる#pressz、#moveなどの情報
-       # ex. mask_info = [#pressz 1 1 0", "#move 2 x 100 - - - -"] # mask 1にpress, mask 2にxmove
+       mask_info = "", # input.rdに書かれる#pressz、#moveなどの情報, list[str]
+       omp_num_threads = 3 # OMP_NUM_THREADSの値
        )
 ```
-### allegro()
+## allegro()
 sfに入っている原子の座標などから、かかる力とポテンシャルエネルギーを予測します.<br>
 力はatomsの["pred_x", "pred_y", "pred_z"]に入ります。<br>
 ポテンシャルエネルギーはpred_potential_energyに入ります。<br>
-Virialテンソルの値はpred_virial_tensorに入ります。3 x 3 <br>
+Virialテンソルの値はpred_virial_tensorに入ります。shapeは(3,3) <br>
 ```python3
 sf.allegro(
     cut_off = 4.0, #cutoff
@@ -404,10 +449,10 @@ sf.allegro(
     )
 ```
 <a id="anchor7"></a>
-## AnalyzeFrame
+# AnalyzeFrame
 [実際のコード](https://github.com/kainakajima11/limda/blob/main/src/limda/analyse_frame.py)
 
-### get_neighbor_list()
+## get_neighbor_list
 sfに対する、隣接リストを作成し、返します。<br>
 neighor_listの形式はlist[list[int]です.<br>
 配列のi番目の要素はi番目の原子と隣接する原子のidxの配列です.<br>
@@ -419,26 +464,51 @@ neighbor_list = sf.get_neighbor_list(mode="bond_length", bond_length=[[1.2, 2.0]
 # cut_off
 neighbor_list = sf.get_neighbor_list(mode="cut_off", cut_off=3.4)
 ```
-### get_edge_idx()
+## get_edge_idx
 隣接リストをallegroのデータセットの形式にしたもの(edge_idx)を返します。<br>
 edge_idxはlist[list[int, int]]で、配列の要素は大きさ2の配列であり、<br>
 [a,b]のときa番目の原子とb番目の原子は隣接してることを表します。
 ```python3
 edge_index = sf.get_egde_index(cut_off=3.4)
 ```
-### count_mols_dict()
+## get_mols_list
+分子ごとに原子のidをlistにまとめる. <br>
+例えば、水分子が3個とアンモニアが1個の系では
+[[0, 1, 2],  # 水分子 <br>
+  [3, 4, 5],  # 水分子 <br>
+  [6, 7, 8],  # 水分子 <br>
+  [9, 10, 11, 12]] # アンモニア <br>
+のようなlist[list[int]]が得られる.
+```python3
+mols_list = sf.get_mols_list(mode="bond_length", bond_length=[[1.2, 2.0],[2.0, 2.3]])
+```
+
+## get_mols_dict
+分子種類ごと, 分子ごとに原子のidをまとめる. <br>
+例えば、水分子が3個とアンモニアが1個あるときは <br>
+    {"H2O1":[[0, 1, 2], [3, 4, 5], [6, 7, 8]], <br>
+     "H3N1":[[9, 10, 11, 12]]} というdict[str, list[list[int]]]が得られる.  <br>
+```python3
+mols_dict = sf.get_mols_dict(mode="bond_length", bond_length=[[1.2, 2.0],[2.0, 2.3]])
+```
+## count_mols
 sf内に何の分子が何個存在するかを返します。<br>
 dict[str, int]の形式で返され
 H2O1 : 3 であれば,水分子が3個あることを表します。<br>
 ```python3
-mols_dict = sf.get_mols_dict(mode="bond_length", bond_length=[[1.2, 2.0],[2.0, 2.3]])
+mols_count = sf.count_mols(mode="bond_length", bond_length=[[1.2, 2.0],[2.0, 2.3]])
 ```
-### count_bonds()
+## count_bonds
 sf内に何の結合が何個あるかを返します。<br>
 dict[str, int]の形式で返され、
 H-O : 2 であれば水素酸素結合が2つ存在することを表します。
+```python3
+count_bonds_dict = sf.count_bonds(mode="bond_length", bond_length=[[1.2, 2.0],[2.0, 2.3]])
+```
 
-### count_coord_numbers()
-sf内の原子の配位数の数を返します。
-list[dict[int,int]]の形式で返され、i番目の配列が、{1 : 2, 2 : 3}であれば、<br>
-i番目のタイプの原子は1配位が2つ、2配位が3つあることを表します.<br>
+## get_sum_of_momentums
+各方向の運動量の合計を計算する.
+[x,y,z]の運動量がの合計が入ったndarrayが得られる.
+```python3
+momentum_sum = sf.get_sum_of_momentums()
+```
