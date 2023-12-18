@@ -425,14 +425,41 @@ sf.packmol(sf_list=[sf_h2o],
 ## lax()
 laxを実行します.<br>
 ```python3
-sf.lax(calc_dir = "lax_calc" # 計算が行われるdir
-       lax_cmd = "lax" # laxの実行ファイルのpath # ~/bin/ にあればdefaultでok
-       lax_config = None # config.rdにかかれる条件をdict[str]で指定.
-       print_lax = False,  # 標準出力するか
+lax_config = {
+    "Mode":"MD",
+     "NNPModelPath":"/nfshome15/rkudo/work/lax_bench/train/model1/frozen_models/allegro_frozen_544000.pth",
+     "TotalStep":"100000",
+     "TimeStep":"0.50",
+     "FileStep":"100",
+     "SaveRestartStep":"0",
+     "MPIGridX":"1",
+     "MPIGridY":"1",
+     "MPIGridZ":"1",
+     "CUTOFF":"4.0",
+     "MARGIN":"1.0",
+     "GhostFactor":"20.0",
+     "InitTemp":"300.0",
+     "Thermo":"NoseHoover",
+     "AimTemp":"300.0",
+     "FinalTemp":"300.0",
+     "ThermoFreq":"10.0",
+     "Baro":"NoseHoover",
+     "PressFlag":"1 1 1",
+     "AimPress":"1.0 1.0 1.0",
+     "BaroFreq":"3000 3000 3000",
+     "FlagArrayUsage":"1",
+     "MaxPairNumberOfOneMeshDevided":"3000",
+}
+sf.lax(calc_dir = "lax_calc/lax_calc_0", # 計算が行われるdir
+       lax_cmd = "~/lax/src/build/lax", # 実行可能なlaxのpath
+       lax_config = lax_config, # config.rdに必要な内容をdictで渡す.
+       print_lax = True,  # out fileを出力するか
        exist_ok = False, # calc_dirが存在するときに実行するか
-       mask_info = "", # input.rdに書かれる#pressz、#moveなどの情報, list[str]
+       mask_info = [] # input.rdに書かれる#pressz、#moveなどの情報
+       # ex. mask_info = [#pressz 1 1 0", "#move 2 x 100 - - - -"] # mask 1にpress, mask 2にmove
        omp_num_threads = 3 # OMP_NUM_THREADSの値
        )
+
 ```
 ## allegro()
 sfに入っている原子の座標などから、かかる力とポテンシャルエネルギーを予測します.<br>
