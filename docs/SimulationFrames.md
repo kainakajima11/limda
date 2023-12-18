@@ -20,20 +20,20 @@ sfsが何個のフレームを持つか, SimulationFrameのlist
 ## atom_symbol_to_type
 キーを元素記号、値をtypeとするdict
 ```python3
-print(sfs.atom_symbol_to_type)
-# {'Cr': 1, 'Mn': 2, 'Fe': 3, 'Co': 4, 'Ni': 5, 'H': 6, 'O': 7}
+>>> sfs.atom_symbol_to_type
+{'Cr': 1, 'Mn': 2, 'Fe': 3, 'Co': 4, 'Ni': 5, 'H': 6, 'O': 7}
 ```
 ### atom_type_to_symbol
 キーをtype、値を原子の質量とするdict
 ```python3
-print(sfs.atom_type_to_symbol)
-# {1: 'Cr', 2: 'Mn', 3: 'Fe', 4: 'Co', 5: 'Ni', 6: 'H', 7: 'O'}
+>>> sfs.atom_type_to_symbol
+{1: 'Cr', 2: 'Mn', 3: 'Fe', 4: 'Co', 5: 'Ni', 6: 'H', 7: 'O'}
 ```
 ### atom_type_to_mass
 キーをtype、値を原子の質量とするdict
 ```python3
-print(sfs.atom_type_to_mass)
-# {1: 51.9961, 2: 54.938045, 3: 55.845, 4: 58.933195, 5: 58.6934, 6: 1.00794, 7: 15.9994}
+>>> sfs.atom_type_to_mass
+{1: 51.9961, 2: 54.938045, 3: 55.845, 4: 58.933195, 5: 58.6934, 6: 1.00794, 7: 15.9994}
 ```
 <a id="anchor2"></a>
 # メソッド

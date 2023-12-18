@@ -358,14 +358,14 @@ class ExportFrame(
         ---------
         export_file_name: str 
             作成するfile名
-        Example
-            input file - inputで始まる
         """
-        if "input" in export_file_name:
+        export_filename = pathlib.Path(export_filename)
+        export_file_basename = export_filename.name
+        if "input" in export_file_basename:
             self.export_input(export_file_name)
-        elif export_file_name.startswith('dump') or export_file_name.endswith('pos'):
-            self.export_dumppos(export_file_name)
-        elif export_file_name.endswith('xyz'):
+        elif export_file_basename.endswith('xyz'):
             self.export_xyz(export_file_name)
+        elif "dump" in export_file_basename or "pos" in export_file_basename:
+            self.export_dumppos(export_file_name)
         else:
             raise RuntimeError("適切なfile名にしてください.")     

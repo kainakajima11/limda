@@ -223,7 +223,7 @@ class SimulationFrame(
         density = all_weight / volume
         return density
 #--------------------------------------------------------------------------------------
-    def count_atom_types(self, res_type='series', condition=None): #k
+    def count_atom_types(self, res_type='series', condition=None):
         """原子のタイプごとに原子の個数をカウントする関数
         Parameters
         ----------
