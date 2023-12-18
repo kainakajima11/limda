@@ -35,7 +35,7 @@ class ImportFrame(
             self.limda_default = {}
 
 #-----------------------------------------------------------------------   
-    def import_input(self, file_path: Union[str, pathlib.Path]) -> None: #ky
+    def import_input(self, file_path: Union[str, pathlib.Path]) -> None:
         """Laichのinputファイルを読み込み、
         sf.cell, sf.atomsを更新する
         Parameters
@@ -212,17 +212,14 @@ class ImportFrame(
         if not np.all(slide_cell_length):
             self.slide_atoms(-1 * slide_cell_length)
 #------------------------------------------
-    def import_mol(self, molecular_fomula):
+    def import_mol(self, molecular_fomula : str):
             '''分子式から原子配置を読み込む
             Parameters
             ----------
                 molecular_fomula : str
                     読み込む分子式
             '''
-            try:
-                from ase import build
-            except:
-                pass
+            from ase import build
 
             ase_atoms = build.molecule(molecular_fomula)
             self.atoms = pd.DataFrame(ase_atoms.positions, columns=['x', 'y', 'z'])
@@ -318,12 +315,14 @@ class ImportFrame(
 
         if "input" in import_file_basename:
             self.import_input(import_filename)
-        elif import_file_basename.startswith("dump") or import_file_basename.endswith("pos"):
-            self.import_dumppos(import_filename)
         elif import_file_basename.endswith("xyz"):
             self.import_xyz(import_filename)
         elif import_file_basename.endswith("car"):
             self.import_car(import_filename)
+        elif import_file_basename.endswith("cif"):
+            self.import_cif(import_filename)
+        elif "dump" in import_file_basename or "pos" in import_file_basename:
+            self.import_dumppos(import_filename)
         else:
             raise RuntimeError("適切なfile名にしてください.")
 #----------------------------------------------------------------------------------------------

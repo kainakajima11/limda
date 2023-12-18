@@ -246,7 +246,7 @@ sf.import_para_from_list(["Cr", "Mn", "Fe", "Co", "Ni"]) # list[str]
 ## import_para_from_str()
 機能はimport_para_from_listと同じです。
 ```python3
-sf.import_para_from_list("Cr Mn Fe Co Ni") # 空白区切りのstr
+sf.import_para_from_str("Cr Mn Fe Co Ni") # 空白区切りのstr
 ```
 ## import_car()
 car fileを読み込みます。
@@ -481,7 +481,7 @@ sf.allegro(
 
 ## get_neighbor_list
 sfに対する、隣接リストを作成し、返します。<br>
-neighor_listの形式はlist[list[int]です.<br>
+neighor_listの形式はlist[list[int]]です.<br>
 配列のi番目の要素はi番目の原子と隣接する原子のidxの配列です.<br>
 mode = "bond_length"ならば元素種類ごとに長さを指定する. <br>
 mode = "cut_off"ならばfloat型の一つの値で長さを定義.

@@ -352,20 +352,20 @@ class ExportFrame(
                           mode='a', header=False, index=False,
                           float_format='%.6f')
 #-----------------------------------------------------------
-    def export_file(self, export_file_name: str):
+    def export_file(self, export_filename: str):
         """引数のfile名に合った種類の形式でfileを作成.
         Parameter
         ---------
-        export_file_name: str 
+        export_filename: str 
             作成するfile名
-        Example
-            input file - inputで始まる
         """
-        if "input" in export_file_name:
-            self.export_input(export_file_name)
-        elif export_file_name.startswith('dump') or export_file_name.endswith('pos'):
-            self.export_dumppos(export_file_name)
-        elif export_file_name.endswith('xyz'):
-            self.export_xyz(export_file_name)
+        export_filename = pathlib.Path(export_filename)
+        export_file_basename = export_filename.name
+        if "input" in export_file_basename:
+            self.export_input(export_filename)
+        elif export_file_basename.endswith('xyz'):
+            self.export_xyz(export_filename)
+        elif "dump" in export_file_basename or "pos" in export_file_basename:
+            self.export_dumppos(export_filename)
         else:
             raise RuntimeError("適切なfile名にしてください.")     

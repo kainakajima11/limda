@@ -262,12 +262,12 @@ class SimulationFrames(
 
         return pot_and_pred_pot
 #----------------------------------------------------------------------------------------------    
-    def concat_virial_and_pred_virial(self, onlydiag : bool = False) -> pd.DataFrame:
+    def concat_virial_and_pred_virial(self, only_diag : bool = False) -> pd.DataFrame:
         """
         sfsにある構造の,virial_tensorとpred_virial_tensorをまとめたdfを作成する。
         Augument
         --------
-            onlydiag : bool = False
+            only_diag : bool = False
                 対角成分のみのdfを作成するか
         Return
         ------
