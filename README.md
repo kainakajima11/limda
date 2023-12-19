@@ -43,3 +43,5 @@ nfshome17/knakajima を各自のものに変えてください。
 ## Documents of limda
 [SimulationFrame](https://github.com/kainakajima11/limda/blob/main/docs/SimulationFrame.md) <br>
 [SimulationFrames](https://github.com/kainakajima11/limda/blob/main/docs/SimulationFrames.md) <br>
+[limda default](https://github.com/kainakajima11/limda/blob/main/docs/limda_default.md)
+[limda scripts](https://github.com/kainakajima11/limda/blob/main/docs/limda%20_scripts.md)<br>
