@@ -125,8 +125,9 @@ class Calculate(
         time.sleep(5)
         if print_vasp:
             tail_process = subprocess.Popen(f'tail -F stdout', cwd=calc_directory, shell=True)
-            while vasp_md_process.poll() is None:
-                time.sleep(1)
+        while vasp_md_process.poll() is None:
+            time.sleep(1)
+        if print_vasp:
             tail_process.kill()
 #----------------------------------------------------------------------------------------------
     def laich(self,
@@ -387,6 +388,7 @@ class Calculate(
         ポテンシャルエネルギーと原子に働く力を計算する
         Allegroによって予測されたポテンシャルエネルギーはsf.pred_potential_energyに入る
         Allegroによって予測されたそれぞれの原子にかかる力はsf.atoms.loc[:, ["pred_fx", "pred_fy", "pred_fz"]]に入る
+        flag_calc_virialをTrueにした場合, virialテンソルの値がsf.pred_virial_tensorに入る
         Parameters
         ----------
             cut_off: float
@@ -396,6 +398,8 @@ class Calculate(
             allegro_model: torch.jit._script.RecursiveScriptModule
                 frozenされたAllegroを読み込んだモデル
                 pathではないことに注意
+            flag_calc_virial
+                virialを推論するかどうか
         """
 
         if type(device) == str:
@@ -433,3 +437,54 @@ class Calculate(
             self.pred_virial_tensor = output['virial'].cpu().detach().numpy()
 
         return output
+    
+    def allegro_ensumble(self,
+                         cut_off : float,
+                         device : Union[str, torch.DeviceObjType],
+                         allegro_ensumble_dir : Union[str, pathlib.Path],
+                         flag_calc_virial: bool = False,
+                         flag_calc_force: bool = True)->list[dict[str, torch.Tensor]]:
+        """
+        AllegroのEnsumbleを用いてポテンシャル、力、virialを推論
+        Return
+        ----------
+            outputs
+                outputs[i]はi番目のNNPで推論した結果
+        Note
+        ----
+            allegro_ensumble_dirには,frozen_model以外は入れない
+        """
+        if type(device) == str:
+            device = torch.device(device)
+
+        cell = np.array(self.cell, dtype=np.float32)
+        pos = np.array(self.atoms[["x","y","z"]].values, dtype=np.float32)
+        atom_types = np.array(self.atoms["type"].values)
+        atom_types -= 1
+        cut_off = np.array(cut_off, dtype=np.float32)
+
+        edge_index = [[],[]]
+        edge_index = self.get_edge_index(cut_off=cut_off)
+        edge_index = np.array(edge_index)
+
+        pos_tensor = torch.tensor(pos, device=device)
+        edge_index_tensor = torch.tensor(edge_index, device=device)
+        cell_tensor = torch.tensor(cell, device=device)
+        atom_types_tensor = torch.tensor(atom_types, device=device)
+        cut_off_tensor = torch.tensor(cut_off, device=device)
+
+        allegro_ensumble_dir = pathlib.Path(allegro_ensumble_dir)
+        NNPs = list(allegro_ensumble_dir.glob("*"))
+        outputs = [None for _ in range(len(NNPs))]
+        for i, NNP in enumerate(NNPs):
+            outputs[i] = torch.jit.load(NNP)(
+                pos_tensor,
+                edge_index_tensor,
+                cell_tensor,
+                atom_types_tensor,
+                cut_off_tensor,
+                flag_calc_virial,
+                flag_calc_force,
+            )
+            
+        return outputs
