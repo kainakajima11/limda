@@ -1,5 +1,6 @@
 # SimulationFrames (sfs)
-sfsについての簡単な説明です。<br>
+SimulationFrames (sfs)は、SimulationFrameを複数保持することができるクラスです.<br>
+複数の構造の情報が含まれるファイルを扱ったり、複数の構造に同じ処理をするメソッドを持ちます<br>
 詳しい内容は実際のコードやdocstringを見て下さい。
 ```python3
 from limda import SimulationFrames # import
@@ -17,7 +18,16 @@ sfs.import_dumpposes("/nfshome17/knakajima/sfstest") # 複数のframeをinput
 <a id="anchor1"></a>
 # 変数 
 ## sf
-sfsが何個のフレームを持つか, SimulationFrameのlist
+sfsが持つ構造リスト, sfsはlen(sfs.sf)個の構造(SimulationFrame)を持っている.
+```python3
+# sfsの最初の構造のポテンシャルエネルギーを得る
+pot_E_of_0step_structure = sfs.sf[0].potential_energy()
+
+# sfsのそれぞれの構造をdensityを得る
+densities = [None for _ in range(len(sfs)]
+for frame_i, frame in enumerate(sfs.sf):
+  densities[frame_i] = sfs.sf[frame_i].density()
+```
 ## atom_symbol_to_type
 キーを元素記号、値をtypeとするdict
 ```
@@ -137,12 +147,20 @@ sfs.import_limda_default()
 ```
 
 ## import_vasp
-vaspで計算した第一原理MDファイルから、原子の座標, cellの大きさ, 原子にかかる力, ポテンシャルエネルギー, virialテンソルを読み込む.
+vaspで計算した第一原理MDファイルから、原子の座標, cellの大きさ, 原子にかかる力, ポテンシャルエネルギー, virialテンソルを読み込む.<br>
+virialテンソルは-1倍されていることに注意
 ```python3
 sfs.import_vasp(calc_directory="Cr_0", # vaspの計算ディレクトリのパス
                 NELM=400) # vaspの最大Iteration回数
 # NELMは,指定しなければlimda_defaultの値が使用されます.
 # NELM回まで達した構造は収束していないと判断し,importしません.
+
+# 以下のようにそれぞれのSimulationFrameのインスタンス変数に値が格納されます.
+# sfs.sf[5].atoms["x"]         # 6step目の構造の原子のx座標
+# sfs.sf[10].atoms["fz"]       # 11step目の構造の原子のz方向にかかる力
+# sfs.sf[-1]:.potential_energy # 最後に収束した構造の原子のポテンシャルエネルギー
+# sfs.sf[i].cell               # i番目の構造のセルサイズ
+# sfs.sf[0].virial_tensor      # 最初の構造のvirialテンソル(-1倍)
 ```
 ## import_dumpposes
 フォルダのpathを指定し、そこにあるdumppos fileを読み込む.
