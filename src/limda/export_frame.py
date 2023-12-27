@@ -18,6 +18,7 @@ class ExportFrame(
             ofn: str, 
             comment: str="", 
             scaling_factor: float=1.0,
+            set_initial_velocity: bool=False,
         ) -> None:
         """vaspのincarファイルを作成する
         注意:この関数はsf.atomsの原子をtypeごとにinplaceに並べ替えます.
@@ -30,6 +31,8 @@ class ExportFrame(
                 POSCARの1行目に書かれるコメント
             scaling_factor: float
                 VASPを参照してください. 基本1.0でok
+            set_initial_velocity: bool
+                TrueならばPOSCARに速度を書き込む
         """
         for dim in range(3):
             if self.cell[dim] == 0:
@@ -67,6 +70,12 @@ class ExportFrame(
 
         self.atoms.to_csv(ofn, columns=['x', 'y', 'z'], mode='a', header=False,
                           sep=' ', float_format='%.10f', index=False)
+        
+        if set_initial_velocity and 'vx' in self.atoms and 'vy' in self.atoms and 'vz' in self.atoms:
+            with open(ofn, 'a') as ofp:
+                ofp.writelines(["\n"])
+            self.atoms.to_csv(ofn, columns=['vx', 'vy', 'vz'], mode='a', header=False,
+                              sep=' ', float_format='%.10f', index=False)
 #----------------------------------------------------------------------------------
     def export_vasp_poscar_from_contcar(
             self, 

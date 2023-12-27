@@ -43,6 +43,7 @@ class Calculate(
             contcar_path: str = "",
             place :str = "kbox",
             num_nodes: int = 1,
+            set_initial_velocity: bool = False,
     ):
         """vaspを実行する.
         Parameters
@@ -107,7 +108,7 @@ class Calculate(
         num_process = incar_config["NCORE"] * incar_config["NPAR"] * incar_config["KPAR"]
         assert num_process%num_nodes == 0, "Invalid num_nodes"
         if not poscar_from_contcar:
-            self.export_vasp_poscar(poscar_path, poscar_comment, poscar_scaling_factor)
+            self.export_vasp_poscar(poscar_path, poscar_comment, poscar_scaling_factor, set_initial_velocity)
         else:
             self.export_vasp_poscar_from_contcar(poscar_path, contcar_path)
         self.export_vasp_incar(incar_path, incar_config)
@@ -121,13 +122,13 @@ class Calculate(
             cmd = f'mpiexec -np {num_process} {vasp_command} > stdout'
         elif place.upper() == "MASAMUNE":
             cmd = f'aprun -n {num_process} -N {int(num_process / num_nodes)} -j 1 {vasp_command} > stdout'
+        
         vasp_md_process = subprocess.Popen(cmd, cwd=calc_directory, shell=True)
         time.sleep(5)
         if print_vasp:
             tail_process = subprocess.Popen(f'tail -F stdout', cwd=calc_directory, shell=True)
-        while vasp_md_process.poll() is None:
-            time.sleep(1)
-        if print_vasp:
+            while vasp_md_process.poll() is None:
+                time.sleep(1)
             tail_process.kill()
 #----------------------------------------------------------------------------------------------
     def laich(self,
