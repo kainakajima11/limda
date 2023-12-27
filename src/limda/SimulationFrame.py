@@ -427,3 +427,55 @@ class SimulationFrame(
 
         if change_cellsize:
             self.cell += np.array(slide_length)
+#---------------------------------------------------------------------------------------------------
+    def set_velo_to_mol(self,
+                        target_mols:list[str],
+                        mols_velo:list[list[float]],
+                        mode: str = "bond_length",
+                        cut_off: float = None,
+                        bond_length: list[list[float]] = None,
+                        ):
+        """
+        分子に速度を与える.
+        Parameters
+        ----------
+            target_mols
+                速度を与えたい分子のリスト
+                ex. ["H2O1", "N1H3"] 水とアンモニアに速度を与える
+            mols_velo
+                分子に与える速度、速度を与える分子の種類だけ指定
+                ex. [[0.0, 0.01, 0.0], [0.02, -0.01, 0.0]]
+            mode
+                分子判定のためのmols_dictの作成に用いる.
+                bond_length or cut_off
+            cut_off
+                modeがcut_offのときのcut_off距離
+            bond_length
+                modeがbond_lengthのときの結合距離
+        """
+        mols_dict = self.get_mols_dict(mode, cut_off, bond_length)
+        print(mols_dict)
+        flag_target_mols = np.array([False for _ in range(len(self))])
+        velo = np.zeros((self.get_total_atoms(), 3))
+        for target_mol, mol_velo in zip(target_mols, mols_velo):
+            for mol_list in mols_dict[target_mol]:
+                for atom_idx in mol_list:
+                    velo[atom_idx] = mol_velo
+                    flag_target_mols[atom_idx] = True
+        self.atoms[["vx", "vy", "vz"]] = velo
+        mols_momentum = self.get_momentum() #動かす原子の運動量の和
+        other_mass = self.atoms["type"].replace(self.atom_type_to_mass).loc[~flag_target_mols].sum()
+        other_velo = mols_momentum / other_mass * (-1) #その他の原子の運動量
+        self.atoms.loc[~flag_target_mols, ["vx", "vy", "vz"]] = other_velo    
+#---------------------------------------------------------------------------------------------------
+    def get_momentum(self):
+        """
+        分子の運動量を計算する。
+        """
+
+        self.atoms["mass"] = self.atoms["type"].replace(self.atom_type_to_mass)
+        self.atoms["mvx"] = self.atoms["vx"] * self.atoms["mass"]
+        self.atoms["mvy"] = self.atoms["vy"] * self.atoms["mass"]
+        self.atoms["mvz"] = self.atoms["vz"] * self.atoms["mass"]
+
+        return self.atoms[["mvx", "mvy", "mvz"]].sum().values
