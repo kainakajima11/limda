@@ -355,6 +355,12 @@ class ExportFrame(
 #-----------------------------------------------------------
     def export_car(self, export_filename : str):
         """
+        car fileを出力する.
+
+        Parameter
+        ------------
+        export_filename
+            出力するcarfileの名前
         """
         has_cell : bool = (self.cell is not None)
         now = datetime.now()
@@ -399,5 +405,7 @@ class ExportFrame(
             self.export_xyz(export_filename)
         elif "dump" in export_file_basename or "pos" in export_file_basename:
             self.export_dumppos(export_filename)
+        elif export_file_basename.endswith('car'):
+            self.export_car(export_filename)
         else:
             raise RuntimeError("適切なfile名にしてください.")     
