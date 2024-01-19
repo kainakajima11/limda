@@ -209,8 +209,7 @@ class ImportFrame(
         self.atoms.index = self.atoms.index - 1
         self.atoms.sort_index(inplace=True)
 
-        if not np.all(slide_cell_length):
-            self.slide_atoms(-1 * slide_cell_length)
+        self.slide_atoms(-1 * slide_cell_length)
 #------------------------------------------
     def import_mol(self, molecular_fomula : str):
             '''分子式から原子配置を読み込む
