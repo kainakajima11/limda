@@ -3,6 +3,7 @@ import pandas as pd
 import pathlib
 import subprocess
 from typing import Union
+from datetime import datetime
 
 class ExportFrame(
 
@@ -352,6 +353,43 @@ class ExportFrame(
                           mode='a', header=False, index=False,
                           float_format='%.6f')
 #-----------------------------------------------------------
+    def export_car(self, export_filename : str):
+        """
+        car fileを出力する.
+
+        Parameter
+        ------------
+        export_filename
+            出力するcarfileの名前
+        """
+        has_cell : bool = (self.cell is not None)
+        now = datetime.now()
+        output_date = now.strftime("%a %b %d %H:%M:%S %Y")
+        header_line = [
+            "!BIOSYM archive 3\n",
+            "",
+            "Materials Studio Generated CAR File\n",
+            f"!DATE {output_date} \n" 
+        ]
+        if has_cell:
+            header_line[1] = "PBC=ON\n"
+            header_line.append(f"PBC {self.cell[0]:8.4f} {self.cell[1]:8.4f} {self.cell[2]:8.4f}    90.0000   90.0000   90.0000 (P1)\n")
+        else:
+            header_line[1] = "PBC=OFF\n"
+        car_df = self.atoms.sort_values(by="type")
+        typ_cnt = np.array([0 for _ in range(len(self.atom_symbol_to_type))])
+        def make_atom_line_for_car(atom):
+            typ_cnt[int(atom['type']) - 1] += 1 
+            symbol =  self.atom_type_to_symbol[atom['type']]
+            return f"{symbol+str(typ_cnt[int(atom['type']) - 1]):5}  {atom['x']:13.9f}  {atom['y']:13.9f}  {atom['z']:13.9f}  XXXX 1      xx     {symbol:<3} 0.000\n"
+        atom_lines = car_df.apply(make_atom_line_for_car, axis=1).to_numpy()
+        with open(export_filename, 'w') as ofp:
+            ofp.writelines(header_line)
+            ofp.writelines(atom_lines)
+            ofp.writelines("end\n")
+            ofp.writelines("end\n")
+
+#-----------------------------------------------------------
     def export_file(self, export_filename: str):
         """引数のfile名に合った種類の形式でfileを作成.
         Parameter
@@ -367,5 +405,7 @@ class ExportFrame(
             self.export_xyz(export_filename)
         elif "dump" in export_file_basename or "pos" in export_file_basename:
             self.export_dumppos(export_filename)
+        elif export_file_basename.endswith('car'):
+            self.export_car(export_filename)
         else:
             raise RuntimeError("適切なfile名にしてください.")     
