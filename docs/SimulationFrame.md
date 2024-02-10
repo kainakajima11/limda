@@ -396,7 +396,7 @@ sf.vasp(calc_directory="",  # 計算を実行するディレクトリ
         iconst_config = None, # iconstにかかれる情報, NPTの時は指定する
         vasp_command = "vasp_std", # vaspを実行するためのコマンド
         print_vasp = True,  # 標準出力をpythonからも表示するかどうか
-        exist_o = False, # Trueなら同名のディレクトリがあったとき上書きして実行する
+        exist_ok = False, # Trueなら同名のディレクトリがあったとき上書きして実行する
         poscar_from_contcar = False, # poscarをcontcarを指定して作成するか
         contcar_path = "", # contcarのpath 
         place = "kbox", # 実行環境 "kbox" or "masamune"
@@ -455,9 +455,9 @@ sf.lax(calc_dir = "lax_calc/lax_calc_0", # 計算が行われるdir
        lax_config = lax_config, # config.rdに必要な内容をdictで渡す.
        print_lax = True,  # out fileを出力するか
        exist_ok = False, # calc_dirが存在するときに実行するか
-       mask_info = [] # input.rdに書かれる#pressz、#moveなどの情報
-       # ex. mask_info = [#pressz 1 1 0", "#move 2 x 100 - - - -"] # mask 1にpress, mask 2にmove
-       omp_num_threads = 3 # OMP_NUM_THREADSの値
+       mask_info = [], # input.rdに書かれる#pressz、#moveなどの情報
+       # ex. mask_info = [#pressz 1 1 0", "#move 2 x 100 - - - -"], # mask 1にpress, mask 2にmove
+       omp_num_threads = 1, # OMP_NUM_THREADSの値
        )
 
 ```
@@ -470,7 +470,7 @@ Virialテンソルの値はpred_virial_tensorに入ります。shapeは(3,3) <br
 sf.allegro(
     cut_off = 4.0, #cutoff
     device = "cuda", #device, 'cpu' or 'cuda'
-    allegro_model = torch.jit.load("allegro_frozen_800000.pth")
+    allegro_model = torch.jit.load("allegro_frozen_800000.pth"),
     # frozenされたAllegroを読み込んだモデル # pathではない
     flag_calc_virial = False, # virialを推論するか
     )
