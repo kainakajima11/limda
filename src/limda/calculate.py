@@ -43,6 +43,7 @@ class Calculate(
             contcar_path: str = "",
             place :str = "kbox",
             num_nodes: int = 1,
+            check_vasp_condition: bool = True,
     ):
         """vaspを実行する.
         Parameters
@@ -88,6 +89,10 @@ class Calculate(
         assert potcar_root is not None, "There isn't potcar_root."
         assert incar_config is not None, "There isn't incar_config."
         assert place == "kbox" or place.upper() == "MASAMUNE", "Invalid place"
+
+        if check_vasp_condition:
+            self.check_vasp_condition(incar_config, iconst_config)
+
         if not calc_directory:
             calc_directory = f"{system_name}_{step_num}"
         calc_directory = pathlib.Path(calc_directory)
@@ -128,6 +133,24 @@ class Calculate(
             while vasp_md_process.poll() is None:
                 time.sleep(1)
             tail_process.kill()
+#----------------------------------------------------------------------------------------------
+    def check_vasp_condition(self, incar_config: dict, iconst_config: list[list[str]]):
+        """
+        vaspを回す前に条件のミスがないかをチェックする
+        """
+        # potim
+        for typ in self.get_atom_type_set():
+            if self.atom_type_to_mass[typ] <= 10.0 and 1.0 < incar_config["POTIM"]: # H,He,Li,Be
+                incar_config["POTIM"] = 1.0
+                print(f"POTIM was changed to 1.0 fs due to the presence of light elements.", flush=True)
+
+        # iconst_config
+        if incar_config["ISIF"] == 3 and iconst_config != ['LA 1 2 0','LA 1 3 0','LA 2 3 0']:
+            iconst_config = ['LA 1 2 0','LA 1 3 0','LA 2 3 0']
+            print(f"iconst_config was changed to keep rectangular cells", flush=True)
+        if incar_config["ISIF"] != 3 and iconst_config != None:
+            iconst_config = None
+            print(f"iconst_config deleted", flush=True)
 #----------------------------------------------------------------------------------------------
     def laich(self,
               calc_dir: str='laich_calc',
