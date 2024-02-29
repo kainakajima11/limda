@@ -93,8 +93,8 @@ class ExportFrames(
         for sf_idx in range(len(self)):
             data = {}
             data["cell"] = np.array(self.sf[sf_idx].cell, dtype=np.float32)
-            if  exclude_too_small_cell and np.any(self.sf[sf_idx].cell < 2 * cut_off):
-                print(f"Exculuded frame : cellsize(={np.min(self.sf[sf_idx].cell)}) is smaller than 2 x cutoff(= {cut_off*2})", flush=True)
+            if  exclude_too_small_cell and np.any(np.diag(self.sf[sf_idx].cell) < 2 * cut_off):
+                print(f"Exculuded frame : cellsize(={np.min(np.diag(self.sf[sf_idx].cell))}) is smaller than 2 x cutoff(= {cut_off*2})", flush=True)
                 continue
             data["pos"] = np.array(self.sf[sf_idx].atoms[["x","y","z"]].values, dtype=np.float32)
             data["force"] = np.array(self.sf[sf_idx].atoms[["fx","fy","fz"]].values, dtype=np.float32)
@@ -107,10 +107,10 @@ class ExportFrames(
             data["potential_energy"] = np.array(self.sf[sf_idx].potential_energy, dtype=np.float32)
             data["virial"] = np.array(self.sf[sf_idx].virial_tensor, dtype=np.float32)
 
-            edge_index = [[],[]]
-            edge_index = self.sf[sf_idx].get_edge_index(cut_off=cut_off)
+            edge_index, shift = self.sf[sf_idx].get_edge_index(cut_off=cut_off)
 
             data["edge_index"] = np.array(edge_index)
+            data["shift"] = np.array(shift, dtype=np.float32)
             if test_size is not None:
                 if sf_idx < len(self)*(1.0-test_size):
                     train_frames.append(data)
@@ -167,3 +167,10 @@ class ExportFrames(
                 self.sf[step_idx].atoms.index -= 1
 
     #--------------------------------------------------------------------------------
+    def export_xyzs(self, output_folder: str, out_columns=None) -> None:
+        output_folder = pathlib.Path(output_folder)
+        output_folder.mkdir(exist_ok=True, parents=True)
+        for frame_idx in range(len(self.sf)):
+            self.sf[frame_idx].export_xyz(output_folder / f"{frame_idx}.xyz", out_columns=out_columns)
+
+

@@ -73,9 +73,10 @@ class ImportFrames(
                 sf.atom_type_to_mass = self.atom_type_to_mass
                 sf.atom_type_to_symbol = self.atom_type_to_symbol 
 
-                sf.cell = np.empty(3, dtype=np.float32)
+                sf.cell = []
                 for dim in range(3):
-                    sf.cell[dim] = float(splines[cell_line_idx+dim+1][dim])
+                    sf.cell.append(list(map(float, splines[cell_line_idx+dim+1][:3])))
+                sf.cell = np.array(sf.cell)
 
                 atoms_dict_keys = ['type','x','y','z','fx','fy','fz']
                 atoms_dict = {key: val for key, val in zip(atoms_dict_keys, [[] for i in range(7)])}

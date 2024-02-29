@@ -247,9 +247,10 @@ class ImportFrame(
         with open(poscar_path, "r") as f:
             f.readline()
             f.readline()
-            self.cell = np.array([None, None, None])
+            self.cell = []
             for dim in range(3):
-                self.cell[dim] = float(f.readline().split()[dim])
+                self.cell.append(list(map(float, f.readline().split())))
+            self.cell = np.array(self.cell)
             atom_symbol_list = list(f.readline().split())
             atom_type_counter = list(map(int, f.readline().split()))
             atom_types = []

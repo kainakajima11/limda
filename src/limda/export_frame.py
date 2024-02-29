@@ -32,21 +32,12 @@ class ExportFrame(
             scaling_factor: float
                 VASPを参照してください. 基本1.0でok
         """
-        for dim in range(3):
-            if self.cell[dim] == 0:
-                print(f'warning : cell[{dim}] is 0')
-
-            if self.cell[dim] is None:
-                print(f'warning : cell[{dim}] is not defined')
-                print(f'warning : cell[{dim}] has been initialized to 0')
-                self.cell[dim] = 0.0
-
         header_line = [
             f"{comment.strip()}\n",
             f"{scaling_factor}\n",
-            f"{self.cell[0]:.10f} 0.0000000000 0.0000000000\n",
-            f"0.0000000000 {self.cell[1]:.10f} 0.0000000000\n",
-            f"0.0000000000 0.0000000000 {self.cell[2]:.10f}\n"
+            f"{self.cell[0][0]:.10f} {self.cell[0][1]:.10f} {self.cell[0][2]:.10f}\n",
+            f"{self.cell[1][0]:.10f} {self.cell[1][1]:.10f} {self.cell[1][2]:.10f}\n",
+            f"{self.cell[2][0]:.10f} {self.cell[2][1]:.10f} {self.cell[2][2]:.10f}\n"
         ]
         atom_symbol_to_atom_counter = self.count_atom_types(res_type='dict')
         atom_symbols = []
@@ -324,8 +315,7 @@ class ExportFrame(
         self.atoms.index = self.atoms.index - 1
 #-----------------------------------------------------------
     def export_xyz(self, ofn: Union[str,pathlib.Path],
-                   out_columns: list[str]=None,
-                   structure_name: str= "structure")->None:
+                   out_columns: list[str]=None)->None:
         """xyz fileを作成する.
         Parameters
         ----------
@@ -338,13 +328,9 @@ class ExportFrame(
         """
         if out_columns is None:
             out_columns = ['type', 'x', 'y', 'z']
-        if structure_name == "structure":
-            print('warning : structure_name is not defined')
-            print('warning : structure_name has been initialized to \'structure\'')
-
         header_line = [
             f"{self.get_total_atoms()}\n",
-            f"{structure_name}\n",
+            f"Lattice=\" {self.cell[0][0]} {self.cell[0][1]} {self.cell[0][2]} {self.cell[1][0]} {self.cell[1][1]} {self.cell[1][2]} {self.cell[2][0]} {self.cell[2][1]} {self.cell[2][2]}\"\n",
         ]
 
         with open(ofn, 'w') as ofp:

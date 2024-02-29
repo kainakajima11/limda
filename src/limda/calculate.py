@@ -405,21 +405,52 @@ class Calculate(
         pos = np.array(self.atoms[["x","y","z"]].values, dtype=np.float32)
         atom_types = np.array(self.atoms["type"].values)
         atom_types -= 1
-        cut_off = np.array(cut_off, dtype=np.float32)
 
-        edge_index = [[],[]]
-        edge_index = self.get_edge_index(cut_off=cut_off)
+        edge_index, shift = self.get_edge_index(cut_off=cut_off)
+        cut_off = np.array(cut_off, dtype=np.float32)
         edge_index = np.array(edge_index)
+        shift = np.array(shift, dtype=np.float32)
 
         pos_tensor = torch.tensor(pos, device=device)
         edge_index_tensor = torch.tensor(edge_index, device=device)
         cell_tensor = torch.tensor(cell, device=device)
+        shift_tensor = torch.tensor(shift, device=device)
         atom_types_tensor = torch.tensor(atom_types, device=device)
         cut_off_tensor = torch.tensor(cut_off, device=device)
+
+        if True:
+            print("pos_tensor")
+            print(pos_tensor)
+            print()
+
+            print("edge_index_tensor")
+            print(edge_index_tensor)
+            print()
+
+            print("shift_tensor")
+            print(shift_tensor)
+            print()
+
+            print("cell_tensor")
+            print(cell_tensor)
+            print()
+
+            print("atom_types_tensor")
+            print(atom_types_tensor)
+            print()
+
+            print("cut_off_tensor")
+            print(cut_off_tensor)
+            print()
+
+            print("flag_calc_virial")
+            print(flag_calc_virial)
+            print()
 
         output = allegro_model(
             pos_tensor,
             edge_index_tensor,
+            shift_tensor,
             cell_tensor,
             atom_types_tensor,
             cut_off_tensor,
@@ -429,6 +460,11 @@ class Calculate(
         self.atoms[['pred_fx', 'pred_fy', 'pred_fz']] = output['force'].cpu().detach().numpy()
         self.atoms['pred_potential_energy'] = output['atomic_energy'].cpu().detach().numpy()
         self.pred_potential_energy = output['total_energy'].cpu().detach().item()
+
+        if True:
+            from pprint import pprint
+            pprint(output)
+
         if flag_calc_virial:
             self.pred_virial_tensor = output['virial'].cpu().detach().numpy()
 
