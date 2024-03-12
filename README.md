@@ -13,6 +13,7 @@ numpy>=1.24.3
 pandas>=2.0.1
 tqdm>=4.65.0
 Cython=0.29.24
+PyYaml=6.0.1
 ```
 ## Install
 ソースコードをコピーした後、Cythonコードを用いるためのコンパイルが必要です。
