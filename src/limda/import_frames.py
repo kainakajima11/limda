@@ -173,7 +173,8 @@ class ImportFrames(
         """ 
         if len(atom_symbol_list) == 0 and "para" in self.limda_default:
             atom_symbol_list = self.limda_default["para"]
-        assert len(atom_symbol_list) != 0
+        if len(atom_symbol_list) == 0:
+            return
 
         atom_symbol_to_type = {}
         type_list = [i for i in range(1, len(atom_symbol_list)+1)]
