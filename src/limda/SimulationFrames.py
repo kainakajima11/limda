@@ -43,8 +43,7 @@ class SimulationFrames(
         self.atom_type_to_symbol : dict[int, str] = None
         self.atom_type_to_mass : dict[int, float] = None
         self.import_limda_default()
-        if para:
-            self.import_para_from_str(para)
+        self.import_para_from_str(para)
 #---------------------
     def __len__(self):
         """
@@ -286,7 +285,7 @@ class SimulationFrames(
             for i in range(3):
                 stress_list.append(self.sf[frame_idx].virial_tensor[i][i] / volume)
                 pred_stress_list.append(self.sf[frame_idx].pred_virial_tensor[i][i] / volume)
-            if not onlydiag:
+            if not only_diag:
                 for i in range(3):
                     stress_list.append(self.sf[frame_idx].virial_tensor[i][(i+1)%3] / volume)
                     pred_stress_list.append(self.sf[frame_idx].pred_virial_tensor[i][(i+1)%3] / volume)

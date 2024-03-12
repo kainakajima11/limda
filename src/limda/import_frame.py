@@ -109,6 +109,8 @@ class ImportFrame(
         """ 
         if len(atom_symbol_list) == 0 and "para" in self.limda_default:
             atom_symbol_list = self.limda_default["para"]
+        assert len(atom_symbol_list) != 0
+        
         atom_symbol_to_type = {}
         type_list = [i for i in range(1, len(atom_symbol_list)+1)]
         atom_symbol_to_type = {key: val for key, val in zip(atom_symbol_list, type_list)}
@@ -257,8 +259,8 @@ class ImportFrame(
                 for _ in range(atom_type_count):
                     atom_types.append(self.atom_symbol_to_type[atom_symbol])
 
-            # self.atoms = pd.read_csv(
-            #     f, skiprows = 1, sep='\s+', names=("x", "y", "z"))
+            self.atoms = pd.read_csv(
+                f, skiprows = 1, sep='\s+', names=("x", "y", "z"))
             
         return atom_types
 #-----------------------------------------------------------------------------------
