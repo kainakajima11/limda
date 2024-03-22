@@ -231,39 +231,43 @@ class ImportFrame(
             self.atoms['y'] += abs(self.atoms['y'].min()) + 0.1
             self.atoms['z'] += abs(self.atoms['z'].min()) + 0.1
 #------------------------------------------------------------------------------------
-    def import_from_poscar(self, poscar_path: Union[str, pathlib.Path]) -> list[int]:
-        """vaspに用いるPOSCARから, 
+    def import_vasp_poscar(self, poscar_path: Union[str, pathlib.Path]):
+        """vaspに用いるPOSCARから,  
         原子それぞれの種類を表すリストを作成する。
         また、初期構造のSimulationFrame(原子の座標のみ)が得られる。
         Parameters
         ----------
             poscar_path: Union[str, Path]
-                vaspで計算したディレクトリ内のPOSCARのpath 
-        Return val
-        ----------
-            atom_types: list[int]
-            原子の種類をtype listと照らし合した時の整数が入っています。  
-
-            sf: SimulationFrame
-            t=0 の SimulationFrame
+                vaspで計算したディレクトリ内のPOSCARのpath         
+        Note
+        ----
+            frameのatoms["type"]は原子の種類をtype listと照らし合した時の整数が入っています。
         """
         with open(poscar_path, "r") as f:
             f.readline()
-            f.readline()
+            # cell
+            scaling_factor = float(f.readline())
             self.cell = np.array([None, None, None])
             for dim in range(3):
-                self.cell[dim] = float(f.readline().split()[dim])
+                self.cell[dim] = float(f.readline().split()[dim]) * scaling_factor
+            # atom type
             atom_symbol_list = list(f.readline().split())
             atom_type_counter = list(map(int, f.readline().split()))
             atom_types = []
             for atom_type_count, atom_symbol in zip(atom_type_counter, atom_symbol_list):
                 for _ in range(atom_type_count):
                     atom_types.append(self.atom_symbol_to_type[atom_symbol])
-
+            # position
+            pos_type = f.readline().split()[0]
+            assert pos_type == "Cartesian" or pos_type== "Direct"
             self.atoms = pd.read_csv(
-                f, skiprows = 1, sep='\s+', names=("x", "y", "z"))
-            
-        return atom_types
+                f, sep='\s+', names=("x", "y", "z"))
+            if pos_type == "Direct":
+                self.atoms["x"] = self.atoms["x"] * self.cell[0]
+                self.atoms["y"] = self.atoms["y"] * self.cell[1]
+                self.atoms["z"] = self.atoms["z"] * self.cell[2]
+
+            self.atoms["type"] = np.array(atom_types)
 #-----------------------------------------------------------------------------------
     def import_xyz(self, ifn: Union[str,pathlib.Path])->None:
         """xyz fileを読み込む.
@@ -303,7 +307,27 @@ class ImportFrame(
         index = np.arange(total_atom)
         self.atoms = pd.DataFrame(data=atom_data, index=index)
         self.atoms.sort_index(inplace=True)
-#-------------------------------------------------------------
+#----------------------------------------------------------------------------------------------
+    def import_cif(self, cif_file_path: Union[str, pathlib.Path]):
+        """
+        cif fileを読み込み
+        cell, atoms, を更新する.
+
+        Augument
+        ---------
+        cif_file_path : Union[str, pathlib.Path]
+            input cif file path
+        """
+        from ase.io import read
+        # reading cif file using ase
+        cifdata = read(cif_file_path)
+        # cell
+        self.cell = cifdata.cell.array.diagonal().copy()
+        # atoms position
+        self.atoms = pd.DataFrame(cifdata.get_positions(), columns=["x", "y", "z"])
+        # atoms type
+        self.atoms["type"] = np.array([self.atom_symbol_to_type[symbol] for symbol in cifdata.get_chemical_symbols()])   
+#-----------------------------------------------------------------------------------------------
     def import_file(self, import_filename: Union[str, pathlib.Path]):
         """
         file名から、適切な形式fileを読み込みます.
@@ -327,23 +351,3 @@ class ImportFrame(
             self.import_dumppos(import_filename)
         else:
             raise RuntimeError("適切なfile名にしてください.")
-#----------------------------------------------------------------------------------------------
-    def import_cif(self, cif_file_path: Union[str, pathlib.Path]):
-        """
-        cif fileを読み込み
-        cell, atoms, を更新する.
-
-        Augument
-        ---------
-        cif_file_path : Union[str, pathlib.Path]
-            input cif file path
-        """
-        from ase.io import read
-        # reading cif file using ase
-        cifdata = read(cif_file_path)
-        # cell
-        self.cell = cifdata.cell.array.diagonal().copy()
-        # atoms position
-        self.atoms = pd.DataFrame(cifdata.get_positions(), columns=["x", "y", "z"])
-        # atoms type
-        self.atoms["type"] = np.array([self.atom_symbol_to_type[symbol] for symbol in cifdata.get_chemical_symbols()])             
