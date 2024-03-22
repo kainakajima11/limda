@@ -28,6 +28,8 @@ class ImportFrames(
         if pathlib.Path.exists(limda_dot_path):
             with open(limda_dot_path, "r") as f:
                 self.limda_default = yaml.safe_load(f)
+        else:
+            self.limda_default = {}
 #----------------------------------------------------------------------------------------------
     def import_vasp(self, calc_directory: Union[str, pathlib.Path], NELM : int = None):
         """vaspで計算した第一原理MDファイルから、
@@ -169,9 +171,11 @@ class ImportFrames(
             の場合、Cの原子のタイプが1, Hの原子のタイプが2, Oの原子のタイプが3, Nの原子のタイプが4となる
 
         """ 
-        if len(atom_symbol_list) == 0:
-            assert "para" in self.limda_default
+        if len(atom_symbol_list) == 0 and "para" in self.limda_default:
             atom_symbol_list = self.limda_default["para"]
+        if len(atom_symbol_list) == 0:
+            return
+
         atom_symbol_to_type = {}
         type_list = [i for i in range(1, len(atom_symbol_list)+1)]
         atom_symbol_to_type = {key: val for key, val in zip(atom_symbol_list, type_list)}

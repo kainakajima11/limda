@@ -286,7 +286,7 @@ class SimulationFrames(
             for i in range(3):
                 stress_list.append(self.sf[frame_idx].virial_tensor[i][i] / volume)
                 pred_stress_list.append(self.sf[frame_idx].pred_virial_tensor[i][i] / volume)
-            if not onlydiag:
+            if not only_diag:
                 for i in range(3):
                     stress_list.append(self.sf[frame_idx].virial_tensor[i][(i+1)%3] / volume)
                     pred_stress_list.append(self.sf[frame_idx].pred_virial_tensor[i][(i+1)%3] / volume)
