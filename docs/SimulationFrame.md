@@ -276,12 +276,13 @@ ase ライブラリを用いて、分子を読み込みます。
 ```python3
 sf.import_mol("H2O") # 取り込みたい分子式をstr型で
 ```
-## import_from_poscar()
-POSCARからその構造の原子のlist[int]が返される。
+## import_vasp_poscar()
+POSCARからその構造を読み込む (x, y, z, type, cell)
 ```python3
 # Crが2つ,Niが4つ入った構造の時
->>> sf.import_from_poscar("/nfshome17/knakajima/work/CrNi/CrNi_0/POSCAR")
-[1, 1, 5, 5, 5, 5]    # list[int]
+sf.import_vasp_poscar("/nfshome17/knakajima/work/CrNi/CrNi_0/POSCAR")
+>>> sf.atoms["type"]
+[1, 1, 5, 5, 5, 5]
 ```
 
 ## import_xyz()

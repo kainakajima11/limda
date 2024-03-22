@@ -56,8 +56,9 @@ class ImportFrames(
                 NELM = 1e6
         calc_directory = pathlib.Path(calc_directory)
         first_sf = SimulationFrame()
-        first_sf.atom_symbol_to_type = self.atom_symbol_to_type
-        atom_types = first_sf.import_from_poscar(f'{calc_directory}/POSCAR')
+        first_sf.atom_symbol_to_type = self.atom_symbol_to_type.copy()
+        first_sf.import_vasp_poscar(f'{calc_directory}/POSCAR')
+        atom_types = first_sf.atoms["type"]
 
         with open(calc_directory / "OUTCAR", "r") as f:
             lines = f.readlines()
