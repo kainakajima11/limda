@@ -328,6 +328,54 @@ class ImportFrame(
         # atoms type
         self.atoms["type"] = np.array([self.atom_symbol_to_type[symbol] for symbol in cifdata.get_chemical_symbols()])   
 #-----------------------------------------------------------------------------------------------
+    def import_xsf(self, import_filename: Union[str, pathlib.Path], atom_type: int = 1):
+        """
+        xsf file を読み込み、cell, atoms[x,y,z]の情報を得る
+        TODO : 多分全対応していないので解決する（atomskで作成したxsfは読み込める）
+        
+        Parameters
+        ---------
+            import_filename : 読み込むxsf file
+            atom_type : 元素種  
+        """
+        with open(import_filename ,"r") as f:
+            lines = f.readlines()
+            self.cell = np.array([float(lines[3].split()[0]), float(lines[4].split()[1]), float(lines[5].split()[2])])
+        self.atoms = pd.read_csv(import_filename, skiprows=12, sep='\s+', usecols=[1,2,3], names=["x", "y", "z"])
+        self.atoms["type"] = np.array([atom_type for _ in range(len(self))])    
+#-----------------------------------------------------------------------------------------------
+    def import_cfg(self, import_filename: Union[str, pathlib.Path]):
+        """
+        cfg file を読み込み、cell、atom[x,y,z,grain_id]の情報を得る
+        TODO : 多分全対応していないので解決する（atomskで作成したcfgは読み込める）
+
+        Parameters
+        ---------
+            import_filename : 読み込むcfg file
+        """
+        with open(import_filename, "r") as f:
+            lines = f.readlines()
+            current_line_id = 0
+            for line in lines:
+                current_line_id += 1
+                spline = line.split()
+                l = len(spline)
+                if l == 5 and line[:21] == "Number of particles =":
+                    total_atom_num = int(spline[4])
+                elif l == 3 and spline[0] == "H0(1,1)":
+                    cell_x = float(spline[2])
+                elif l == 3 and spline[0] == "H0(2,2)":
+                    cell_y = float(spline[2])
+                elif l == 3 and spline[0] == "H0(3,3)":
+                    cell_z = float(spline[2])
+                elif l == 1 and spline[0] in self.atom_symbol_to_type:
+                    atom_type = self.atom_symbol_to_type[spline[0]]
+                    break
+        self.cell = np.array([cell_x, cell_y, cell_z])
+        self.atoms = pd.read_csv(import_filename, skiprows=current_line_id, sep='\s+', names=["x", "y", "z", "grain_id"])
+        self.atoms[["x", "y", "z"]] *= self.cell
+        self.atoms["type"] = np.array([atom_type for _ in range(total_atom_num)])
+#-----------------------------------------------------------------------------------------------
     def import_file(self, import_filename: Union[str, pathlib.Path]):
         """
         file名から、適切な形式fileを読み込みます.
@@ -349,5 +397,9 @@ class ImportFrame(
             self.import_cif(import_filename)
         elif "dump" in import_file_basename or "pos" in import_file_basename:
             self.import_dumppos(import_filename)
+        elif import_file_basename.endswith("xsf"):
+            self.import_xsf(import_filename)
+        elif import_file_basename.endswith("cfg"):
+            self.import_cfg(import_filename)
         else:
             raise RuntimeError("適切なfile名にしてください.")
