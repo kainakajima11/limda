@@ -43,8 +43,7 @@ class SimulationFrames(
         self.atom_type_to_symbol : dict[int, str] = None
         self.atom_type_to_mass : dict[int, float] = None
         self.import_limda_default()
-        if para:
-            self.import_para_from_str(para)
+        self.import_para_from_str(para)
 #---------------------
     def __len__(self):
         """
