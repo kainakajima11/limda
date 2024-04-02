@@ -401,5 +401,7 @@ class ImportFrame(
             self.import_xsf(import_filename)
         elif import_file_basename.endswith("cfg"):
             self.import_cfg(import_filename)
+        elif import_file_basename == "POSCAR":
+            self.import_vasp_poscar(import_filename)
         else:
             raise RuntimeError("適切なfile名にしてください.")

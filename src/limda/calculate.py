@@ -4,7 +4,7 @@ from tqdm import tqdm
 import subprocess
 import os
 import time
-from typing import Union, Dict
+from typing import Union, Dict, Any
 import torch
 import shutil
 
@@ -433,3 +433,54 @@ class Calculate(
             self.pred_virial_tensor = output['virial'].cpu().detach().numpy()
 
         return output
+#---------------------------------------------------------------------------------------------
+    def check_vasp(self,
+                   incar_config: Dict[str, Any],
+                   magmom_list: list[float] = None,
+                   check_magmom: bool = True,
+                   check_potim: bool = True,
+                   light_atom_border: float = 10.0,
+                   potim: tuple[float,float] = (1.0, 2.0),
+                   )-> tuple[Dict[str, Any], list[str]]:
+        """
+        vaspを回す(self.run_vasp)前に条件(self, incar_config)をcheckする
+        MAGMOM : ISPINが有効なら、magmomlistに合わせて、MAGMOMを設定する
+        POTIM : 軽元素によってPOTIMを変える
+        iconst_config : NPTならばセルが傾かないように設定する
+        
+        Parameters
+        ----------
+            incar_config : incar_config, 
+            magmom_list : magmomを設定するときに必要
+            check_magmom : MAGMOMをcheckするかどうか
+            check_potim : POTIMをcheckするかどうか
+            light_atom_border : 軽元素とみなす最大の重さ
+            potim : (軽元素があるとき、ないとき) のPOTIM
+        """
+        # MAGMOM
+        if check_magmom:
+            if incar_config["ISPIN"] == 2 and magmom_list is not None:
+                incar_config["MAGMOM"] = self.make_magmom_str(magmom_list)
+
+        # POTIM
+        if check_potim:
+            type_set = self.get_atom_type_set()
+            lightest_mass = 1000.
+            for typ in type_set:
+                lightest_mass = min(lightest_mass, self.atom_type_to_mass[typ])
+            if lightest_mass <= light_atom_border: # 軽元素が含まれるか
+                incar_config["POTIM"] = potim[0]
+            else:
+                incar_config["POTIM"] = potim[1]
+        
+        # iconst_config
+        iconst_config: list[str] = None
+        if incar_config["ISIF"] == 3:
+            iconst_config = [ # 角度一定でNPTする設定
+                'LA 1 2 0',    
+                'LA 1 3 0',
+                'LA 2 3 0'
+            ]
+
+        return incar_config, iconst_config
+    
