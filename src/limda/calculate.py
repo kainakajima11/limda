@@ -444,6 +444,18 @@ class Calculate(
                    )-> tuple[Dict[str, Any], list[str]]:
         """
         vaspを回す(self.run_vasp)前に条件(self, incar_config)をcheckする
+        MAGMOM : ISPINが有効なら、magmomlistに合わせて、MAGMOMを設定する
+        POTIM : 軽元素によってPOTIMを変える
+        iconst_config : NPTならばセルが傾かないように設定する
+        
+        Parameters
+        ----------
+            incar_config : incar_config, 
+            magmom_list : magmomを設定するときに必要
+            check_magmom : MAGMOMをcheckするかどうか
+            check_potim : POTIMをcheckするかどうか
+            light_atom_border : 軽元素とみなす最大の重さ
+            potim : (軽元素があるとき、ないとき) のPOTIM
         """
         # MAGMOM
         if check_magmom:
@@ -456,7 +468,7 @@ class Calculate(
             lightest_mass = 1000.
             for typ in type_set:
                 lightest_mass = min(lightest_mass, self.atom_type_to_mass[typ])
-            if lightest_mass < light_atom_border: # 軽元素が含まれるか
+            if lightest_mass <= light_atom_border: # 軽元素が含まれるか
                 incar_config["POTIM"] = potim[0]
             else:
                 incar_config["POTIM"] = potim[1]
