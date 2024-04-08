@@ -25,6 +25,8 @@ class vaspDataManager:
         data = Poscar.from_file(path)
         self.classification.append(f"{''.join(data.site_symbols)}_")
         self.info["ATOM_INFO"] = data.structure.composition.formula
+        cell = data.structure.lattice
+        self.info["CELL"] = f"{cell.a} {cell.b} {cell.c}"
 
     def check_incar(self, path):
         data = Incar.from_file(path).as_dict()
@@ -142,6 +144,7 @@ def add_readme(readme_path, manager, new_dir_path, path):
             f.write("\n".join(manager.warn_sentence))
             f.write("\n-#-#-#-#-#-#-#-#-#-#-#-#-\n\n")
         f.write(f"COMPOSITION : {manager.info['ATOM_INFO']}\n")
+        f.write(f"CELL LATTICE : {manager.info['CELL']}\n")
         f.write(f"from {path}\n\n\n")
 
 def classify_and_move_vasp_dir(storage_path: Union[str, Path], ipt: Input, move_files: int):
