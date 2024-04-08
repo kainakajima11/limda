@@ -265,8 +265,9 @@ class ImportFrame(
                 f, sep='\s+', names=("x", "y", "z"))
             df_size = len(df)
             assert df_size == total_atom_num or df_size == 2 * total_atom_num
+
             if df_size == total_atom_num:
-                self.atoms = df_size
+                self.atoms = df
             else:
                 self.atoms = pd.DataFrame({"x":df["x"].iloc[:total_atom_num],
                                            "y":df["y"].iloc[:total_atom_num],
@@ -274,6 +275,7 @@ class ImportFrame(
                                            "vx":df["x"].iloc[total_atom_num:].reset_index(drop=True),
                                            "vy":df["y"].iloc[total_atom_num:].reset_index(drop=True),
                                            "vz":df["z"].iloc[total_atom_num:].reset_index(drop=True),})
+
             if pos_type == "Direct":
                 self.atoms["x"] = self.atoms["x"] * self.cell[0]
                 self.atoms["y"] = self.atoms["y"] * self.cell[1]
