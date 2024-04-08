@@ -265,8 +265,9 @@ class ImportFrame(
                 f, sep='\s+', names=("x", "y", "z"))
             df_size = len(df)
             assert df_size == total_atom_num or df_size == 2 * total_atom_num
+
             if df_size == total_atom_num:
-                self.atoms = df_size
+                self.atoms = df
             else:
                 self.atoms = pd.DataFrame({"x":df["x"].iloc[:total_atom_num],
                                            "y":df["y"].iloc[:total_atom_num],
