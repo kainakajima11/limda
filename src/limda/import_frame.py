@@ -275,7 +275,6 @@ class ImportFrame(
                                            "vx":df["x"].iloc[total_atom_num:].reset_index(drop=True),
                                            "vy":df["y"].iloc[total_atom_num:].reset_index(drop=True),
                                            "vz":df["z"].iloc[total_atom_num:].reset_index(drop=True),})
-
             if pos_type == "Direct":
                 self.atoms["x"] = self.atoms["x"] * self.cell[0]
                 self.atoms["y"] = self.atoms["y"] * self.cell[1]
