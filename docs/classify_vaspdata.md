@@ -22,18 +22,18 @@ classify_vaspdata.py input
 第一引数 : 対象となるディレクトリのパス
 第二引数 : storage_dirにできる新しいディレクトリの名前<br><br>
 複数のディレクトリに対して操作がしたければ、#target_dirの行を増やしてください<br>
-第二引数にはなるべく多くの情報をわかりやすくした名前を入れてください。<br>
+第二引数にはなるべく多くの情報をわかりやすくした名前を入れてください。<br><br>
 例
 ```
 Cantor+H2O_FCC_slab_013 
 ```
 特に構造に関しては、分類が難しいためどんな構造かわかるようにしてください。<br>
-基本的に含ませる情報
+##### 基本的に含ませる情報
  - 何の材料か (Cantor+H2O, MoDTC+Fe ...)
  - 結晶の構造 (FCC, BCC, Amorphous)
  - 表面の情報 (slab_001, bulk)
 
-他の情報の例
+##### 他の情報の例
  - 初期速度を含む (with_velocity)
  - 不安定な構造 (unstable)
  - 格子定数が特殊 (lattice_const_3.5, strain)
@@ -52,17 +52,17 @@ Cantor+H2O_FCC_slab_013
 ```
 #target_dir 1 argument
 ├── 〇〇_0
-│   ├── #move_file 1 argment
-│   ├── #move_file 2 argment
-│   ├── #move_file 2 argment
-│   ├── #move_file 3 argment
+│   ├── #move_file 1 argument
+│   ├── #move_file 2 argument
+│   ├── #move_file 2 argument
+│   ├── #move_file 3 argument
 │   ├── file
 │   └── file
 ├── 〇〇_1
-│   ├── #move_file 1 argment
-│   ├── #move_file 2 argment
-│   ├── #move_file 2 argment
-│   ├── #move_file 3 argment
+│   ├── #move_file 1 argument
+│   ├── #move_file 2 argument
+│   ├── #move_file 2 argument
+│   ├── #move_file 3 argument
 │   ├── file
 │   └── file 
 .   .
@@ -76,20 +76,20 @@ VASP実行ディレクトリがそれぞれ分類されます。(000..., 001...,
 #storage_dir 1 argument
 ├── #target_dir 2 argument
 │   ├── 000...
-|   │   ├── #move_file 1 argment
-|   │   ├── #move_file 2 argment
-|   │   ├── #move_file 2 argment
-|   │   └── #move_file 3 argment
+|   │   ├── #move_file 1 argument
+|   │   ├── #move_file 2 argument
+|   │   ├── #move_file 2 argument
+|   │   └── #move_file 3 argument
 │   ├── 001...
-|   │   ├── #move_file 1 argment
-|   │   ├── #move_file 2 argment
-|   │   ├── #move_file 2 argment
-|   │   └── #move_file 3 argment
+|   │   ├── #move_file 1 argument
+|   │   ├── #move_file 2 argument
+|   │   ├── #move_file 2 argument
+|   │   └── #move_file 3 argument
 │   ├── 002...
-|   │   ├── #move_file 1 argment
-|   │   ├── #move_file 2 argment
-|   │   ├── #move_file 2 argment
-|   │   └── #move_file 3 argment
+|   │   ├── #move_file 1 argument
+|   │   ├── #move_file 2 argument
+|   │   ├── #move_file 2 argument
+|   │   └── #move_file 3 argument
 .   .    
 .   .   
 .   └── README
@@ -99,7 +99,7 @@ VASP実行ディレクトリがそれぞれ分類されます。(000..., 001...,
 ```
 003_CrMnFeCoNi_NPT_10kbar_600K_SMR_SPIN_ECT_400_5stps
 ```
-分類の種類(ディレクトリの名前になる)
+##### 分類の種類(ディレクトリの名前になる)
  - インデックス (000, 001, ..., 999)
  - 構成元素 (CrMnFeCoNi, HO)
  - アンサンブル NVT以外なら表記(NPT_10kbar)
@@ -123,8 +123,8 @@ Following Data were Stored in 2024-04-08-11:30 by knakajima
 COMPOSITION : Mn43 Fe21 Co21 Ni23
 from /nfshome17/knakajima/work/fpc/B/FCC/B_F_L/B_F_L_111
 ```
- - 組成
  - 実行日時
  - 実行した人
- - どこからファイルを持ってきたか
+ - 組成 (ディレクトリごと)
+ - どこからファイルを持ってきたか (ディレクトリごと）
 
