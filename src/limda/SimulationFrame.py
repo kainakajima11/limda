@@ -245,7 +245,7 @@ class SimulationFrame(
             raise ValueError(
                 f'res_type: {res_type} is not supported. supported res_type : [series, dict]')
 #---------------------------------------------------------------------------------------------
-    def shuffle_type(self, type_ratio: list[float]):
+    def shuffle_type(self, type_ratio: list[float], fix_type: list[int] = None):
         """sfのtypeをランダムにシャッフルする。
             atomsに座標を持たせてから使用。
         Parameters
@@ -259,6 +259,10 @@ class SimulationFrame(
             原子数:6 -> sf.atoms["type"] = [1,2,2,3,3,3] をシャッフルしたもの
             余りはtype_ratioに応じてランダムに入る
         """
+        if fix_type is not None:
+            atoms_tmp = self.atoms.query('type in @fix_type')
+            self.atoms = self.atoms.query('type not in @fix_type')
+
         tot_atoms = self.get_total_atoms()
         tot_ratio = sum(type_ratio)
         type_ratio = [(type_ratio[i]*tot_atoms/tot_ratio) for i in range(len(type_ratio))]
@@ -273,6 +277,10 @@ class SimulationFrame(
 
         random.shuffle(type_list)    
         self.atoms["type"] = type_list
+
+        if fix_type is not None:
+            self.atoms = pd.concat([self.atoms, atoms_tmp])
+            self.atoms.reset_index(drop=True, inplace=True)            
 #--------------------------------------------------------------------------------       
     def make_magmom_str(self, initial_magmom:list[float])->str:
         """
