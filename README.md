@@ -14,6 +14,7 @@ pandas>=2.0.1
 tqdm>=4.65.0
 Cython=0.29.24
 PyYaml=6.0.1
+pymatgen=2023.3.23
 ```
 ## Install
 ソースコードをコピーした後、Cythonコードを用いるためのコンパイルが必要です。
