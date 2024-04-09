@@ -250,14 +250,17 @@ class SimulationFrame(
             atomsに座標を持たせてから使用。
         Parameters
         ----------
-        type_ratio: list[float]
-            typeに対する割合が入ったlist
+            type_ratio: list[float]
+                typeに対する割合が入ったlist
 
+            fix_type: list[int]
+                固定するタイプが入ったlist
         Example
         -------
-        sf.shuffle_type([1,2,3])
-            原子数:6 -> sf.atoms["type"] = [1,2,2,3,3,3] をシャッフルしたもの
-            余りはtype_ratioに応じてランダムに入る
+            sf.shuffle_type([1,2,3,0])
+                原子数:6 -> sf.atoms["type"] = [1,2,2,3,3,3] をシャッフルしたもの
+                余りはtype_ratioに応じてランダムに入る
+
         """
         if fix_type is not None:
             atoms_tmp = self.atoms.query('type in @fix_type')
