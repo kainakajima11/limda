@@ -242,6 +242,7 @@ class ImportFrame(
         Note
         ----
             frameのatoms["type"]は原子の種類をtype listと照らし合した時の整数が入っています。
+            速度や力がたとえ入っていたとしても、その情報は抜け落ちます。
         """
         with open(poscar_path, "r") as f:
             f.readline()
@@ -261,20 +262,9 @@ class ImportFrame(
             # position
             pos_type = f.readline().split()[0]
             assert pos_type == "Cartesian" or pos_type== "Direct"
-            df = pd.read_csv(
-                f, sep='\s+', names=("x", "y", "z"))
-            df_size = len(df)
-            assert df_size == total_atom_num or df_size == 2 * total_atom_num
+            self.atoms = pd.read_csv(
+                f, sep='\s+', names=("x", "y", "z"), nrows=total_atom_num)
 
-            if df_size == total_atom_num:
-                self.atoms = df
-            else:
-                self.atoms = pd.DataFrame({"x":df["x"].iloc[:total_atom_num],
-                                           "y":df["y"].iloc[:total_atom_num],
-                                           "z":df["z"].iloc[:total_atom_num],
-                                           "vx":df["x"].iloc[total_atom_num:].reset_index(drop=True),
-                                           "vy":df["y"].iloc[total_atom_num:].reset_index(drop=True),
-                                           "vz":df["z"].iloc[total_atom_num:].reset_index(drop=True),})
             if pos_type == "Direct":
                 self.atoms["x"] = self.atoms["x"] * self.cell[0]
                 self.atoms["y"] = self.atoms["y"] * self.cell[1]

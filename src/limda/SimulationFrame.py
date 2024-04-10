@@ -260,7 +260,6 @@ class SimulationFrame(
             sf.shuffle_type([1,2,3,0])
                 原子数:6 -> sf.atoms["type"] = [1,2,2,3,3,3] をシャッフルしたもの
                 余りはtype_ratioに応じてランダムに入る
-
         """
         if fix_type is not None:
             atoms_tmp = self.atoms.query('type in @fix_type')
