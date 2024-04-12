@@ -11,16 +11,17 @@ from .import_frame import ImportFrame
 from .SimulationFrame import SimulationFrame
 import os
 
+
 class ImportFrames(
 
 ):
     """シミュレーションしたデータを読み込むためのクラス
     複数のフレームを読み込む(file -> SimulationFrames)
     """
-#-----------------------
+
     def __init__(self):
         pass
-#----------------------------------
+
     def import_limda_default(self):
         """limdaのデフォルトファイル(.limda.yaml)を読み込む
         """
@@ -30,8 +31,8 @@ class ImportFrames(
                 self.limda_default = yaml.safe_load(f)
         else:
             self.limda_default = {}
-#----------------------------------------------------------------------------------------------
-    def import_vasp(self, calc_directory: Union[str, pathlib.Path], NELM : int = None):
+
+    def import_vasp(self, calc_directory: Union[str, pathlib.Path], NELM: int = None):
         """vaspで計算した第一原理MDファイルから、
         原子の座標, cellの大きさ, 原子にかかる力, ポテンシャルエネルギーを読み込む
         Parameters
@@ -51,7 +52,7 @@ class ImportFrames(
         """
         if NELM is None:
             if "NELM" in self.limda_default:
-                    NELM = self.limda_default["NELM"]
+                NELM = self.limda_default["NELM"]
             else:
                 NELM = 1e6
         calc_directory = pathlib.Path(calc_directory)
@@ -62,7 +63,7 @@ class ImportFrames(
 
         with open(calc_directory / "OUTCAR", "r") as f:
             lines = f.readlines()
-            splines = list(map(lambda l:l.split(), lines))
+            splines = list(map(lambda l: l.split(), lines))
 
         for line_idx, spline in enumerate(splines):
             if len(spline) <= 1:
@@ -74,18 +75,20 @@ class ImportFrames(
                 sf = SimulationFrame()
                 sf.atom_symbol_to_type = self.atom_symbol_to_type
                 sf.atom_type_to_mass = self.atom_type_to_mass
-                sf.atom_type_to_symbol = self.atom_type_to_symbol 
+                sf.atom_type_to_symbol = self.atom_type_to_symbol
 
                 sf.cell = np.empty(3, dtype=np.float32)
                 for dim in range(3):
                     sf.cell[dim] = float(splines[cell_line_idx+dim+1][dim])
 
-                atoms_dict_keys = ['type','x','y','z','fx','fy','fz']
-                atoms_dict = {key: val for key, val in zip(atoms_dict_keys, [[] for i in range(7)])}
+                atoms_dict_keys = ['type', 'x', 'y', 'z', 'fx', 'fy', 'fz']
+                atoms_dict = {key: val for key, val in zip(
+                    atoms_dict_keys, [[] for i in range(7)])}
                 atoms_dict['type'] = atom_types
                 for atom_idx in range(len(atom_types)):
                     for key_idx in range(len(atoms_dict_keys)-1):
-                        atoms_dict[atoms_dict_keys[key_idx+1]].append(float(splines[line_idx+2+atom_idx][key_idx]))
+                        atoms_dict[atoms_dict_keys[key_idx+1]
+                                   ].append(float(splines[line_idx+2+atom_idx][key_idx]))
 
                 sf.atoms = pd.DataFrame(atoms_dict)
                 # potential_energy
@@ -93,31 +96,34 @@ class ImportFrames(
                 # virial tensor
                 sf.virial_tensor = np.empty((3, 3), dtype=np.float32)
                 for i in range(3):
-                    sf.virial_tensor[i][i] = float(splines[virial_tensor_idx][i+1])
+                    sf.virial_tensor[i][i] = float(
+                        splines[virial_tensor_idx][i+1])
                 for i in range(3):
-                    sf.virial_tensor[i][(i+1)%3] = float(splines[virial_tensor_idx][i+4])
-                    sf.virial_tensor[(i+1)%3][i] = float(splines[virial_tensor_idx][i+4])
+                    sf.virial_tensor[i][(
+                        i+1) % 3] = float(splines[virial_tensor_idx][i+4])
+                    sf.virial_tensor[(
+                        i+1) % 3][i] = float(splines[virial_tensor_idx][i+4])
 
-                self.sf.append(sf)  
- 
+                self.sf.append(sf)
+
             if len(splines[line_idx]) == 6 and splines[line_idx][0] == "direct" \
-                and splines[line_idx][1] == "lattice":
+                    and splines[line_idx][1] == "lattice":
                 cell_line_idx = line_idx
-                     
+
             if len(splines[line_idx]) >= 4 and \
-                splines[line_idx][0] == "energy" and \
-                splines[line_idx][1] == "without" and \
-                splines[line_idx][2] == "entropy":
-                potential_energy_idx = line_idx 
+                    splines[line_idx][0] == "energy" and \
+                    splines[line_idx][1] == "without" and \
+                    splines[line_idx][2] == "entropy":
+                potential_energy_idx = line_idx
 
             if len(splines[line_idx]) == 7 and splines[line_idx][0] == "Total":
                 virial_tensor_idx = line_idx
 
             if len(splines[line_idx]) == 5 and splines[line_idx][0] == "---------------------------------------" \
-                and splines[line_idx][1] == "Iteration":
+                    and splines[line_idx][1] == "Iteration":
                 iteration = int(splines[line_idx][3][:-1])
-#---------------------------------------------------------------------------------------------------
-    def import_dumpposes(self, dir_name:Union[str, pathlib.Path]=None, step_nums:list[int]=None, skip_num: int=None):
+
+    def import_dumpposes(self, dir_name: Union[str, pathlib.Path] = None, step_nums: list[int] = None, skip_num: int = None):
         """Laichで計算したdumpposを複数読み込む
         Parameters
         ----------
@@ -134,7 +140,7 @@ class ImportFrames(
         """
         assert self.atom_symbol_to_type is not None, "import atom symbol first"
         assert self.atom_type_to_mass is not None, "import atom symbol first"
-        assert self.atom_type_to_symbol is not None, "import atom symbol first" 
+        assert self.atom_type_to_symbol is not None, "import atom symbol first"
 
         if dir_name is None:
             dir_name = os.getcwd()
@@ -151,15 +157,15 @@ class ImportFrames(
             step_nums = step_nums[::skip_num]
 
         self.sf = [SimulationFrame() for _ in range(len(step_nums))]
-        
+
         for step_idx, step_num in enumerate(tqdm(step_nums, desc='[importing dumpposes]')):
             self.sf[step_idx].step_num = step_num
             self.sf[step_idx].atom_symbol_to_type = self.atom_symbol_to_type
             self.sf[step_idx].atom_type_to_mass = self.atom_type_to_mass
             self.sf[step_idx].atom_type_to_symbol = self.atom_type_to_symbol
             self.sf[step_idx].import_dumppos(f'{dir_name}/dump.pos.{step_num}')
-#-------------------------------------------------------------------------------
-    def import_para_from_list(self, atom_symbol_list:list[str]):
+
+    def import_para_from_list(self, atom_symbol_list: list[str]):
         """原子のリストからatom_symbol_to_type, atom_type_to_symbol, atom_type_to_massを作成する.
         Parameters
         ----------
@@ -171,7 +177,7 @@ class ImportFrames(
             atom_symbol_list = ['C', 'H', 'O', 'N']
             の場合、Cの原子のタイプが1, Hの原子のタイプが2, Oの原子のタイプが3, Nの原子のタイプが4となる
 
-        """ 
+        """
         if len(atom_symbol_list) == 0 and "para" in self.limda_default:
             atom_symbol_list = self.limda_default["para"]
         if len(atom_symbol_list) == 0:
@@ -179,17 +185,18 @@ class ImportFrames(
 
         atom_symbol_to_type = {}
         type_list = [i for i in range(1, len(atom_symbol_list)+1)]
-        atom_symbol_to_type = {key: val for key, val in zip(atom_symbol_list, type_list)}
+        atom_symbol_to_type = {key: val for key,
+                               val in zip(atom_symbol_list, type_list)}
         # type -> symbol# symbol -> type # type -> mass
         self.atom_symbol_to_type = atom_symbol_to_type
         self.atom_type_to_symbol = {
             atom_type: atom_symbol for atom_symbol, atom_type in self.atom_symbol_to_type.items()}
-        
+
         self.atom_type_to_mass = {}
         for atom_symbol, atom_type in self.atom_symbol_to_type.items():
             self.atom_type_to_mass[atom_type] = C.ATOM_SYMBOL_TO_MASS[atom_symbol]
-#-------------------------------------------------------
-    def import_para_from_str(self, atom_symbol_str:str):
+
+    def import_para_from_str(self, atom_symbol_str: str):
         """
             受け取ったstrをlistにして、
             import_para_from_list()を呼び出す。
@@ -203,9 +210,9 @@ class ImportFrames(
                 para_atom_symbol_str = 'C H O N' #原子と原子の間には、スペース
                 の場合、Cの原子のタイプが1, Hの原子のタイプが2, Oの原子のタイプが3, Nの原子のタイプが4となる
         """
-        self.import_para_from_list(atom_symbol_str.split())                        
-#----------------------------------------------------------
-    def import_allegro_frames(self, file_name: Union[str, pathlib.Path])->list[dict]:
+        self.import_para_from_list(atom_symbol_str.split())
+
+    def import_allegro_frames(self, file_name: Union[str, pathlib.Path]) -> list[dict]:
         """
         pickle fileを読み込み、sfsに入れます。
         pickle file には 
@@ -234,6 +241,3 @@ class ImportFrames(
             self.sf.append(sf)
 
         return frames
-
-
-    

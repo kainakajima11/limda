@@ -11,6 +11,7 @@ from .export_frames import ExportFrames
 from .SimulationFrame import SimulationFrame
 from .analyze_frames import AnalyzeFrames
 
+
 class SimulationFrames(
     ImportFrames,
     ExportFrames,
@@ -29,35 +30,35 @@ class SimulationFrames(
         原子のtypeをkey, 原子のシンボルをvalueとするdict
     atom_type_to_mass : dict[int, float]
         原子のtypeをkey, 原子の質量(g/mol)をvalueとするdict
-    
+
     """
     sf: list[SimulationFrame]
     atom_symbol_to_type: dict[str, int]
-    atom_type_to_symbol : dict[int, str]
-    atom_type_to_mass : dict[int, float]
+    atom_type_to_symbol: dict[int, str]
+    atom_type_to_mass: dict[int, float]
     limda_default: dict[str, Any]
-#----------------------
-    def __init__(self, para: str=""):
-        self.sf:list[SimulationFrame] = []
+
+    def __init__(self, para: str = ""):
+        self.sf: list[SimulationFrame] = []
         self.atom_symbol_to_type: dict[str, int] = None
-        self.atom_type_to_symbol : dict[int, str] = None
-        self.atom_type_to_mass : dict[int, float] = None
+        self.atom_type_to_symbol: dict[int, str] = None
+        self.atom_type_to_mass: dict[int, float] = None
         self.import_limda_default()
         self.import_para_from_str(para)
-#---------------------
+
     def __len__(self):
         """
         len(sfs)でlen(sfs.sf)を得ることができる
         """
         return len(self.sf)
-#----------------------------- 
+
     def __getitem__(self, key):
         """sfs = SimulationFrames()
         sfs[step_idx]でsfs.sf[step_idx]を得ることができる
         """
         return self.sf[key]
-#------------------------------------
-    def shuffle_sfs(self, seed:int=1):
+
+    def shuffle_sfs(self, seed: int = 1):
         """self.sfの順番をシャッフルする
         Parameters
         ----------
@@ -66,8 +67,8 @@ class SimulationFrames(
         """
         random.seed(seed)
         random.shuffle(self.sf)
-# -----------------------------------------------------------------  
-    def concat_sfs(self, simulation_frames_list:list):
+
+    def concat_sfs(self, simulation_frames_list: list):
         """sfsを結合する
         Parameters
         ----------
@@ -82,11 +83,11 @@ class SimulationFrames(
         for outer_sfs in simulation_frames_list:
             for step_idx in range(len(outer_sfs)):
                 self.sf.append(outer_sfs.sf[step_idx])
-        
+
         for step_idx, frame in enumerate(self.sf):
             frame.step_num = step_idx
-#-------------------------------------------------------------------
-    def split_sfs_specified_list_size(self, list_size: int)->list:
+
+    def split_sfs_specified_list_size(self, list_size: int) -> list:
         """sfsを複数のsfsに分け, sfsのlistを返す。
             listのサイズを指定できる
         Parameters
@@ -116,8 +117,8 @@ class SimulationFrames(
             frames.atom_type_to_symbol = self.atom_type_to_symbol
             frames.atom_type_to_mass = self.atom_type_to_mass
         return sfs_list
-#---------------------------------------------------------------------------------------------------------------
-    def split_sfs(self, each_sfs_size: int, keep_remains:bool = False)->list:
+
+    def split_sfs(self, each_sfs_size: int, keep_remains: bool = False) -> list:
         """ sfsを複数のsfsに分け, sfsのlistを返す。
             sfs1つ1つサイズを指定できる。
         Parameters
@@ -140,7 +141,7 @@ class SimulationFrames(
         list_size = int(len(self) / each_sfs_size)
         main_sfs = SimulationFrames()
         remain_sfs = SimulationFrames()
-        remain = len(self)%each_sfs_size
+        remain = len(self) % each_sfs_size
         main_sfs.sf = self.sf[0:len(self)-remain]
         remain_sfs.sf = self.sf[len(self)-remain:len(self)]
         sfs_list = main_sfs.split_sframes_specify_list_size(list_size)
@@ -151,12 +152,11 @@ class SimulationFrames(
             sfs_list.append(remain_sfs)
         return sfs_list
 
-#---------------------------------------------------------------------------------------------------------------
     def allegro(self,
                 cut_off: float,
                 device: Union[str, torch.DeviceObjType],
                 allegro_model: torch.jit._script.RecursiveScriptModule,
-                flag_calc_virial:bool = False,
+                flag_calc_virial: bool = False,
                 ) -> None:
         """sfsのもつすべてのSimulationFrameに対して、以下を行う
         Allegroを使って、sfに入っている原子の座標に対して推論を行い、
@@ -179,8 +179,7 @@ class SimulationFrames(
                                        allegro_model=allegro_model,
                                        flag_calc_virial=flag_calc_virial)
 
-#---------------------------------------------------------------------------------------------- 
-    def concat_force_and_pred_force(self, 
+    def concat_force_and_pred_force(self,
                                     reduce_direction: bool = False,
                                     ) -> pd.DataFrame:
         """それぞれのSimulationFrameが持つ力とAllegroによって予測された力という一つのDataFrameを作る
@@ -219,8 +218,9 @@ class SimulationFrames(
         for frame_idx in range(len(self.sf)):
             force_and_pred_force_list.append(
                 self.sf[frame_idx].atoms.loc[:,
-                    ["fx", "fy", "fz", "pred_fx", "pred_fy", "pred_fz"]
-                ]
+                                             ["fx", "fy", "fz", "pred_fx",
+                                                 "pred_fy", "pred_fz"]
+                                             ]
             )
         force_and_pred_force = pd.concat(force_and_pred_force_list)
 
@@ -228,15 +228,15 @@ class SimulationFrames(
             force_and_pred_force_reduced = pd.DataFrame(
                 np.concatenate(
                     [force_and_pred_force.loc[:, ["fx", "pred_fx"]].values,
-                    force_and_pred_force.loc[:, ["fy", "pred_fy"]].values,
-                    force_and_pred_force.loc[:, ["fz", "pred_fz"]].values,],
+                     force_and_pred_force.loc[:, ["fy", "pred_fy"]].values,
+                     force_and_pred_force.loc[:, ["fz", "pred_fz"]].values,],
                     axis=0),
                 columns=["f", "pred_f"]
             )
             return force_and_pred_force_reduced
         else:
             return force_and_pred_force
-#----------------------------------------------------------------------------------------------
+
     def concat_pot_and_pred_pot(self) -> pd.DataFrame:
         """それぞれのSimulationFrameが持つポテンシャルエネルギーと
         Allegroによって予測されたポテンシャルエネルギーという一つのDataFrameを作る
@@ -253,16 +253,17 @@ class SimulationFrames(
         pred_potential_energy_list = []
         for frame_idx in range(len(self.sf)):
             potential_energy_list.append(self.sf[frame_idx].potential_energy)
-            pred_potential_energy_list.append(self.sf[frame_idx].pred_potential_energy)
+            pred_potential_energy_list.append(
+                self.sf[frame_idx].pred_potential_energy)
 
         pot_and_pred_pot = pd.DataFrame({
-                "potential_energy":potential_energy_list,
-                "pred_potential_energy":pred_potential_energy_list
-            })
+            "potential_energy": potential_energy_list,
+            "pred_potential_energy": pred_potential_energy_list
+        })
 
         return pot_and_pred_pot
-#----------------------------------------------------------------------------------------------    
-    def concat_virial_and_pred_virial(self, only_diag : bool = False) -> pd.DataFrame:
+
+    def concat_virial_and_pred_virial(self, only_diag: bool = False) -> pd.DataFrame:
         """
         sfsにある構造の,virial_tensorとpred_virial_tensorをまとめたdfを作成する。
         Augument
@@ -281,21 +282,26 @@ class SimulationFrames(
         stress_list = []
         pred_stress_list = []
         for frame_idx in range(len(self.sf)):
-            volume = self.sf[frame_idx].cell[0] * self.sf[frame_idx].cell[1] * self.sf[frame_idx].cell[2]
+            volume = self.sf[frame_idx].cell[0] * \
+                self.sf[frame_idx].cell[1] * self.sf[frame_idx].cell[2]
             for i in range(3):
-                stress_list.append(self.sf[frame_idx].virial_tensor[i][i] / volume)
-                pred_stress_list.append(self.sf[frame_idx].pred_virial_tensor[i][i] / volume)
+                stress_list.append(
+                    self.sf[frame_idx].virial_tensor[i][i] / volume)
+                pred_stress_list.append(
+                    self.sf[frame_idx].pred_virial_tensor[i][i] / volume)
             if not only_diag:
                 for i in range(3):
-                    stress_list.append(self.sf[frame_idx].virial_tensor[i][(i+1)%3] / volume)
-                    pred_stress_list.append(self.sf[frame_idx].pred_virial_tensor[i][(i+1)%3] / volume)
+                    stress_list.append(
+                        self.sf[frame_idx].virial_tensor[i][(i+1) % 3] / volume)
+                    pred_stress_list.append(
+                        self.sf[frame_idx].pred_virial_tensor[i][(i+1) % 3] / volume)
 
         stress_and_pred_stress = pd.DataFrame({
-                "stress":stress_list,
-                "pred_stress":pred_stress_list
-            })
+            "stress": stress_list,
+            "pred_stress": pred_stress_list
+        })
         return stress_and_pred_stress
-#---------------------------------------------------------------------------------------------- 
+
     def get_step_nums(self) -> list[int]:
         """ステップ数のリストを作る
         """

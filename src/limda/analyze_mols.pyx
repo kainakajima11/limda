@@ -36,7 +36,7 @@ cdef vector[vector[int]] get_mols_list(vector[vector[int]] neighbor_list, int at
                     continue
                 que.push(nex)
     return mols_list
-#------------------------------------------------------------------------------------------------------------------
+
+
 def get_mols_list_using_cython(vector[vector[int]] neighbor_list, int atom_num):
     return get_mols_list(neighbor_list, atom_num)
-#------------------------------------------------------------------------------------------------------------------

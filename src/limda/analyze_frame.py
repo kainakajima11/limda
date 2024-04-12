@@ -9,7 +9,6 @@ class AnalyzeFrame:
     def __init__(self):
         pass
 
-# ---------------------------------------------------------------------------------------------------------
     def get_neighbor_list(
         self, mode: str, cut_off: float = None, bond_length: list[list[float]] = None
     ) -> list[list[int]]:
@@ -31,7 +30,8 @@ class AnalyzeFrame:
             if bond_length is None:
                 if "bond_length" in self.limda_default:
                     bond_length = self.limda_default["bond_length"]
-            assert len(bond_length) == atom_type_num, "Incorrect format of bond length"
+            assert len(
+                bond_length) == atom_type_num, "Incorrect format of bond length"
             for bond_list in bond_length:
                 assert (
                     len(bond_list) == atom_type_num
@@ -59,7 +59,7 @@ class AnalyzeFrame:
             cell=self.cell,
         )
         return neighbor_list
-#----------------------------------------------------------------------------------------
+
     def get_mols_list(
         self,
         mode: str = "bond_length",
@@ -87,7 +87,7 @@ class AnalyzeFrame:
             mode=mode, cut_off=cut_off, bond_length=bond_length
         )
         return get_mols_list_using_cython(neighbor_list, self.get_total_atoms())
-#----------------------------------------------------------------------------------------
+
     def get_mols_dict(
         self,
         mode: str = "bond_length",
@@ -138,7 +138,7 @@ class AnalyzeFrame:
             mols_dict[mol_str] = mols
 
         return mols_dict
-#----------------------------------------------------------------------------------------
+
     def count_mols(
         self,
         mode: str = "bond_length",
@@ -188,7 +188,7 @@ class AnalyzeFrame:
             mols_count[mol_str] = count
 
         return mols_count
-#----------------------------------------------------------------------------------------
+
     def count_bonds(
         self,
         mode: str = "bond_length",
@@ -215,7 +215,7 @@ class AnalyzeFrame:
         atom_types = self.atoms["type"].values
         count_bonds_list = [
             [0 for _ in range(len(self.atom_symbol_to_type))]
-                for _ in range(len(self.atom_symbol_to_type))
+            for _ in range(len(self.atom_symbol_to_type))
         ]
         for atom_i_idx in range(self.get_total_atoms()):
             atom_i_type = atom_types[atom_i_idx]
@@ -231,7 +231,7 @@ class AnalyzeFrame:
                     atom_j_type - 1
                 ]
         return count_bonds_dict
-#----------------------------------------------------------------------------------------
+
     def get_edge_index(self, cut_off: float) -> list[list[int]]:
         """allegroのedge_indexを作成します。
         edge_index : list[list[int]]でshapeは[2, num_edges]
@@ -249,8 +249,8 @@ class AnalyzeFrame:
                     edge_index[0].append(atom_idx)
                     edge_index[1].append(neighbor_atom_idx)
         return edge_index
-#----------------------------------------------------------------------------------------
-    def get_sum_of_momentums(self)->np.ndarray[float]:
+
+    def get_sum_of_momentums(self) -> np.ndarray[float]:
         """
         各方向の運動量の合計を計算する.
 
@@ -259,7 +259,8 @@ class AnalyzeFrame:
             momentum_sum : np.ndarray[float]
                 運動量の合計 [x, y, z]
         """
-        mass = np.array([self.atom_type_to_mass[typ] for typ in self.atoms["type"]])
-        momentums = np.array([self.atoms["vx"], self.atoms["vy"], self.atoms["vz"]]) * mass
+        mass = np.array([self.atom_type_to_mass[typ]
+                        for typ in self.atoms["type"]])
+        momentums = np.array(
+            [self.atoms["vx"], self.atoms["vy"], self.atoms["vz"]]) * mass
         return np.sum(momentums, axis=1)
-        
