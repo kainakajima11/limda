@@ -223,13 +223,14 @@ class AnalyzeFrame:
                 if atom_i_idx < atom_j_idx:
                     atom_j_type = atom_types[atom_j_idx]
                     count_bonds_list[atom_i_type - 1][atom_j_type - 1] += 1
+        print(count_bonds_list)
         count_bonds_dict = {}
         for atom_i_type in range(1, len(self.atom_symbol_to_type) + 1):
             for atom_j_type in range(atom_i_type, len(self.atom_symbol_to_type) + 1):
                 bond = f"{self.atom_type_to_symbol[atom_i_type]}-{self.atom_type_to_symbol[atom_j_type]}"
-                count_bonds_dict[bond] = count_bonds_list[atom_i_type - 1][
-                    atom_j_type - 1
-                ]
+                count_bonds_dict[bond] = count_bonds_list[atom_i_type - 1][atom_j_type - 1]
+                if atom_i_type != atom_j_type:
+                    count_bonds_dict[bond] = count_bonds_list[atom_j_type - 1][atom_i_type - 1]
         return count_bonds_dict
 
     def get_edge_index(self, cut_off: float) -> list[list[int]]:
