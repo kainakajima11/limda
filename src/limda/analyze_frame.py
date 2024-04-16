@@ -223,7 +223,6 @@ class AnalyzeFrame:
                 if atom_i_idx < atom_j_idx:
                     atom_j_type = atom_types[atom_j_idx]
                     count_bonds_list[atom_i_type - 1][atom_j_type - 1] += 1
-        print(count_bonds_list)
         count_bonds_dict = {}
         for atom_i_type in range(1, len(self.atom_symbol_to_type) + 1):
             for atom_j_type in range(atom_i_type, len(self.atom_symbol_to_type) + 1):
