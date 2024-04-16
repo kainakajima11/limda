@@ -264,3 +264,35 @@ class AnalyzeFrame:
         momentums = np.array(
             [self.atoms["vx"], self.atoms["vy"], self.atoms["vz"]]) * mass
         return np.sum(momentums, axis=1)
+
+    def get_neighbor_list_brute(self, bond_length: list[list[float]]) -> list[list[int]]:
+        """ neighbor_listを作成します。
+            pythonでO(N^2)のため、get_neighbor_list()のtest用です。
+        Parameters
+        -----------
+            bond_length: list[list[float]]
+        """
+        neighbor_list_brute = [[] for _ in range(len(self))]
+        x = self.atoms['x'].values
+        y = self.atoms['y'].values
+        z = self.atoms['z'].values
+        atom_types = self.atoms['type'].to_list()
+        for i in range(self.get_total_atoms()):
+            for j in range(i+1, self.get_total_atoms()):
+                dx: list[float] = [None, None, None]
+                dx[0] = x[j] - x[i]
+                dx[1] = y[j] - y[i]
+                dx[2] = z[j] - z[i]
+                for ax in range(3):
+                    if dx[ax] < -self.cell[ax]/2:
+                        dx[ax] += self.cell[ax]
+                    elif self.cell[ax]/2 < dx[ax]:
+                        dx[ax] -= self.cell[ax]
+                if dx[0]*dx[0] + dx[1]*dx[1] + dx[2]*dx[2] <= bond_length[atom_types[i]-1][atom_types[j]-1]*bond_length[atom_types[i]-1][atom_types[j]-1]:
+                    neighbor_list_brute[i].append(j)
+                    neighbor_list_brute[j].append(i)
+
+        for idx in range(len(neighbor_list_brute)):
+            neighbor_list_brute[idx] = sorted(neighbor_list_brute[idx])
+
+        return neighbor_list_brute
