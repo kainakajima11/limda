@@ -14,34 +14,36 @@ try:
 except:
     pass
 
+
 class Calculate(
 
 ):
     """計算を実行するクラス
     """
+
     def __init__(self):
         pass
 
     def vasp(
             self,
-            calc_directory: str="",
-            system_name: str="",
-            step_num: int= 0,
-            poscar_comment: str="",
-            poscar_scaling_factor: float=1.0,
-            incar_config: dict=None,
-            potcar_root: str=None,
-            kpoints_comment: str="",
-            kpoints_kx: int=1,
-            kpoints_ky: int=1,
-            kpoints_kz: int=1,
-            iconst_config: list[str]=None,
-            vasp_command: str="vasp_std",
-            print_vasp: bool=True,
-            exist_ok: bool=False,
+            calc_directory: str = "",
+            system_name: str = "",
+            step_num: int = 0,
+            poscar_comment: str = "",
+            poscar_scaling_factor: float = 1.0,
+            incar_config: dict = None,
+            potcar_root: str = None,
+            kpoints_comment: str = "",
+            kpoints_kx: int = 1,
+            kpoints_ky: int = 1,
+            kpoints_kz: int = 1,
+            iconst_config: list[str] = None,
+            vasp_command: str = "vasp_std",
+            print_vasp: bool = True,
+            exist_ok: bool = False,
             poscar_from_contcar: bool = False,
             contcar_path: str = "",
-            place :str = "kbox",
+            place: str = "kbox",
             num_nodes: int = 1,
     ):
         """vaspを実行する.
@@ -98,21 +100,25 @@ class Calculate(
         os.makedirs(calc_directory, exist_ok=exist_ok)
         if poscar_from_contcar:
             incar_config["ISTART"] = 1
-            subprocess.run(["cp", f"./{system_name}_{step_num-1}/WAVECAR", f'./{calc_directory}'])
+            subprocess.run(
+                ["cp", f"./{system_name}_{step_num-1}/WAVECAR", f'./{calc_directory}'])
         poscar_path = calc_directory / "POSCAR"
         incar_path = calc_directory / "INCAR"
         potcar_path = calc_directory / "POTCAR"
         kpoints_path = calc_directory / "KPOINTS"
         iconst_path = calc_directory / "ICONST"
-        num_process = incar_config["NCORE"] * incar_config["NPAR"] * incar_config["KPAR"]
-        assert num_process%num_nodes == 0, "Invalid num_nodes"
+        num_process = incar_config["NCORE"] * \
+            incar_config["NPAR"] * incar_config["KPAR"]
+        assert num_process % num_nodes == 0, "Invalid num_nodes"
         if not poscar_from_contcar:
-            self.export_vasp_poscar(poscar_path, poscar_comment, poscar_scaling_factor)
+            self.export_vasp_poscar(
+                poscar_path, poscar_comment, poscar_scaling_factor)
         else:
             self.export_vasp_poscar_from_contcar(poscar_path, contcar_path)
         self.export_vasp_incar(incar_path, incar_config)
         self.export_vasp_potcar(potcar_path, potcar_root)
-        self.export_vasp_kpoints(kpoints_path, kpoints_comment, kpoints_kx, kpoints_ky, kpoints_kz)
+        self.export_vasp_kpoints(
+            kpoints_path, kpoints_comment, kpoints_kx, kpoints_ky, kpoints_kz)
 
         if iconst_config is not None:
             self.export_vasp_iconst(iconst_path, iconst_config)
@@ -124,19 +130,20 @@ class Calculate(
         vasp_md_process = subprocess.Popen(cmd, cwd=calc_directory, shell=True)
         time.sleep(5)
         if print_vasp:
-            tail_process = subprocess.Popen(f'tail -F stdout', cwd=calc_directory, shell=True)
+            tail_process = subprocess.Popen(
+                f'tail -F stdout', cwd=calc_directory, shell=True)
             while vasp_md_process.poll() is None:
                 time.sleep(1)
             tail_process.kill()
-#----------------------------------------------------------------------------------------------
+
     def laich(self,
-              calc_dir: str='laich_calc',
-              para_file_path: str=None,
-              laich_cmd: str ='laich',
-              laich_config :dict=None,
-              print_laich: bool=False,
+              calc_dir: str = 'laich_calc',
+              para_file_path: str = None,
+              laich_cmd: str = 'laich',
+              laich_config: dict = None,
+              print_laich: bool = False,
               exist_ok=False,
-              place :str = "kbox",
+              place: str = "kbox",
               num_nodes: int = 1,
               mask_info: list[str] = None):
         """LaichでMD,または構造最適化を実行する。
@@ -170,12 +177,14 @@ class Calculate(
 
         if para_file_path is not None:
             try:
-                subprocess.run(f'cp {para_file_path} {calc_dir / "para.rd"}', shell=True)
+                subprocess.run(
+                    f'cp {para_file_path} {calc_dir / "para.rd"}', shell=True)
             except:
                 pass
 
-        num_process = laich_config["MPIGridX"]*laich_config["MPIGridY"]*laich_config["MPIGridZ"]
-        assert num_process%num_nodes == 0, "Invalid num_nodes"
+        num_process = laich_config["MPIGridX"] * \
+            laich_config["MPIGridY"]*laich_config["MPIGridZ"]
+        assert num_process % num_nodes == 0, "Invalid num_nodes"
 
         if place == "kbox":
             cmd = f"mpiexec.hydra -np {num_process} {laich_cmd} < /dev/null >& out"
@@ -185,7 +194,8 @@ class Calculate(
         laich_process = subprocess.Popen(cmd, cwd=calc_dir, shell=True)
         time.sleep(5)
         if print_laich:
-            tail_process = subprocess.Popen(f'tail -F out', cwd=calc_dir, shell=True)
+            tail_process = subprocess.Popen(
+                f'tail -F out', cwd=calc_dir, shell=True)
         while laich_process.poll() is None:
             time.sleep(1)
         if print_laich:
@@ -196,17 +206,17 @@ class Calculate(
         assert len(dumppos_paths) != 0, "dumpposが生成されていません"
         optimized_dumppos_path = dumppos_paths[0]
         self.import_dumppos(optimized_dumppos_path)
-#------------------------------------------------------------------------------------------
+
     def packmol(self,
                 sf_list: list,
                 pack_num_list: list[int],
-                tolerance: float=2.0,
-                packmol_tmp_dir: Union[str,pathlib.Path]="./packmol_tmp",
-                xyz_condition: list[float]=None,
-                seed: int=-1,
-                packmol_cmd: str="packmol",
-                print_packmol: bool=False,
-                exist_ok: bool=True
+                tolerance: float = 2.0,
+                packmol_tmp_dir: Union[str, pathlib.Path] = "./packmol_tmp",
+                xyz_condition: list[float] = None,
+                seed: int = -1,
+                packmol_cmd: str = "packmol",
+                print_packmol: bool = False,
+                exist_ok: bool = True
                 ):
         """packmolで原子を詰める
         Parameters
@@ -246,7 +256,8 @@ class Calculate(
             境界には間を開けることを推奨
         """
         if xyz_condition is not None:
-            assert len(xyz_condition) == len(sf_list), "sf_listとxyz_conditonを同じ長さにしてください."
+            assert len(xyz_condition) == len(
+                sf_list), "sf_listとxyz_conditonを同じ長さにしてください."
 
         packmol_tmp_dir = pathlib.Path(packmol_tmp_dir)
         if packmol_tmp_dir.exists() and not exist_ok:
@@ -281,18 +292,20 @@ class Calculate(
                         f.write(f"\t{condition}")
                     f.write("\n")
                 f.write("end structure\n\n")
-        
+
         # export xyz file
         if self.atoms is not None and self.get_total_atoms() >= 1:
-            self.export_xyz(packmol_tmp_dir / "this_sf.xyz", structure_name="this_sf")
+            self.export_xyz(packmol_tmp_dir / "this_sf.xyz",
+                            structure_name="this_sf")
 
         for frame_idx in range(len(sf_list)):
             sf_list[frame_idx].export_xyz(packmol_tmp_dir / f"sf_idx_{frame_idx}.xyz",
                                           structure_name=f"sf_idx_{frame_idx}")
-        
+
         # run packmol
         if print_packmol:
-            p = subprocess.Popen(f"{packmol_cmd} < packmol_mixture_comment.inp", cwd=packmol_tmp_dir, shell=True, )
+            p = subprocess.Popen(
+                f"{packmol_cmd} < packmol_mixture_comment.inp", cwd=packmol_tmp_dir, shell=True, )
         else:
             p = subprocess.Popen(f"{packmol_cmd} < packmol_mixture_comment.inp", cwd=packmol_tmp_dir, shell=True,
                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -300,17 +313,17 @@ class Calculate(
         p.wait()
         # import result
         self.import_xyz(packmol_tmp_dir / "packmol_mixture_result.xyz")
-#---------------------------------------------------------------------
+
     def lax(self,
             calc_dir: str = "lax_calc",
             lax_cmd: str = "lax",
             lax_config: dict = None,
             print_lax: bool = False,
-            exist_ok = False,
-            place :str = "kbox",
+            exist_ok=False,
+            place: str = "kbox",
             num_nodes: int = 1,
             mask_info: list[str] = [],
-            omp_num_threads :int = 1):
+            omp_num_threads: int = 1):
         """
         laxを実行する.
         Parameters
@@ -348,8 +361,9 @@ class Calculate(
             lax_config["MPIGridY"] = 1
         if "MPIGridZ" not in lax_config:
             lax_config["MPIGridZ"] = 1
-        num_process = int(lax_config["MPIGridX"]) * int(lax_config["MPIGridY"]) * int(lax_config["MPIGridZ"])
-        assert num_process%num_nodes == 0, "Invalid num_nodes"
+        num_process = int(
+            lax_config["MPIGridX"]) * int(lax_config["MPIGridY"]) * int(lax_config["MPIGridZ"])
+        assert num_process % num_nodes == 0, "Invalid num_nodes"
 
         assert omp_num_threads >= 1, "omp_num_threads must be an integer greater than or equal to 1"
         if omp_num_threads > 1:
@@ -359,29 +373,30 @@ class Calculate(
             cmd = f"mpiexec.hydra -np {num_process} {lax_cmd} < /dev/null >& out"
         elif place.upper() == "MASAMUNE":
             cmd = f'aprun -n {num_process} -N {int(num_process / num_nodes)} -j 1 {lax_cmd} > out'
-            
-        lax_process = subprocess.Popen(cmd, cwd = calc_dir, shell = True)
+
+        lax_process = subprocess.Popen(cmd, cwd=calc_dir, shell=True)
         time.sleep(5)
         if print_lax:
-            tail_process = subprocess.Popen(f"tail -F out", cwd = calc_dir, shell = True)
+            tail_process = subprocess.Popen(
+                f"tail -F out", cwd=calc_dir, shell=True)
         while lax_process.poll() is None:
             time.sleep(1)
         if print_lax:
             tail_process.kill()
         dumppos_paths = list(calc_dir.glob("./dump.pos.*"))
-        dumppos_paths.sort(reverse = True)
+        dumppos_paths.sort(reverse=True)
         assert len(dumppos_paths) != 0, "dumpposが生成されていません"
         optimized_dumppos_path = dumppos_paths[0]
         self.import_dumppos(optimized_dumppos_path)
 
         if omp_num_threads > 1:
             os.environ["OMP_NUM_THREADS"] = "1"
-#---------------------------------------------------------------------------------------------
+
     def allegro(self,
                 cut_off: float,
                 device: Union[str, torch.DeviceObjType],
                 allegro_model: torch.jit._script.RecursiveScriptModule,
-                flag_calc_virial = False,
+                flag_calc_virial=False,
                 ) -> Dict[str, torch.Tensor]:
         """Allegroを使って、sfに入っている原子の座標に対して推論を行い、
         ポテンシャルエネルギーと原子に働く力を計算する
@@ -402,12 +417,12 @@ class Calculate(
             device = torch.device(device)
 
         cell = np.array(self.cell, dtype=np.float32)
-        pos = np.array(self.atoms[["x","y","z"]].values, dtype=np.float32)
+        pos = np.array(self.atoms[["x", "y", "z"]].values, dtype=np.float32)
         atom_types = np.array(self.atoms["type"].values)
         atom_types -= 1
         cut_off = np.array(cut_off, dtype=np.float32)
 
-        edge_index = [[],[]]
+        edge_index = [[], []]
         edge_index = self.get_edge_index(cut_off=cut_off)
         edge_index = np.array(edge_index)
 
@@ -426,28 +441,31 @@ class Calculate(
             flag_calc_virial,
         )
 
-        self.atoms[['pred_fx', 'pred_fy', 'pred_fz']] = output['force'].cpu().detach().numpy()
-        self.atoms['pred_potential_energy'] = output['atomic_energy'].cpu().detach().numpy()
-        self.pred_potential_energy = output['total_energy'].cpu().detach().item()
+        self.atoms[['pred_fx', 'pred_fy', 'pred_fz']
+                   ] = output['force'].cpu().detach().numpy()
+        self.atoms['pred_potential_energy'] = output['atomic_energy'].cpu(
+        ).detach().numpy()
+        self.pred_potential_energy = output['total_energy'].cpu(
+        ).detach().item()
         if flag_calc_virial:
             self.pred_virial_tensor = output['virial'].cpu().detach().numpy()
 
         return output
-#---------------------------------------------------------------------------------------------
+
     def check_vasp(self,
                    incar_config: Dict[str, Any],
                    magmom_list: list[float] = None,
                    check_magmom: bool = True,
                    check_potim: bool = True,
                    light_atom_border: float = 10.0,
-                   potim: tuple[float,float] = (1.0, 2.0),
-                   )-> tuple[Dict[str, Any], list[str]]:
+                   potim: tuple[float, float] = (1.0, 2.0),
+                   ) -> tuple[Dict[str, Any], list[str]]:
         """
         vaspを回す(self.run_vasp)前に条件(self, incar_config)をcheckする
         MAGMOM : ISPINが有効なら、magmomlistに合わせて、MAGMOMを設定する
         POTIM : 軽元素によってPOTIMを変える
         iconst_config : NPTならばセルが傾かないように設定する
-        
+
         Parameters
         ----------
             incar_config : incar_config, 
@@ -468,19 +486,18 @@ class Calculate(
             lightest_mass = 1000.
             for typ in type_set:
                 lightest_mass = min(lightest_mass, self.atom_type_to_mass[typ])
-            if lightest_mass <= light_atom_border: # 軽元素が含まれるか
+            if lightest_mass <= light_atom_border:  # 軽元素が含まれるか
                 incar_config["POTIM"] = potim[0]
             else:
                 incar_config["POTIM"] = potim[1]
-        
+
         # iconst_config
         iconst_config: list[str] = None
         if incar_config["ISIF"] == 3:
-            iconst_config = [ # 角度一定でNPTする設定
-                'LA 1 2 0',    
+            iconst_config = [  # 角度一定でNPTする設定
+                'LA 1 2 0',
                 'LA 1 3 0',
                 'LA 2 3 0'
             ]
 
         return incar_config, iconst_config
-    

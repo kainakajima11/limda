@@ -46,7 +46,8 @@ class AnalyzeFrames:
         df_count_mols = pd.DataFrame(count_mols_lists).fillna(0).astype(int)
         df_count_mols.index = self.get_step_nums()
         columns = list(df_count_mols.columns)
-        columns.sort(key= lambda col: df_count_mols[col].max(), reverse=True) # 出現率の多い分子から表示
+        # 出現率の多い分子から表示
+        columns.sort(key=lambda col: df_count_mols[col].max(), reverse=True)
         df_count_mols = df_count_mols[columns]
         return df_count_mols
 

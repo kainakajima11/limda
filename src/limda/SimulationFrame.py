@@ -11,6 +11,7 @@ from .calculate import Calculate
 from .analyze_frame import AnalyzeFrame
 from . import const as C
 
+
 class SimulationFrame(
     ImportFrame,
     ExportFrame,
@@ -46,17 +47,17 @@ class SimulationFrame(
         NNPにより推論したときのvirialテンソル, 単位はeV, shape:(3,3)
     """
     atoms: pd.DataFrame
-    cell: np.ndarray[float] # shape:[3]
+    cell: np.ndarray[float]  # shape:[3]
     atom_symbol_to_type: dict[str, int]
-    atom_type_to_symbol : dict[int, str]
-    atom_type_to_mass : dict[int, float]
+    atom_type_to_symbol: dict[int, str]
+    atom_type_to_mass: dict[int, float]
     step_num: int
     potential_energy: float
     virial_tensor: np.ndarray[float]
     pred_potential_energy: float
     pred_virial_tensor: np.ndarray[float]
     limda_default: dict[str, Any]
-#--------------------------------------
+
     def __init__(self, para: str = ""):
         self.atoms = None
         self.cell = None
@@ -70,23 +71,22 @@ class SimulationFrame(
         self.pred_virial_tensor = None
         self.import_limda_default()
         self.import_para_from_str(para)
-#-------------------------------------
+
     def __getitem__(self, key) -> pd.DataFrame:
         """
         sdat.atoms[column]をsdat[column]と省略して書くことが出来る。
         """
         return self.atoms[key]
-#-------------------------------------------
+
     def __setitem__(self, key, val) -> None:
         self.atoms[key] = val
-#------------------------------
-    def __len__(self) -> int:
-            """
-            sdat.get_total_atoms()をlen(sdat)と省略して書くことが出来る。
-            """
-            return self.get_total_atoms()
 
-#-------------------------------------
+    def __len__(self) -> int:
+        """
+        sdat.get_total_atoms()をlen(sdat)と省略して書くことが出来る。
+        """
+        return self.get_total_atoms()
+
     def get_total_atoms(self) -> int:
         """
         全原子数を返す関数。
@@ -94,23 +94,22 @@ class SimulationFrame(
         assert self.atoms is not None, 'Import file first'
         return len(self.atoms)
 
-#--------------------------------------
     def get_atom_type_set(self) -> set:
         """
         系内の原子のtypeのsetを返す関数
         """
         return set(self.atoms['type'])
-#----------------------------------------------
+
     def wrap_atoms(self) -> None:
         """
         セルの外にはみ出している原子をセルの中に入れる。
         """
         assert self.cell is not None, "set sf.cell"
-        assert 0 not in set(self.cell), "cell size must not be 0" 
+        assert 0 not in set(self.cell), "cell size must not be 0"
 
         self.atoms[['x', 'y', 'z']] %= self.cell
-#---------------------------------------------------------------------------------
-    def replicate_atoms(self, replicate_directions:list[int] = [1, 1, 1]) -> None:
+
+    def replicate_atoms(self, replicate_directions: list[int] = [1, 1, 1]) -> None:
         """
         x, y, z 方向にセルを複製する関数
 
@@ -124,16 +123,16 @@ class SimulationFrame(
         """
         for i, dim in enumerate(['x', 'y', 'z']):
             copy_atoms = self.atoms.copy()
-            for idx in range(1,replicate_directions[i]): 
-                replicate = lambda d: d[dim] + self.cell[i]*idx
+            for idx in range(1, replicate_directions[i]):
+                def replicate(d): return d[dim] + self.cell[i]*idx
                 append_atoms = copy_atoms.copy()
-                append_atoms[dim] = append_atoms.apply(replicate,axis=1)
+                append_atoms[dim] = append_atoms.apply(replicate, axis=1)
                 self.atoms = pd.concat([self.atoms, append_atoms])
 
         self.atoms.reset_index(drop=True, inplace=True)
         for dim in range(3):
             self.cell[dim] *= replicate_directions[dim]
-#------------------------------------------------------
+
     def concat_atoms(self, outer_sf) -> None:
         """
         sfとouter_sfを結合する関数
@@ -149,28 +148,27 @@ class SimulationFrame(
         for dim in range(3):
             self.cell[dim] = max(self.cell[dim], outer_sf.cell[dim])
 
-#------------------------------------------------
     def delete_atoms(self, condition, reindex):
-            """
-            条件に当てはまる原子を削除する
+        """
+        条件に当てはまる原子を削除する
 
-            Parameters
-            ----------
-            condition : function
-                削除したい原子の条件を指定する関数
-            reindex : bool
-                reindex == Trueの時は原子のid(idx)は新しく割り振られる
-                reindex == Falseの時は原子のid(idx)は新しく割り振られず、削除前のものと変わらない
-            """
-            if callable(condition):
-                target_atoms = condition(self)
-                self.atoms = self.atoms[~target_atoms]
-            else:
-                self.atoms = self.atoms[~condition]
-            if reindex:
-                self.atoms.reset_index(drop=True, inplace=True)
-#-------------------------------------------------------------------------------------------
-    def density(self, x_min=None, x_max=None, y_min=None, y_max=None,z_min=None,z_max=None):
+        Parameters
+        ----------
+        condition : function
+            削除したい原子の条件を指定する関数
+        reindex : bool
+            reindex == Trueの時は原子のid(idx)は新しく割り振られる
+            reindex == Falseの時は原子のid(idx)は新しく割り振られず、削除前のものと変わらない
+        """
+        if callable(condition):
+            target_atoms = condition(self)
+            self.atoms = self.atoms[~target_atoms]
+        else:
+            self.atoms = self.atoms[~condition]
+        if reindex:
+            self.atoms.reset_index(drop=True, inplace=True)
+
+    def density(self, x_min=None, x_max=None, y_min=None, y_max=None, z_min=None, z_max=None):
         """セル内の密度を計算する関数
         Parameters
         ----------
@@ -209,12 +207,14 @@ class SimulationFrame(
         # 体積(cm^3)
         volume = (x_mx - x_mn) * (y_mx - y_mn) * (z_mx - z_mn) * (10 ** - 24)
         all_weight = 0
+
         def condition(sf):
-            target_atoms = (x_mn <= sf.atoms['x'])&(sf.atoms['x'] <= x_mx)
-            target_atoms &= (y_mn <= sf.atoms['y'])&(sf.atoms['y'] <= y_mx)
-            target_atoms &= (z_mn <= sf.atoms['z'])&(sf.atoms['z'] <= z_mx)
+            target_atoms = (x_mn <= sf.atoms['x']) & (sf.atoms['x'] <= x_mx)
+            target_atoms &= (y_mn <= sf.atoms['y']) & (sf.atoms['y'] <= y_mx)
+            target_atoms &= (z_mn <= sf.atoms['z']) & (sf.atoms['z'] <= z_mx)
             return target_atoms
-        atom_type_counter = self.count_atom_types(res_type='dict', condition=condition)
+        atom_type_counter = self.count_atom_types(
+            res_type='dict', condition=condition)
         for atom_symbol, atom_type_count in atom_type_counter.items():
             atom_type = self.atom_symbol_to_type[atom_symbol]
             atom_mass = self.atom_type_to_mass[atom_type]
@@ -222,7 +222,7 @@ class SimulationFrame(
         # セル内の密度(g/cm^3)
         density = all_weight / volume
         return density
-#--------------------------------------------------------------------------------------
+
     def count_atom_types(self, res_type='series', condition=None):
         """原子のタイプごとに原子の個数をカウントする関数
         Parameters
@@ -238,13 +238,13 @@ class SimulationFrame(
         else:
             target_atoms = condition(self)
         if res_type == 'series':
-            return self.atoms.loc[target_atoms,'type'].value_counts().rename(index=self.atom_type_to_symbol)
+            return self.atoms.loc[target_atoms, 'type'].value_counts().rename(index=self.atom_type_to_symbol)
         elif res_type == 'dict':
-            return self.atoms.loc[target_atoms,'type'].value_counts().rename(index=self.atom_type_to_symbol).to_dict()
+            return self.atoms.loc[target_atoms, 'type'].value_counts().rename(index=self.atom_type_to_symbol).to_dict()
         else:
             raise ValueError(
                 f'res_type: {res_type} is not supported. supported res_type : [series, dict]')
-#---------------------------------------------------------------------------------------------
+
     def shuffle_type(self, type_ratio: list[float], fix_type: list[int] = None):
         """sfのtypeをランダムにシャッフルする。
             atomsに座標を持たせてから使用。
@@ -267,24 +267,27 @@ class SimulationFrame(
 
         tot_atoms = self.get_total_atoms()
         tot_ratio = sum(type_ratio)
-        type_ratio = [(type_ratio[i]*tot_atoms/tot_ratio) for i in range(len(type_ratio))]
-        remain_weight = [type_ratio[i] - int(type_ratio[i]) for i in range(len(type_ratio))]
+        type_ratio = [(type_ratio[i]*tot_atoms/tot_ratio)
+                      for i in range(len(type_ratio))]
+        remain_weight = [type_ratio[i] -
+                         int(type_ratio[i]) for i in range(len(type_ratio))]
         type_list = []
         for idx, ratio in enumerate(type_ratio):
             type_list.extend([idx+1 for _ in range(int(ratio))])
 
         if len(type_list) != len(self):
-            remain_type = random.choices([i+1 for i in range(len(type_ratio))], k=tot_atoms-len(type_list), weights=remain_weight)
+            remain_type = random.choices(
+                [i+1 for i in range(len(type_ratio))], k=tot_atoms-len(type_list), weights=remain_weight)
             type_list.extend(remain_type)
 
-        random.shuffle(type_list)    
+        random.shuffle(type_list)
         self.atoms["type"] = type_list
 
         if fix_type is not None:
             self.atoms = pd.concat([self.atoms, atoms_tmp])
-            self.atoms.reset_index(drop=True, inplace=True)            
-#--------------------------------------------------------------------------------       
-    def make_magmom_str(self, initial_magmom:list[float])->str:
+            self.atoms.reset_index(drop=True, inplace=True)
+
+    def make_magmom_str(self, initial_magmom: list[float]) -> str:
         """
         VaspのMAGMOM(初期磁気モーメントを決めるパラメーター)を簡単に設定できるようにします。
         MAGMOMの仕様
@@ -304,7 +307,7 @@ class SimulationFrame(
             magmom_str: str 
                 MAGMOMにこのstrを指定すればokです。
         """
-        type_dict: dict[int,int] = {}
+        type_dict: dict[int, int] = {}
         for type_len in range(len(self.atom_symbol_to_type)):
             type_dict[type_len] = 0
 
@@ -320,7 +323,7 @@ class SimulationFrame(
 
         magmom_str = magmom_str[:-1]
         return magmom_str
-#------------------------------------------------------------------
+
     def change_lattice_const(self,
                              new_cell: np.array(np.float32) = None,
                              magnification: np.float32 = None):
@@ -333,19 +336,20 @@ class SimulationFrame(
             magnification: np.float32
                 セルを何倍にするか
         """
-        assert new_cell or magnification,"new_cellかmagnificationのどちらかを指定してください"
-        assert not (new_cell and magnification), "new_cellかmagnificationのどちらかを指定してください"
+        assert new_cell or magnification, "new_cellかmagnificationのどちらかを指定してください"
+        assert not (
+            new_cell and magnification), "new_cellかmagnificationのどちらかを指定してください"
         assert magnification or len(new_cell) == 3, "正しい形式でnew_cellを指定してください"
         if magnification:
             new_cell = magnification*self.cell
         for i, dim in enumerate(["x", "y", "z"]):
             self.atoms[dim] *= new_cell[i]/self.cell[i]
         self.cell = new_cell
-#----------------------------------------------------------------------------------------------------
+
     def make_empty_space(self,
-                        empty_length: float = 10.0,
-                        direction: str = "z",
-                        both_direction: bool = True):
+                         empty_length: float = 10.0,
+                         direction: str = "z",
+                         both_direction: bool = True):
         """cellに真空部分を作ります.
         Arguments
         ---------
@@ -357,11 +361,11 @@ class SimulationFrame(
                 Trueならば+方向と-方向に半分ずつスペースができる
         """
         assert direction == "x" or direction == "y" or direction == "z", "Incorrect direction"
-        dim = {"x" : 0 , "y" : 1, "z" : 2}
+        dim = {"x": 0, "y": 1, "z": 2}
         self.cell[dim[direction]] += empty_length
         if both_direction:
             self.atoms[direction] += empty_length / 2
-#---------------------------------------------------------------------------------------------------
+
     def mirroring_atoms(self, direction: str = "z"):
         """
         指定した方向に、原子を反転して結合します.
@@ -374,7 +378,7 @@ class SimulationFrame(
         assert direction == "x" or direction == "y" or direction == "z", "Incorrect direction"
         # make mirror sf
         sf_mirror = deepcopy(self)
-        dim = {"x" : 0 , "y" : 1, "z" : 2}
+        dim = {"x": 0, "y": 1, "z": 2}
         sf_mirror.atoms[direction] *= -1
         sf_mirror.atoms[direction] += sf_mirror.cell[dim[direction]]
         sf_mirror.wrap_atoms()
@@ -382,8 +386,8 @@ class SimulationFrame(
         self.atoms[direction] += self.cell[dim[direction]]
         self.cell[dim[direction]] *= 2
         self.concat_atoms(sf_mirror)
-#-----------------------------------------------------------------------------------------------------
-    def shuffle_type_by_part(self, segment_num:list[int], type_ratio:list[int]):
+
+    def shuffle_type_by_part(self, segment_num: list[int], type_ratio: list[int]):
         """
         xyzで区切られた領域に対して、原子タイプをシャッフルする。
         -> 大きい系で、原子タイプの比率が偏ることがないようにする。
@@ -394,19 +398,21 @@ class SimulationFrame(
                 [x,y,z]方向に何個領域を区切るか
             type_ratio:list[int]
                 原子タイプの割合
-        """     
+        """
         assert len(segment_num) == 3, "segment_num is incorrrect form"
-        assert len(type_ratio) == len(self.atom_symbol_to_type), "type_ratio is incorrect form"
+        assert len(type_ratio) == len(
+            self.atom_symbol_to_type), "type_ratio is incorrect form"
 
         new_atoms = pd.DataFrame(columns=self.atoms.columns.to_list())
-        
+
         segment_num = np.array(segment_num, dtype=np.int32)
-        seg_length = self.cell / segment_num 
+        seg_length = self.cell / segment_num
 
         which_segment = np.array([0 for _ in range(len(self))])
         which_segment += self.atoms["x"] // seg_length[0]
         which_segment += self.atoms["y"] // seg_length[1] * segment_num[0]
-        which_segment += self.atoms["z"] // seg_length[2] * segment_num[0] * segment_num[1] 
+        which_segment += self.atoms["z"] // seg_length[2] * \
+            segment_num[0] * segment_num[1]
 
         for segment_id in range(np.prod(segment_num)):
             shuffled_seg = deepcopy(self)
@@ -415,12 +421,12 @@ class SimulationFrame(
             new_atoms = pd.concat([new_atoms, shuffled_seg.atoms])
 
         new_atoms = new_atoms.reset_index(drop=True)
-        self.atoms = new_atoms      
-#---------------------------------------------------------------------------------------------------
-    def slide_atoms(self, slide_length:list[float], change_cellsize:bool = True):
+        self.atoms = new_atoms
+
+    def slide_atoms(self, slide_length: list[float], change_cellsize: bool = True):
         """
         xyz方向それぞれに原子を平行移動させる。
-        
+
         Arguments
         ------------------
             slide_length: list[float]
@@ -429,7 +435,8 @@ class SimulationFrame(
                 スライドに伴い,cellサイズを変更するか
                 ex. x方向に 1 だけ移動-> x方向 の cellsize を1増加させる.
         """
-        assert len(slide_length) == 3, "Specify the slide_length for the [x, y, z] direction"
+        assert len(
+            slide_length) == 3, "Specify the slide_length for the [x, y, z] direction"
 
         self.atoms["x"] += slide_length[0]
         self.atoms["y"] += slide_length[1]
