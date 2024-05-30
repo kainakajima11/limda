@@ -257,6 +257,12 @@ class ImportFrame(
                                        dim]) * scaling_factor
             # atom type
             atom_symbol_list = list(f.readline().split())
+            for atom_symbol_num in range(len(atom_symbol_list)):
+                if atom_symbol_list[atom_symbol_num][0:5] == "Type_":
+                    atom_symbol_list[atom_symbol_num] = self.atom_type_to_symbol[int(atom_symbol_list[atom_symbol_num][5:])]
+
+
+            print(atom_symbol_list)
             atom_type_counter = list(map(int, f.readline().split()))
             total_atom_num = sum(atom_type_counter)
             atom_types = []
@@ -287,12 +293,17 @@ class ImportFrame(
             lines = ifp.readlines()
         total_atom = int(lines[0])
         lattice_value = re.search('Lattice="(.*?)"', lines[1])
-
         if lattice_value is not None:
             cellsize = lattice_value.group(1).split()
-            self.cell[0] = float(cellsize[0])
-            self.cell[1] = float(cellsize[1])
-            self.cell[2] = float(cellsize[2])
+            self.cell = [0,0,0]
+            if len(cellsize) == 9:
+                self.cell[0] = float(cellsize[0])
+                self.cell[1] = float(cellsize[4])
+                self.cell[2] = float(cellsize[8])
+            if len(cellsize) == 3:
+                self.cell[0] = float(cellsize[0])
+                self.cell[1] = float(cellsize[1])
+                self.cell[2] = float(cellsize[2])
 
         splines = np.array([l.split() for l in lines[2:2+total_atom]])
         atom_data = dict()
