@@ -1,11 +1,24 @@
 # SimulationFrame (sf)
 sfについての簡単な説明です。<br>
 詳しい内容は実際のコードやdocstringを見て下さい。
-```python
 
-sf = SimulationFrame() # sfを定義、.limda.yamlにparaがあれば読み込まれる
-sf = SimulationFrame("Cr Mn Fe Co Ni") # 定義と同時にparaをimport
-sf.import_dumppos("/nfshome17/knakajima/work/dump.pos.100") # 構造を読み込む
+### paraについて
+SimulationFrame(SimulationFramesでも同様)では基本的にparaを定義する必要があります.<br>
+paraを設定する方法についてはimport_para_from_list, import_para_from_strメソッドで設定することができます。<br>
+このメソッドは以下の場合についてインスタンス化したときに呼び出されます。
+1. ./limda.yaml に para変数が存在するとき
+2. インスタンス化時に引数としてparaをstr型で与えたとき
+```python
+# 例１
+sf = SimulationFrame() # インスタンス化 #.limda.yamlにparaがあれば読み込まれる, なければparaは設定されない.
+
+# 例2
+sf = SimulationFrame()
+sf.import_para_from_str("Cr Mn Fe Co Ni") # paraをここで設定する. # 元々設定されている場合でも上書きされる.
+
+# 例3
+sf = SimulationFrame("Cr Mn Fe Co Ni") # .limda.yamlのparaの有無に関係なく"Cr Mn Fe Co Ni"がparaとして設定される.
+# 内部でsf.import_para_from_str("Cr Mn Fe Co Ni") が実行されているので例2と意味は同じ
 ```
 ## 目次
 - [変数](#anchor1)<br>
@@ -263,12 +276,13 @@ ase ライブラリを用いて、分子を読み込みます。
 ```python3
 sf.import_mol("H2O") # 取り込みたい分子式をstr型で
 ```
-## import_from_poscar()
-POSCARからその構造の原子のlist[int]が返される。
+## import_vasp_poscar()
+POSCARからその構造を読み込む (x, y, z, type, cell)
 ```python3
 # Crが2つ,Niが4つ入った構造の時
->>> sf.import_from_poscar("/nfshome17/knakajima/work/CrNi/CrNi_0/POSCAR")
-[1, 1, 5, 5, 5, 5]    # list[int]
+sf.import_vasp_poscar("/nfshome17/knakajima/work/CrNi/CrNi_0/POSCAR")
+>>> sf.atoms["type"]
+[1, 1, 5, 5, 5, 5]
 ```
 
 ## import_xyz()

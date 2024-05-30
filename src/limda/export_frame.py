@@ -5,21 +5,23 @@ import subprocess
 from typing import Union
 from datetime import datetime
 
+
 class ExportFrame(
 
 ):
     """
     ファイルをexportするためのclass
     """
+
     def __init__(self):
         pass
-#--------------------------------------------------------------------------
+
     def export_vasp_poscar(
-            self, 
-            ofn: str, 
-            comment: str="", 
-            scaling_factor: float=1.0,
-        ) -> None:
+        self,
+        ofn: str,
+        comment: str = "",
+        scaling_factor: float = 1.0,
+    ) -> None:
         """vaspのincarファイルを作成する
         注意:この関数はsf.atomsの原子をtypeごとにinplaceに並べ替えます.
 
@@ -54,26 +56,28 @@ class ExportFrame(
         for atom_type in range(1, len(self.atom_type_to_symbol) + 1):
             atom_symbol = self.atom_type_to_symbol[atom_type]
             if atom_symbol in atom_symbol_to_atom_counter and atom_symbol_to_atom_counter[atom_symbol] != 0:
-                atom_types_counter.append(atom_symbol_to_atom_counter[atom_symbol])
+                atom_types_counter.append(
+                    atom_symbol_to_atom_counter[atom_symbol])
                 atom_symbols.append(atom_symbol)
 
         header_line.append(" ".join(atom_symbols) + "\n")
         header_line.append(" ".join(map(str, atom_types_counter)) + "\n")
         header_line.append("Cartesian\n")
 
-        self.atoms['symbol'] = self.atoms['type'].replace(self.atom_type_to_symbol)
+        self.atoms['symbol'] = self.atoms['type'].replace(
+            self.atom_type_to_symbol)
         self.atoms = self.atoms.sort_values('type').reset_index(drop=True)
         with open(ofn, 'w') as ofp:
             ofp.writelines(header_line)
 
         self.atoms.to_csv(ofn, columns=['x', 'y', 'z'], mode='a', header=False,
                           sep=' ', float_format='%.10f', index=False)
-#----------------------------------------------------------------------------------
+
     def export_vasp_poscar_from_contcar(
-            self, 
-            ofn: str, 
-            contcar_path:str="",            
-        ):
+        self,
+        ofn: str,
+        contcar_path: str = "",
+    ):
         """
         POSCARをCONTCARから作る。
         Parameters
@@ -82,20 +86,20 @@ class ExportFrame(
             POSCARのPath
         contcar_path
             CONTCARのPath
-        
+
         アンサンブルが異なるときは使わない方がよい
         """
         header_line = []
         with open(contcar_path, 'r') as cp:
             lines = cp.readlines()
-        
+
         for line in lines:
             header_line.append(f"{line}")
 
         with open(ofn, 'w') as ofp:
             ofp.writelines(header_line)
-#----------------------------------------------------------------------------------
-    def export_vasp_incar( 
+
+    def export_vasp_incar(
             self,
             ofn: str,
             config: dict,
@@ -117,15 +121,15 @@ class ExportFrame(
             config_list.append(f'{config_key} = {config_value}\n')
         with open(ofn, "w") as ofp:
             ofp.writelines(config_list)
-#--------------------------------------------------------------------------------------
+
     def export_vasp_kpoints(
-            self, 
-            ofn: str,
-            comment: str="",
-            kx: int=1,
-            ky: int=1,
-            kz: int=1,
-        ):
+        self,
+        ofn: str,
+        comment: str = "",
+        kx: int = 1,
+        ky: int = 1,
+        kz: int = 1,
+    ):
         """vaspのKPOINTSファイルを作成する.
         Parameters
         ----------
@@ -145,13 +149,13 @@ class ExportFrame(
         ]
 
         with open(ofn, "w") as ofp:
-            ofp.writelines(output)    
-#--------------------------------------------------------------------------------------
+            ofp.writelines(output)
+
     def export_vasp_iconst(
-            self, 
-            ofn: str,
-            config: list[str],  
-        ):
+        self,
+        ofn: str,
+        config: list[str],
+    ):
         """vaspのICONSTファイルを作成する.
         Parameters
         ----------
@@ -176,15 +180,15 @@ class ExportFrame(
         """
         for line_idx in range(len(config)):
             config[line_idx] = config[line_idx].rstrip() + '\n'
-        
+
         with open(ofn, "w") as ofp:
             ofp.writelines(config)
-#----------------------------------------------------------------
+
     def export_vasp_potcar(
-            self, 
-            ofn: str,
-            potcar_root: str,  
-        ):
+        self,
+        ofn: str,
+        potcar_root: str,
+    ):
         """vaspのPOTCARファイルを作成する.
         Parameters
         ----------
@@ -205,8 +209,8 @@ class ExportFrame(
         make_potcar_command_list.append(f" > {ofn}")
         make_potcar_command = " ".join(make_potcar_command_list)
         subprocess.run(make_potcar_command, shell=True)
-#------------------------------------------------------------------------------
-    def export_dumppos(self, ofn: str, time_step: int=None, out_columns=None)->None:
+
+    def export_dumppos(self, ofn: str, time_step: int = None, out_columns=None) -> None:
         """dumpposファイルを作成する。
         Parameters
         ----------
@@ -251,7 +255,7 @@ class ExportFrame(
             f"{0.0} {self.cell[2]}\n",
             " ".join(["ITEM: ATOMS"] + ['id'] + out_columns) + "\n"
         ]
-        
+
         with open(ofn, 'w') as ofp:
             ofp.writelines(header_line)
 
@@ -261,8 +265,8 @@ class ExportFrame(
                           sep=' ', float_format='%.6f')
         # 0-indexed
         self.atoms.index = self.atoms.index - 1
-#--------------------------------------------------------------
-    def export_input(self, ofn: Union[str,pathlib.Path] = "input.rd", mask_info: list[str] = [])->None:
+
+    def export_input(self, ofn: Union[str, pathlib.Path] = "input.rd", mask_info: list[str] = []) -> None:
         """input.rdを作成する。
         Parameters
         ----------
@@ -290,7 +294,7 @@ class ExportFrame(
             header_line.append("\n")
             for info in mask_info:
                 header_line.append(f"{info}\n")
-        
+
         header_line.append("\n")
         header_line.append(f"#atoms {self.get_total_atoms()}\n")
 
@@ -305,13 +309,14 @@ class ExportFrame(
             out_columns.extend(['vx', 'vy', 'vz'])
 
         self.wrap_atoms()
-        def make_coods_not_zero(axises :list[str]):
+
+        def make_coods_not_zero(axises: list[str]):
             for axis in axises:
                 self.atoms[axis] = np.where(
                     0, 0.0001, self.atoms[axis])
         make_coods_not_zero(['x', 'y', 'z'])
 
-        self.atoms.index = self.atoms.index + 1 # 1-indexed
+        self.atoms.index = self.atoms.index + 1  # 1-indexed
         body_line = []
         for row in self.atoms[out_columns].itertuples():
             body_line.append('    '.join(map(str, row)))
@@ -322,10 +327,10 @@ class ExportFrame(
             ofs.writelines(body_line)
 
         self.atoms.index = self.atoms.index - 1
-#-----------------------------------------------------------
-    def export_xyz(self, ofn: Union[str,pathlib.Path],
-                   out_columns: list[str]=None,
-                   structure_name: str= "structure")->None:
+
+    def export_xyz(self, ofn: Union[str, pathlib.Path],
+                   out_columns: list[str] = None,
+                   structure_name: str = "structure") -> None:
         """xyz fileを作成する.
         Parameters
         ----------
@@ -352,8 +357,8 @@ class ExportFrame(
         self.atoms.to_csv(ofn, columns=out_columns, sep='\t',
                           mode='a', header=False, index=False,
                           float_format='%.6f')
-#-----------------------------------------------------------
-    def export_car(self, export_filename : str):
+
+    def export_car(self, export_filename: str):
         """
         car fileを出力する.
 
@@ -362,25 +367,27 @@ class ExportFrame(
         export_filename
             出力するcarfileの名前
         """
-        has_cell : bool = (self.cell is not None)
+        has_cell: bool = (self.cell is not None)
         now = datetime.now()
         output_date = now.strftime("%a %b %d %H:%M:%S %Y")
         header_line = [
             "!BIOSYM archive 3\n",
             "",
             "Materials Studio Generated CAR File\n",
-            f"!DATE {output_date} \n" 
+            f"!DATE {output_date} \n"
         ]
         if has_cell:
             header_line[1] = "PBC=ON\n"
-            header_line.append(f"PBC {self.cell[0]:8.4f} {self.cell[1]:8.4f} {self.cell[2]:8.4f}    90.0000   90.0000   90.0000 (P1)\n")
+            header_line.append(
+                f"PBC {self.cell[0]:8.4f} {self.cell[1]:8.4f} {self.cell[2]:8.4f}    90.0000   90.0000   90.0000 (P1)\n")
         else:
             header_line[1] = "PBC=OFF\n"
         car_df = self.atoms.sort_values(by="type")
         typ_cnt = np.array([0 for _ in range(len(self.atom_symbol_to_type))])
+
         def make_atom_line_for_car(atom):
-            typ_cnt[int(atom['type']) - 1] += 1 
-            symbol =  self.atom_type_to_symbol[atom['type']]
+            typ_cnt[int(atom['type']) - 1] += 1
+            symbol = self.atom_type_to_symbol[atom['type']]
             return f"{symbol+str(typ_cnt[int(atom['type']) - 1]):5}  {atom['x']:13.9f}  {atom['y']:13.9f}  {atom['z']:13.9f}  XXXX 1      xx     {symbol:<3} 0.000\n"
         atom_lines = car_df.apply(make_atom_line_for_car, axis=1).to_numpy()
         with open(export_filename, 'w') as ofp:
@@ -389,7 +396,6 @@ class ExportFrame(
             ofp.writelines("end\n")
             ofp.writelines("end\n")
 
-#-----------------------------------------------------------
     def export_file(self, export_filename: str):
         """引数のfile名に合った種類の形式でfileを作成.
         Parameter
@@ -408,4 +414,4 @@ class ExportFrame(
         elif export_file_basename.endswith('car'):
             self.export_car(export_filename)
         else:
-            raise RuntimeError("適切なfile名にしてください.")     
+            raise RuntimeError("適切なfile名にしてください.")

@@ -13,7 +13,7 @@ cdef struct atom:
     int typ
     int mesh_id
     double pos[3]
-#------------------------------------------------------------------------------------------------------------------
+
 cdef void make_catoms(vector[int] atoms_type, vector[vector[double]] atoms_pos, int atom_num, atom *catoms):
     # sfから持ってきた、原子のtype,positionをatom構造体として記録します。
     cdef int i
@@ -23,7 +23,7 @@ cdef void make_catoms(vector[int] atoms_type, vector[vector[double]] atoms_pos, 
         catoms[i].pos[0] = atoms_pos[0][i]
         catoms[i].pos[1] = atoms_pos[1][i]
         catoms[i].pos[2] = atoms_pos[2][i]
-#-------------------------------------------------------------------------------------------------------------------
+
 cdef void make_mesh_size(vector[double] cell, double mesh_length, int mesh_size[3], double mesh_length_adjusted[3]):
     # x,y,zのmeshの個数を決めます。
     # またmeshの大きさが最適になるように調整します。
@@ -34,7 +34,7 @@ cdef void make_mesh_size(vector[double] cell, double mesh_length, int mesh_size[
         if mesh_size[i] < 3:
             mesh_size[i] = 3
         mesh_length_adjusted[i] = cell[i]/mesh_size[i]
-#----------------------------------------------------------------------------------------------------
+
 cdef void make_mesh_id(int mesh_size[3], atom *catoms, double mesh_length_adjusted[3], int atom_num):
     # 原子がどこのmeshにいるのかを調べ、atom構造体のmesh_idに記録します。
     cdef:
@@ -48,7 +48,7 @@ cdef void make_mesh_id(int mesh_size[3], atom *catoms, double mesh_length_adjust
                 mesh_num[ax] -= 1
 
         catoms[i].mesh_id = mesh_num[2]*mesh_size[0]*mesh_size[1] + mesh_num[1]*mesh_size[0] + mesh_num[0]
-#---------------------------------------------------------------------------------------------------------
+
 cdef vector[vector[int]] get_append_mesh(atom *catoms, vector[vector[int]] append_mesh, int atom_num):
     # meshそれぞれにどの原子がいるかをappend_meshに記録します.
     cdef int i
@@ -56,7 +56,7 @@ cdef vector[vector[int]] get_append_mesh(atom *catoms, vector[vector[int]] appen
         append_mesh[catoms[i].mesh_id].push_back(catoms[i].id)
 
     return append_mesh
-#-----------------------------------------------------------------------------------------------------
+
 cdef vector[vector[int]] search_neighbors(atom *catoms,
                                           vector[vector[int]] append_mesh,
                                           int mesh_size[3],
@@ -109,7 +109,7 @@ cdef vector[vector[int]] search_neighbors(atom *catoms,
                         neighbor_list[own.id].push_back(search.id)
                         neighbor_list[search.id].push_back(own.id)
     return neighbor_list
-#---------------------------------------------------------------------------------------------------------------------------------------
+
 cdef vector[vector[int]] make_neighbor_list(vector[int] atoms_type,
                                             vector[vector[double]] atoms_pos,
                                             double mesh_length,
@@ -131,7 +131,7 @@ cdef vector[vector[int]] make_neighbor_list(vector[int] atoms_type,
     neighbor_list.resize(atom_num)
     neighbor_list = search_neighbors(catoms, append_mesh, mesh_size, neighbor_list, bond_length, cell)
     return neighbor_list
-#------------------------------------------------------------------------------------------------------------------
+
 def get_neighbor_list_using_cython(vector[int] atoms_type,
                                    vector[vector[double]] atoms_pos,
                                    double mesh_length,
@@ -139,4 +139,3 @@ def get_neighbor_list_using_cython(vector[int] atoms_type,
                                    vector[vector[double]] bond_length,
                                    vector[double] cell):
     return make_neighbor_list(atoms_type,atoms_pos,mesh_length,atom_num,bond_length,cell)
-#------------------------------------------------------------------------------------------------------------------
