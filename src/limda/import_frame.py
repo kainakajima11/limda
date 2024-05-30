@@ -261,8 +261,6 @@ class ImportFrame(
                 if atom_symbol_list[atom_symbol_num][0:5] == "Type_":
                     atom_symbol_list[atom_symbol_num] = self.atom_type_to_symbol[int(atom_symbol_list[atom_symbol_num][5:])]
 
-
-            print(atom_symbol_list)
             atom_type_counter = list(map(int, f.readline().split()))
             total_atom_num = sum(atom_type_counter)
             atom_types = []
