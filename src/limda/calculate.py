@@ -38,7 +38,7 @@ class Calculate(
             kpoints_ky: int = 1,
             kpoints_kz: int = 1,
             iconst_config: list[str] = None,
-            vasp_command: str = "vasp_gam",
+            vasp_command: str = "vasp_std",
             print_vasp: bool = True,
             exist_ok: bool = False,
             poscar_from_contcar: bool = False,
