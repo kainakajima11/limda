@@ -251,16 +251,29 @@ class ImportFrame(
             for dim in range(3):
                 self.cell[dim] = float(f.readline().split()[dim])
             atom_symbol_list = list(f.readline().split())
+            for atom_symbol_num in range(len(atom_symbol_list)):
+                if atom_symbol_list[atom_symbol_num][0:5] == "Type_":
+                    atom_symbol_list[atom_symbol_num] = self.atom_type_to_symbol[int(atom_symbol_list[atom_symbol_num][5:])]
+
             atom_type_counter = list(map(int, f.readline().split()))
+            total_atom_num = sum(atom_type_counter)
             atom_types = []
             for atom_type_count, atom_symbol in zip(atom_type_counter, atom_symbol_list):
                 for _ in range(atom_type_count):
                     atom_types.append(self.atom_symbol_to_type[atom_symbol])
+                        # position
+            pos_type = f.readline().split()[0]
+            assert pos_type == "Cartesian" or pos_type == "Direct"
+            self.atoms = pd.read_csv(
+                f, sep='\s+', names=("x", "y", "z"), nrows=total_atom_num)
 
-            # self.atoms = pd.read_csv(
-            #     f, skiprows = 1, sep='\s+', names=("x", "y", "z"))
-            
-        return atom_types
+            if pos_type == "Direct":
+                self.atoms["x"] = self.atoms["x"] * self.cell[0]
+                self.atoms["y"] = self.atoms["y"] * self.cell[1]
+                self.atoms["z"] = self.atoms["z"] * self.cell[2]
+
+            self.atoms["type"] = np.array(atom_types)
+
 #-----------------------------------------------------------------------------------
     def import_xyz(self, ifn: Union[str,pathlib.Path])->None:
         """xyz fileを読み込む.
@@ -276,9 +289,15 @@ class ImportFrame(
 
         if lattice_value is not None:
             cellsize = lattice_value.group(1).split()
-            self.cell[0] = float(cellsize[0])
-            self.cell[1] = float(cellsize[1])
-            self.cell[2] = float(cellsize[2])
+            self.cell = [0,0,0]
+            if len(cellsize) == 9:
+                self.cell[0] = float(cellsize[0])
+                self.cell[1] = float(cellsize[4])
+                self.cell[2] = float(cellsize[8])
+            if len(cellsize) == 3:
+                self.cell[0] = float(cellsize[0])
+                self.cell[1] = float(cellsize[1])
+                self.cell[2] = float(cellsize[2])
         
         splines = np.array([l.split() for l in lines[2:2+total_atom]])
         atom_data = dict()
