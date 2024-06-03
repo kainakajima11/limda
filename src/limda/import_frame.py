@@ -298,6 +298,11 @@ class ImportFrame(
                 self.cell[0] = float(cellsize[0])
                 self.cell[1] = float(cellsize[4])
                 self.cell[2] = float(cellsize[8])
+                for cell_array in range(9):
+                    if cell_array % 4 != 0 and cellsize[cell_array] !=  0:
+                        print("WARNING: LIMDA DOES NOT SUPPORT NON-RECTANGULAR")
+                        assert(cellsize[cell_array] !=  0)
+                        
             if len(cellsize) == 3:
                 self.cell[0] = float(cellsize[0])
                 self.cell[1] = float(cellsize[1])
