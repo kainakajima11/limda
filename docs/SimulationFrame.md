@@ -195,6 +195,21 @@ vaspのINCARに必要なMAGMOMの値を作成する.
 incar_config["MAGMOM"] = sf.make_magmom_str([-1.0, 2.0, 4.0])
 ```
 
+## sf.make_magmom_antimagnetic_body_str
+反強磁性体のvaspのINCARに必要なMAGMOMの値を作成する.
+typeごとのMAGMOMを指定し, さらに特定の原子種の最近接原子同士のMAGMOMの符号を逆に指定できます.
+```python3
+# paraが"H O Fe"で指定されており, Fe2O3を計算したい場合
+
+incar_config["MAGMOM"] = sf.make_magmom_str(
+                            initial_magmom = [0.0, 0.0, 4.0], # MAGMOMの大きさを指定
+                            magnetic_atom_type = [3], # 反強磁性となる原子を指定する
+                            nearest_neighbor_distance = [[0.0, 0.0, 0.0], # 反強磁性の鉄-鉄間の最近接距離を指定します。それ以外の距離は適当に指定します。
+                                                         [0.0, 0.0, 0.0],
+                                                         [0.0, 0.0, 3.5],]
+                                            )
+```
+
 ## change_lattice_const
 格子定数を変える.
 ```python3
