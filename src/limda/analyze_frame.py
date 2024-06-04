@@ -296,3 +296,68 @@ class AnalyzeFrame:
             neighbor_list_brute[idx] = sorted(neighbor_list_brute[idx])
 
         return neighbor_list_brute
+
+    def get_bond_length(self, cut_off: float) -> list[list[float]]:
+
+        """
+        neighbor_listを利用してcutoff内の2原子間の距離を結合種ごとに分類します。
+
+        Return
+        ------
+            Dataset_radial_distribution_checker(config)に各原子組の距離が格納されるようにする。
+            C-C: 1.8000, 1.9800, 1.6000...
+            C-H: 1.1000, 1.2500, 1.0500...
+            .
+            .
+            .
+            Fe-Fe: 2.5000, 2.80000, 2.4600....
+        """
+
+        neighbor_list = self.get_neighbor_list(
+            mode="cut_off", cut_off=cut_off,
+        )
+        atom_types = self.atoms["type"].values
+        bond_length_list = [
+            [[] for _ in range(len(self.atom_symbol_to_type))] for _ in range(len(self.atom_symbol_to_type))
+        ]
+        for atom_i_idx in range(self.get_total_atoms()):
+            atom_i_type = atom_types[atom_i_idx]
+            for atom_j_idx in neighbor_list[atom_i_idx]:
+                if atom_i_idx < atom_j_idx:
+                    atom_j_type = atom_types[atom_j_idx]
+                    bond_length_i_and_j = np.sqrt((self.atoms["x"][atom_i_idx]-self.atoms["x"][atom_j_idx])**2
+                                                 +(self.atoms["y"][atom_i_idx]-self.atoms["y"][atom_j_idx])**2
+                                                 +(self.atoms["z"][atom_i_idx]-self.atoms["z"][atom_j_idx])**2)
+                    bond_length_list[atom_i_type - 1][atom_j_type - 1].append(bond_length_i_and_j)
+        
+        bond_length_dict: dict[str, list[float]] = {}
+        for atom_i_type in range(1,len(self.atom_symbol_to_type)+1):
+            for atom_j_type in range(1,len(self.atom_symbol_to_type)+1):
+                if atom_i_type < atom_j_type:
+                    bond = f"{self.atom_type_to_symbol[atom_i_type]}-{self.atom_type_to_symbol[atom_j_type]}"
+                    if bond in bond_length_dict:
+                        bond_length_dict[bond] += bond_length_list[atom_i_type - 1][atom_j_type - 1]
+                    else:
+                        bond_length_dict[bond] = bond_length_list[atom_i_type - 1][atom_j_type - 1]
+                elif atom_i_type >= atom_j_type:
+                    bond = f"{self.atom_type_to_symbol[atom_j_type]}-{self.atom_type_to_symbol[atom_i_type]}"
+                    if bond in bond_length_dict:
+                        bond_length_dict[bond] += bond_length_list[atom_i_type - 1][atom_j_type - 1]
+                    else:
+                        bond_length_dict[bond] = bond_length_list[atom_i_type - 1][atom_j_type - 1]
+
+        #sum_list = 0
+        #for i in range(len(bond_length_list)):
+        #    for j in range(len(bond_length_list[i])):
+        #        a = len(bond_length_list[i][j])
+        #        print(f"{i}-{j} {a}")
+        #        sum_list += a
+        #print(f"sum ={sum_list}")
+
+        #sum_dict = 0
+        #for key in bond_length_dict.keys():
+        #    a = len(bond_length_dict[key])
+        #    print(f"{key} {a}")
+        #    sum_dict += a
+        #print(f"dict sum = {sum_dict}")
+        #return bond_length_dict

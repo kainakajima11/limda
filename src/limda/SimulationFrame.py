@@ -449,32 +449,43 @@ class SimulationFrame(
                                           magnetic_atom_type: list[int] =[],
                                           nearest_neighbor_distance: list[list[float]]=[[]]) -> str:
         """
-        VaspのMAGMOM(初期磁気モーメントを決めるパラメーター)を簡単に設定できるようにします。
+        反強磁性体のvaspのMAGMOM(初期磁気モーメントを決めるパラメーター)を設定できます。
         MAGMOMの仕様
         -------
-            例えばpara が "Fe Co Ni"でそれらが3つずつ入った系を考えます。
-            磁気モーメントをFe->4, Co->3, Ni->2 で入れたいとします。
-            vaspのPOSCARにはtypeごとに座標が入ります。
-            そしてMAGMOMはPOSCARの原子順に空白区切りで磁気モーメントを入れる必要があります。
-            なので、例の場合は "4 4 4 3 3 3 2 2 2" というstrを返します。
+            例えばparaが"O Fe"で酸素が6つ鉄が4つ入った系を考えます。
+            Fe2O3は反強磁性体であるため "0 0 0 0 0 0 -3.8 3.8 -3.8 3.8"のように
+            酸素はmagmomが0, 鉄はmagomomの大きさが3.8で隣り合う酸素とは正負を逆に取る必要性があります。
+            ちなみに鉄のmagmomを同じ符号で統一すると強磁性体になるため誤った計算結果を返すことが予想されます。
         Parameter
         ---------
             initial_magmom: list[float]
-                atomtypeごとの初期磁気モーメント値が入ったlistです。
-                例の場合 : initial_magmom = [4,3,2] と指定します。
+                atomtypeごとの初期磁気モーメントの大きさが入ったlistです。
 
             magnetic_atom_type: list[int]
                 反磁性体のatomtypeが入ったlistです。
                 この配列に格納されたatomtypeのmagmomは最近接反磁性原子間での値の正負が逆転する。
+                注意: 指定できる原子種は1種類だけです。
             
-            cutoff : list[float]
+            nearest_neighbor_distance : list[float]
                 magnetic_atom_typeで指定したatomtypeの第一近接距離が入ったlistです。
                 ある原子のmagmomを負に指定し、その第一近接原子のmagmomを正に指定するため必要です。
 
-                例 : H O Fe が設定されたパラメータにおいては
-                          initial_magmom = [0,0,4]
-                          magnetic_atom_type = [3] 
-                          cutoff = [3.0]と指定します。
+                例 : "C H O P S Zn Fe"がparaに設定されている場合
+                          initial_magmom = [0, 0, 0, 0, 0, 0, 3.8] 
+                          magnetic_atom_type = [7] 
+                          nearest_neighbor_distance = [
+                                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.5], 
+                                    ]                                           
+                        と指定します。
+            nearest_neighbor_distance[6][6]に格納されている値が鉄原子の第一近接距離です。
+            鉄-鉄間の原子以外は適当な値を入れておいてください。
+            
         Returnval
         ---------
             magmom_str: str 
