@@ -229,7 +229,7 @@ class AnalyzeFrame:
                 bond = f"{self.atom_type_to_symbol[atom_i_type]}-{self.atom_type_to_symbol[atom_j_type]}"
                 count_bonds_dict[bond] = count_bonds_list[atom_i_type - 1][atom_j_type - 1]
                 if atom_i_type != atom_j_type:
-                    count_bonds_dict[bond] = count_bonds_list[atom_j_type - 1][atom_i_type - 1]
+                    count_bonds_dict[bond] += count_bonds_list[atom_j_type - 1][atom_i_type - 1]
         return count_bonds_dict
 
     def get_edge_index(self, cut_off: float) -> list[list[int]]:
