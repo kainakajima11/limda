@@ -330,8 +330,10 @@ class ExportFrame(
             out_columns = ['type', 'x', 'y', 'z']
         header_line = [
             f"{self.get_total_atoms()}\n",
-            f"Lattice=\" {self.cell[0][0]} {self.cell[0][1]} {self.cell[0][2]} {self.cell[1][0]} {self.cell[1][1]} {self.cell[1][2]} {self.cell[2][0]} {self.cell[2][1]} {self.cell[2][2]}\"\n",
         ]
+
+        if self.cell is not None:
+            header_line.append(f"Lattice=\" {self.cell[0][0]} {self.cell[0][1]} {self.cell[0][2]} {self.cell[1][0]} {self.cell[1][1]} {self.cell[1][2]} {self.cell[2][0]} {self.cell[2][1]} {self.cell[2][2]}\"\n")
 
         with open(ofn, 'w') as ofp:
             ofp.writelines(header_line)
