@@ -197,7 +197,8 @@ class ExportFrame(
                 出力先のファイルパス
             potcar_root: str
                 potcarが入っているフォルダのパス
-            
+            pseudopot_atom: list[str]
+                POTCARを作成したいPOTLIST内のpseudopotentialsファイル名
         """
         potcar_root = pathlib.Path(potcar_root)
         make_potcar_command_list = ["cat"]
