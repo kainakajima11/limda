@@ -223,7 +223,6 @@ class ExportFrame(
             make_potcar_command_list.append(f" > {ofn}")
             make_potcar_command = " ".join(make_potcar_command_list)
             assert len(pseudopot_atom) == len(atom_symbol_to_atom_counter), "Add all kind of atoms in pseudopot_atom: sf.vasp()"
-            print(list(atom_symbol_to_atom_counter.keys())[1])
             for atom_type_num in range(len(pseudopot_atom)):
                 assert pseudopot_atom[atom_type_num][0:len(list(atom_symbol_to_atom_counter.keys())[atom_type_num])] in list(atom_symbol_to_atom_counter.keys()), "Error: The order must be the same" 
         subprocess.run(make_potcar_command, shell=True)
