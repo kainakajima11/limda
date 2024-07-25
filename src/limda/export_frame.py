@@ -413,5 +413,7 @@ class ExportFrame(
             self.export_dumppos(export_filename)
         elif export_file_basename.endswith('car'):
             self.export_car(export_filename)
+        elif export_file_basename == "POSCAR":
+            self.export_vasp_poscar(export_filename)
         else:
             raise RuntimeError("適切なfile名にしてください.")
