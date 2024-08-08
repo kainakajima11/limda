@@ -1,5 +1,7 @@
 import numpy as np
 from collections import deque
+import ase
+from ase.neighborlist import neighbor_list
 
 from .neighbor import get_neighbor_list_using_cython
 from .analyze_mols import get_mols_list_using_cython
@@ -249,6 +251,26 @@ class AnalyzeFrame:
                     edge_index[0].append(atom_idx)
                     edge_index[1].append(neighbor_atom_idx)
         return edge_index
+
+    def get_edge_index_for_triclinic_cell(self, cut_off: float) -> list[list[int]]:
+        """allegroのedge_indexを作成します。
+        edge_index : list[list[int]]でshapeは[2, num_edges]
+                     原子i -> 原子j のみ(i < j)はいっていて、原子j -> 原子i は入っていない
+        Parameters
+        ----------
+        cut_off: float
+            edgeとしてみなす最大距離
+        """
+        ase_atoms = ase.Atoms(positions=self.atoms[['x', 'y', 'z']].values, cell=self.cell, pbc=[1, 1, 1])
+
+        i_idx, j_idx, shift = neighbor_list(
+            'ijS', ase_atoms, cutoff=cut_off, self_interaction=False
+        )
+        edge_index = np.concatenate((i_idx.reshape(1, -1), j_idx.reshape(1, -1)), axis=0)
+        mask = (edge_index[0] < edge_index[1])
+        edge_index = edge_index[:, mask] # i -> j only
+        shift = shift[mask]
+        return edge_index, shift
 
     def get_sum_of_momentums(self) -> np.ndarray[float]:
         """

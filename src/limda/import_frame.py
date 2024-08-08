@@ -276,6 +276,60 @@ class ImportFrame(
 
             self.atoms["type"] = np.array(atom_types)
 
+    def import_vasp_poscar_for_triclinic_cell(self, poscar_path: Union[str, pathlib.Path]):
+        """vaspに用いるPOSCARから,  
+        原子それぞれの種類を表すリストを作成する。
+        また、初期構造のSimulationFrame(原子の座標のみ)が得られる。
+        Parameters
+        ----------
+            poscar_path: Union[str, Path]
+                vaspで計算したディレクトリ内のPOSCARのpath         
+        Note
+        ----
+            frameのatoms["type"]は原子の種類をtype listと照らし合した時の整数が入っています。
+            速度や力がたとえ入っていたとしても、その情報は抜け落ちます。
+        """
+        with open(poscar_path, "r") as f:
+            f.readline()
+            # cell
+            scaling_factor = float(f.readline())
+
+#triclinic            self.cell = np.array([None, None, None])
+#triclinic            for dim in range(3):
+#triclinic                self.cell[dim] = float(f.readline().split()[
+#triclinic                                       dim]) * scaling_factor
+
+#Bgn triclinic ---------------------
+            self.cell = []
+            for dim in range(3):
+                self.cell.append(list(map(float, f.readline().split())))
+            self.cell = np.array(self.cell)
+
+            for dim in range(3):
+               self.cell[dim] = self.cell[dim] * scaling_factor
+#End triclinic----------------------
+
+            # atom type
+            atom_symbol_list = list(f.readline().split())
+            atom_type_counter = list(map(int, f.readline().split()))
+            total_atom_num = sum(atom_type_counter)
+            atom_types = []
+            for atom_type_count, atom_symbol in zip(atom_type_counter, atom_symbol_list):
+                for _ in range(atom_type_count):
+                    atom_types.append(self.atom_symbol_to_type[atom_symbol])
+            # position
+            pos_type = f.readline().split()[0]
+            assert pos_type == "Cartesian" or pos_type == "Direct"
+            self.atoms = pd.read_csv(
+                f, sep='\s+', names=("x", "y", "z"), nrows=total_atom_num)
+
+            if pos_type == "Direct":
+                self.atoms["x"] = self.atoms["x"] * self.cell[0]
+                self.atoms["y"] = self.atoms["y"] * self.cell[1]
+                self.atoms["z"] = self.atoms["z"] * self.cell[2]
+
+            self.atoms["type"] = np.array(atom_types)
+
     def import_xyz(self, ifn: Union[str, pathlib.Path]) -> None:
         """xyz fileを読み込む.
         Parameter
