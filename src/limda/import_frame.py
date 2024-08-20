@@ -323,10 +323,10 @@ class ImportFrame(
             self.atoms = pd.read_csv(
                 f, sep='\s+', names=("x", "y", "z"), nrows=total_atom_num)
 
-            if pos_type == "Direct":
-                self.atoms["x"] = self.atoms["x"] * self.cell[0]
-                self.atoms["y"] = self.atoms["y"] * self.cell[1]
-                self.atoms["z"] = self.atoms["z"] * self.cell[2]
+#triclinic            if pos_type == "Direct":
+#triclinic                self.atoms["x"] = self.atoms["x"] * self.cell[0]
+#triclinic                self.atoms["y"] = self.atoms["y"] * self.cell[1]
+#triclinic                self.atoms["z"] = self.atoms["z"] * self.cell[2]
 
             self.atoms["type"] = np.array(atom_types)
 
