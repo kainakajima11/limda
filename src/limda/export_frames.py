@@ -135,6 +135,121 @@ class ExportFrames(
             with open(test_frames_path, "wb") as f:
                 pickle.dump(test_frames, f)
 
+    def export_allegro_frames_for_triclinic_cell(self,
+                              output_dir: str,
+                              output_file_name: str,
+                              cut_off: float,
+                              shuffle: bool = False,
+                              seed: int = 1,
+                              test_size: float = None,
+                              test_output_dir: str = None,
+                              test_output_file_name: str = None,
+                              exclude_too_small_cell: bool = True,
+                              exclude_too_large_force: bool = True,
+                              max_allowable_force: float = 50.0,
+                              ):
+        """
+        allegro用のデータセットを保存する
+        Parameters
+        ----------
+            output_dir : str
+                出力する場所
+            output_file_name : str
+                出力するfile名 {output_file_name}.pickle が出力される
+            cut_off : float
+                cutoff距離
+            shuffle : bool
+                フレームをシャッフルするか
+            seed : int
+                シャッフルするときのシード値
+            test_size : float
+                test用にする割合
+            test_output_dir : str
+                test用 : 出力される場所
+            test_output_file_name : str
+                test用 : 出力されるfile名
+            exclude_too_small_cell : bool
+                cutoff x 2 以下のセルサイズを持つフレームを除外するか  
+            exclude_too_large_force : bool
+                forceが基準値(max_allowable_force)より大きいフレームを除外するか
+            max_allowable_force : float
+                フレームを除外する力の基準値 (exclude_unsuitable_force_frame == True のとき)
+        """
+        if test_size is not None:
+            assert 0.0 <= test_size <= 1.0
+            assert test_output_dir is not None
+            assert test_output_file_name is not None
+            test_output_dir = pathlib.Path(test_output_dir)
+            test_output_file_name = pathlib.Path(
+                f"{test_output_file_name}.pickle")
+            test_frames_path = test_output_dir / test_output_file_name
+            os.makedirs(test_output_dir, exist_ok=True)
+
+        output_dir = pathlib.Path(output_dir)
+        output_file_name = pathlib.Path(f"{output_file_name}.pickle")
+        frames_path = output_dir / output_file_name
+        os.makedirs(output_dir, exist_ok=True)
+
+        train_frames = []
+        test_frames = []
+        if shuffle:
+            self.shuffle_sfs(seed=seed)
+        for sf_idx in range(len(self)):
+            data = {}
+            data["cell"] = np.array(self.sf[sf_idx].cell, dtype=np.float32)
+#triclinic            if exclude_too_small_cell and np.any(self.sf[sf_idx].cell < 2 * cut_off):
+#triclinic                print(
+#triclinic                    f"Exculuded frame : cellsize(={np.min(self.sf[sf_idx].cell)}) is smaller than 2 x cutoff(= {cut_off*2})", flush=True)
+#triclinic                continue
+
+#Bgn triclinic ---------------------
+            if  exclude_too_small_cell and np.any(np.diag(self.sf[sf_idx].cell) < 2 * cut_off):
+                print(
+                    f"Exculuded frame : cellsize(={np.min(np.diag(self.sf[sf_idx].cell))}) is smaller than 2 x cutoff(= {cut_off*2})", flush=True)
+                continue
+#End triclinic----------------------
+
+            data["pos"] = np.array(
+                self.sf[sf_idx].atoms[["x", "y", "z"]].values, dtype=np.float32)
+            data["force"] = np.array(
+                self.sf[sf_idx].atoms[["fx", "fy", "fz"]].values, dtype=np.float32)
+            if exclude_too_large_force and np.abs(data['force']).max().item() > max_allowable_force:
+                print(
+                    f"Exculuded frame : force(={np.abs(data['force']).max().item()}) is larger than reference value of force(={max_allowable_force})", flush=True)
+                continue
+            data["atom_types"] = np.array(self.sf[sf_idx].atoms["type"].values)
+            data["atom_types"] -= 1
+            data["cut_off"] = np.array(cut_off, dtype=np.float32)
+            data["potential_energy"] = np.array(
+                self.sf[sf_idx].potential_energy, dtype=np.float32)
+            data["virial"] = np.array(
+                self.sf[sf_idx].virial_tensor, dtype=np.float32)
+
+#triclinic            edge_index = [[], []]
+#triclinic            edge_index = self.sf[sf_idx].get_edge_index(cut_off=cut_off)
+#Bgn triclinic ---------------------
+            edge_index, shift = self.sf[sf_idx].get_edge_index_for_triclinic_cell(cut_off=cut_off)
+#End triclinic----------------------
+
+            data["edge_index"] = np.array(edge_index)
+#Bgn triclinic ---------------------
+            data["shift"] = np.array(shift, dtype=np.float32)
+#End triclinic----------------------
+            if test_size is not None:
+                if sf_idx < len(self)*(1.0-test_size):
+                    train_frames.append(data)
+                else:
+                    test_frames.append(data)
+            else:
+                train_frames.append(data)
+
+        with open(frames_path, "wb") as f:
+            pickle.dump(train_frames, f)
+
+        if test_size is not None:
+            with open(test_frames_path, "wb") as f:
+                pickle.dump(test_frames, f)
+
     def export_lammps_dumpposes(self, ofn: str, out_columns=None) -> None:
         """lammps形式のdumpposを出力する
         Parameters

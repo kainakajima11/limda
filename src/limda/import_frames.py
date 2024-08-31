@@ -123,6 +123,104 @@ class ImportFrames(
                     and splines[line_idx][1] == "Iteration":
                 iteration = int(splines[line_idx][3][:-1])
 
+    def import_vasp_for_triclinic_cell(self, calc_directory: Union[str, pathlib.Path], NELM: int = None):
+        """vaspで計算した第一原理MDファイルから、
+        原子の座標, cellの大きさ, 原子にかかる力, ポテンシャルエネルギーを読み込む
+        Parameters
+        ----------
+            calc_directory: str
+                vaspで計算したディレクトリ
+            NELM: int
+                最大のIteration回数, 最大のiteration回数に達したframeはimportしない
+        Note
+        ----
+            読み込んだデータ
+                simulation_frames[step_idx][['x', 'y', 'z']] : 原子の座標
+                simulation_frames[step_idx][['fx', 'fy', 'fz']] : 原子にかかる力
+                simulation_frames[step_idx].potential_energy : ポテンシャルエネルギー
+                simulation_frames[step_idx].cell : セルサイズ
+                simulation_frames[step_idx].virial_tensor : virialテンソル
+        """
+        if NELM is None:
+            if "NELM" in self.limda_default:
+                NELM = self.limda_default["NELM"]
+            else:
+                NELM = 1e6
+        calc_directory = pathlib.Path(calc_directory)
+        first_sf = SimulationFrame()
+        first_sf.atom_symbol_to_type = self.atom_symbol_to_type.copy()
+        first_sf.import_vasp_poscar_for_triclinic_cell(f'{calc_directory}/POSCAR')
+        atom_types = first_sf.atoms["type"]
+
+        with open(calc_directory / "OUTCAR", "r") as f:
+            lines = f.readlines()
+            splines = list(map(lambda l: l.split(), lines))
+
+        for line_idx, spline in enumerate(splines):
+            if len(spline) <= 1:
+                continue
+
+            if len(spline) == 3 and spline[0] == "POSITION" and spline[1] == "TOTAL-FORCE":
+                if iteration >= NELM:
+                    continue
+                sf = SimulationFrame()
+                sf.atom_symbol_to_type = self.atom_symbol_to_type
+                sf.atom_type_to_mass = self.atom_type_to_mass
+                sf.atom_type_to_symbol = self.atom_type_to_symbol
+
+#triclinic                sf.cell = np.empty(3, dtype=np.float32)
+#triclinic                for dim in range(3):
+#triclinic                    sf.cell[dim] = float(splines[cell_line_idx+dim+1][dim])
+
+#Bgn triclinic ---------------------
+                sf.cell = []
+                for dim in range(3):
+                    sf.cell.append(list(map(float, splines[cell_line_idx+dim+1][:3])))
+                sf.cell = np.array(sf.cell)
+#End triclinic----------------------
+
+                atoms_dict_keys = ['type', 'x', 'y', 'z', 'fx', 'fy', 'fz']
+                atoms_dict = {key: val for key, val in zip(
+                    atoms_dict_keys, [[] for i in range(7)])}
+                atoms_dict['type'] = atom_types
+                for atom_idx in range(len(atom_types)):
+                    for key_idx in range(len(atoms_dict_keys)-1):
+                        atoms_dict[atoms_dict_keys[key_idx+1]
+                                   ].append(float(splines[line_idx+2+atom_idx][key_idx]))
+
+                sf.atoms = pd.DataFrame(atoms_dict)
+                # potential_energy
+                sf.potential_energy = float(splines[potential_energy_idx][4])
+                # virial tensor
+                sf.virial_tensor = np.empty((3, 3), dtype=np.float32)
+                for i in range(3):
+                    sf.virial_tensor[i][i] = float(
+                        splines[virial_tensor_idx][i+1])
+                for i in range(3):
+                    sf.virial_tensor[i][(
+                        i+1) % 3] = float(splines[virial_tensor_idx][i+4])
+                    sf.virial_tensor[(
+                        i+1) % 3][i] = float(splines[virial_tensor_idx][i+4])
+
+                self.sf.append(sf)
+
+            if len(splines[line_idx]) == 6 and splines[line_idx][0] == "direct" \
+                    and splines[line_idx][1] == "lattice":
+                cell_line_idx = line_idx
+
+            if len(splines[line_idx]) >= 4 and \
+                    splines[line_idx][0] == "energy" and \
+                    splines[line_idx][1] == "without" and \
+                    splines[line_idx][2] == "entropy":
+                potential_energy_idx = line_idx
+
+            if len(splines[line_idx]) == 7 and splines[line_idx][0] == "Total":
+                virial_tensor_idx = line_idx
+
+            if len(splines[line_idx]) == 5 and splines[line_idx][0] == "---------------------------------------" \
+                    and splines[line_idx][1] == "Iteration":
+                iteration = int(splines[line_idx][3][:-1])
+
     def import_dumpposes(self, dir_name: Union[str, pathlib.Path] = None, step_nums: list[int] = None, skip_num: int = None):
         """Laichで計算したdumpposを複数読み込む
         Parameters
