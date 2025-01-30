@@ -21,7 +21,6 @@ class ExportFrame(
         ofn: str,
         comment: str = "",
         scaling_factor: float = 1.0,
-        flag_selective_dynamics = False,
     ) -> None:
         """vaspのincarファイルを作成する
         注意:この関数はsf.atomsの原子をtypeごとにinplaceに並べ替えます.
@@ -35,6 +34,11 @@ class ExportFrame(
             scaling_factor: float
                 VASPを参照してください. 基本1.0でok
         """
+        if "fixx" in self.atoms.columns and "fixy" in self.atoms.columns and "fixz" in self.atoms.columns:
+            flag_selective_dynamics = True
+        else:
+            flag_selective_dynamics = False
+
         for dim in range(3):
             if self.cell[dim] == 0:
                 print(f'warning : cell[{dim}] is 0')

@@ -45,7 +45,6 @@ class Calculate(
             contcar_path: str = "",
             place: str = "kbox",
             num_nodes: int = 1,
-            poscar_flag_selective_dynamics: bool = False,
     ):
         """vaspを実行する.
         Parameters
@@ -113,7 +112,7 @@ class Calculate(
         assert num_process % num_nodes == 0, "Invalid num_nodes"
         if not poscar_from_contcar:
             self.export_vasp_poscar(
-                poscar_path, poscar_comment, poscar_scaling_factor, poscar_flag_selective_dynamics)
+                poscar_path, poscar_comment, poscar_scaling_factor)
         else:
             self.export_vasp_poscar_from_contcar(poscar_path, contcar_path)
         self.export_vasp_incar(incar_path, incar_config)
