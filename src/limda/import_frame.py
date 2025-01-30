@@ -263,11 +263,26 @@ class ImportFrame(
             for atom_type_count, atom_symbol in zip(atom_type_counter, atom_symbol_list):
                 for _ in range(atom_type_count):
                     atom_types.append(self.atom_symbol_to_type[atom_symbol])
+            # Selective dynamics
+            selective_dynamics = f.readline().split()[0]
+            if selective_dynamics == "Selective":
+                flag_selective_dynamics = True
+            else:
+                flag_selective_dynamics = False
+
             # position
-            pos_type = f.readline().split()[0]
+            if flag_selective_dynamics:
+                pos_type = f.readline().split()[0]
+            else:
+                pos_type = selective_dynamics
             assert pos_type == "Cartesian" or pos_type == "Direct"
-            self.atoms = pd.read_csv(
-                f, sep='\s+', names=("x", "y", "z"), nrows=total_atom_num)
+            
+            if flag_selective_dynamics:
+                self.atoms = pd.read_csv(
+                    f, sep='\s+', names=("x", "y", "z", "fixx", "fixy", "fixz"), nrows=total_atom_num)
+            else:
+                self.atoms = pd.read_csv(
+                    f, sep='\s+', names=("x", "y", "z"), nrows=total_atom_num)
 
             if pos_type == "Direct":
                 self.atoms["x"] = self.atoms["x"] * self.cell[0]
