@@ -444,6 +444,7 @@ class SimulationFrame(
 
         if change_cellsize:
             self.cell += np.array(slide_length)
+
     def make_magmom_antimagnetic_body_str(self, initial_magmom: list[float],
                                           magnetic_atom_type: list[int] =[],
                                           nearest_neighbor_distance: list[list[float]]=[[]]) -> str:
