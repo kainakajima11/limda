@@ -465,13 +465,13 @@ class SimulationFrame(
             magnetic_atom_type: list[int]
                 反磁性体のatomtypeが入ったlistです。
                 この配列に格納されたatomtypeのmagmomは最近接反磁性原子間での値の正負が逆転する。
-            cutoff : list[float]
-                magnetic_atom_typeで指定したatomtypeの第一近接距離が入ったlistです。
+            nearest_neighbor_distance : list[list[float]]
+                magnetic_atom_typeで指定したatomtypeの第一近接距離を指定するためのlist[list]です。
                 ある原子のmagmomを負に指定し、その第一近接原子のmagmomを正に指定するため必要です。
-                例 : H O Fe が設定されたパラメータにおいては
+                例 : H O Fe で構成される構造においてFeだけmagmom 4.0で正負を反転しながら割り振りたいときは次のように指定する。
                           initial_magmom = [0,0,4]
                           magnetic_atom_type = [3]
-                          cutoff = [3.0]と指定します。
+                          nearest_neighbor_distance = [[0, 0, 0],[0, 0, 0],[0, 0, 3.5]] と指定します。
         Returnval
         ---------
             magmom_str: str
