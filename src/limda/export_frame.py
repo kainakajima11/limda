@@ -427,7 +427,6 @@ class ExportFrame(
 
         header = []
         header.append(f'# total energy =   {self.potential_energy if self.potential_energy is not None else -1 * (now.month * 10000 + now.day * 100 + now.hour + now.minute / 100 + now.second / 10000)} \n')
-        header.append(f' \n')
         if self.cell is not None:
             header.append("CRYSTAL\n")
             header.append("PRIMVEC\n")
