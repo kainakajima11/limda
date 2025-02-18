@@ -25,6 +25,8 @@ class ExportFrame(
         """vaspのincarファイルを作成する
         注意:この関数はsf.atomsの原子をtypeごとにinplaceに並べ替えます.
 
+        self.atomsにfixx,fixy,fixzが含まれている場合、Selective Dynamics(原子の固定)を用いるようにファイルを作成します。
+
         Parameters
         ----------
             ofn: str
@@ -34,6 +36,12 @@ class ExportFrame(
             scaling_factor: float
                 VASPを参照してください. 基本1.0でok
         """
+        if "fixx" in self.atoms.columns and "fixy" in self.atoms.columns and "fixz" in self.atoms.columns:
+            print(f"Using Selective Dynamics", flush=True)
+            flag_selective_dynamics = True
+        else:
+            flag_selective_dynamics = False
+
         for dim in range(3):
             if self.cell[dim] == 0:
                 print(f'warning : cell[{dim}] is 0')
@@ -62,6 +70,8 @@ class ExportFrame(
 
         header_line.append(" ".join(atom_symbols) + "\n")
         header_line.append(" ".join(map(str, atom_types_counter)) + "\n")
+        if flag_selective_dynamics:
+            header_line.append("Selective dynamics\n")
         header_line.append("Cartesian\n")
 
         self.atoms['symbol'] = self.atoms['type'].replace(
@@ -70,7 +80,11 @@ class ExportFrame(
         with open(ofn, 'w') as ofp:
             ofp.writelines(header_line)
 
-        self.atoms.to_csv(ofn, columns=['x', 'y', 'z'], mode='a', header=False,
+        if flag_selective_dynamics:
+            columns = ['x', 'y', 'z', 'fixx', 'fixy', 'fixz']
+        else:
+            columns = ['x', 'y', 'z']
+        self.atoms.to_csv(ofn, columns=columns, mode='a', header=False,
                           sep=' ', float_format='%.10f', index=False)
 
     def export_vasp_poscar_from_contcar(
