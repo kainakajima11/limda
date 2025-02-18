@@ -237,7 +237,10 @@ class ImportFrame(
     def import_vasp_poscar(self, poscar_path: Union[str, pathlib.Path]):
         """vaspに用いるPOSCARから,  
         原子それぞれの種類を表すリストを作成する。
-        また、初期構造のSimulationFrame(原子の座標のみ)が得られる。
+        また、初期構造のSimulationFrameが得られる。
+        Selective Dynamics(原子を固定しているか)が用いられている場合、原子の座標(x,y,z)とx,y,z方向に原子が固定されているか(fixx,fixy,fixz)がsf.atomsに入る。
+        Selective Dynamicsが用いられていない場合、原子の座標(x,y,z)のみが得られる。
+
         Parameters
         ----------
             poscar_path: Union[str, Path]

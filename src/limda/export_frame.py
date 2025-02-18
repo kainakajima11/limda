@@ -25,6 +25,8 @@ class ExportFrame(
         """vaspのincarファイルを作成する
         注意:この関数はsf.atomsの原子をtypeごとにinplaceに並べ替えます.
 
+        self.atomsにfixx,fixy,fixzが含まれている場合、Selective Dynamics(原子の固定)を用いるようにファイルを作成します。
+
         Parameters
         ----------
             ofn: str
@@ -35,6 +37,7 @@ class ExportFrame(
                 VASPを参照してください. 基本1.0でok
         """
         if "fixx" in self.atoms.columns and "fixy" in self.atoms.columns and "fixz" in self.atoms.columns:
+            print(f"Using Selective Dynamics", flush=True)
             flag_selective_dynamics = True
         else:
             flag_selective_dynamics = False
