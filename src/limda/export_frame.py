@@ -410,6 +410,51 @@ class ExportFrame(
             ofp.writelines("end\n")
             ofp.writelines("end\n")
 
+    def export_xsf(self, ofn: str, out_columns=None) -> None:
+        """xsf形式のファイルを出力する
+        Parameters
+        ----------
+            ofn: str
+                出力先
+            out_columns: List[str]
+                sdat.atomsのどのカラムを出力するのか
+                デフォルトは['symbol', 'x', 'y', 'z', 'fx', 'fy', 'fz']
+        """
+        if out_columns is None:
+            out_columns = ['symbol', 'x', 'y', 'z', 'fx', 'fy', 'fz']
+        now = datetime.now()
+        f = open(ofn, 'w')
+
+        header = []
+        header.append(f'# total energy =   {self.potential_energy if self.potential_energy is not None else -1 * (now.month * 10000 + now.day * 100 + now.hour + now.minute / 100 + now.second / 10000)} \n')
+        header.append(f' \n')
+        if self.cell is not None:
+            header.append("CRYSTAL\n")
+            header.append("PRIMVEC\n")
+            header.append(f"{self.cell[0]:>4.6f} {0:.6f} {0:>4.6f}\n")
+            header.append(f"{0:>4.6f} {self.cell[1]:>4.6f} {0:>4.6f}\n")
+            header.append(f"{0:>4.6f} {0:>4.6f} {self.cell[2]:>4.6f} \n")
+        header.append("PRIMCOORD\n")
+        header.append(f"{len(self)}\n")
+        f.writelines(header)
+
+        # write xyz coordinates and forces
+        # 1-index
+        self.atoms['symbol'] = self.atoms['type'].replace(
+            self.atom_type_to_symbol)
+        if "fx" not in self.atoms.keys():
+            self.atoms["fx"] = np.array([0.0001 for _ in range(len(self))])
+        if "fy" not in self.atoms.keys():
+            self.atoms["fy"] = np.array([0.0001 for _ in range(len(self))])
+        if "fz" not in self.atoms.keys():
+            self.atoms["fz"] = np.array([0.0001 for _ in range(len(self))])
+        self.atoms.index += 1
+        self.atoms.to_csv(f, columns=out_columns, sep=' ',
+                                        mode='a', header=False, index=False,
+                                        float_format='%.6f')
+        # 0-index
+        self.atoms.index -= 1
+
     def export_file(self, export_filename: str):
         """引数のfile名に合った種類の形式でfileを作成.
         Parameter
@@ -427,5 +472,7 @@ class ExportFrame(
             self.export_dumppos(export_filename)
         elif export_file_basename.endswith('car'):
             self.export_car(export_filename)
+        elif export_file_basename.endswith('xsf'):
+            self.export_xsf(export_filename)
         else:
             raise RuntimeError("適切なfile名にしてください.")
