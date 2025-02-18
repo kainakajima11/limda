@@ -412,8 +412,7 @@ class ImportFrame(
 
     def import_xsf(self, import_filename: Union[str, pathlib.Path], atom_type: int = 1):
         """
-        xsf file を読み込み、cell, atoms[x,y,z]の情報を得る
-        TODO : 多分全対応していないので解決する（atomskで作成したxsfは読み込める）
+        xsf file を読み込み、cell, atoms[x,y,z,vx,vy,vz,type]の情報を得る
 
         Parameters
         ---------
@@ -422,11 +421,16 @@ class ImportFrame(
         """
         with open(import_filename, "r") as f:
             lines = f.readlines()
-            self.cell = np.array([float(lines[3].split()[0]), float(
-                lines[4].split()[1]), float(lines[5].split()[2])])
+            for i, line in enumerate(lines):
+                if line.strip() == "PRIMVEC":
+                    self.cell = np.array([float(lines[i+1].split()[0]), float(
+                        lines[i+2].split()[1]), float(lines[i+3].split()[2])])
+                if line.strip() == "PRIMCOORD":
+                    primcoord_start = i + 2
+                    break
         self.atoms = pd.read_csv(
-            import_filename, skiprows=12, sep='\s+', usecols=[1, 2, 3], names=["x", "y", "z"])
-        self.atoms["type"] = np.array([atom_type for _ in range(len(self))])
+            import_filename, skiprows=primcoord_start, sep='\s+', usecols=[0, 1, 2, 3, 4, 5, 6], names=["sym", "x", "y", "z" , "fx", "fy", "fz"])
+        self.atoms["type"] = np.array([self.atom_symbol_to_type[s] for s in self.atoms["sym"]])
 
     def import_cfg(self, import_filename: Union[str, pathlib.Path]):
         """

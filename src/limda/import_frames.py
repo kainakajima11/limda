@@ -10,6 +10,7 @@ from . import const as C
 from .import_frame import ImportFrame
 from .SimulationFrame import SimulationFrame
 import os
+import re
 
 
 class ImportFrames(
@@ -339,3 +340,40 @@ class ImportFrames(
             self.sf.append(sf)
 
         return frames
+
+    def import_xsfs(self, dir_name: Union[str, pathlib.Path] = None, step_nums: list[int] = None, skip_num: int = None):
+        """xsfを複数読み込む
+        Parameters
+        ----------
+            dir_name: str
+                xsfが入っているフォルダのパス
+                指定しないときは、current directryになる
+        """
+        assert self.atom_symbol_to_type is not None, "import atom symbol first"
+        assert self.atom_type_to_mass is not None, "import atom symbol first"
+        assert self.atom_type_to_symbol is not None, "import atom symbol first"
+
+        if dir_name is None:
+            dir_name = pathlib.Path.cwd()  
+        else:
+            dir_name = pathlib.Path(dir_name)
+        
+        xsf_files = list(dir_name.glob('*.xsf'))
+        if step_nums is None:
+            step_nums = []
+            for f in xsf_files:
+                numbers = re.findall(r'\d+', f.stem)
+                step_nums.append(int(numbers[0]))
+
+        step_nums.sort()
+        if skip_num is not None:
+            step_nums = step_nums[::skip_num]
+
+        self.sf = [SimulationFrame() for _ in range(len(step_nums))]
+
+        for step_idx, step_num in enumerate(tqdm(step_nums, desc='[importing xsfs]')):
+            self.sf[step_idx].step_num = step_num
+            self.sf[step_idx].atom_symbol_to_type = self.atom_symbol_to_type
+            self.sf[step_idx].atom_type_to_mass = self.atom_type_to_mass
+            self.sf[step_idx].atom_type_to_symbol = self.atom_type_to_symbol
+            self.sf[step_idx].import_xsf(f'{dir_name}/{step_num}.xsf')
