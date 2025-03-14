@@ -429,9 +429,9 @@ class ImportFrame(
                     primcoord_start = i + 2
                     break
         self.atoms = pd.read_csv(
-            import_filename, skiprows=primcoord_start, sep='\s+', usecols=[0, 1, 2, 3, 4, 5, 6], names=["sym", "x", "y", "z" , "fx", "fy", "fz"])
+            import_filename, skiprows=primcoord_start, sep='\s+', usecols=[0, 1, 2, 3], names=["sym", "x", "y", "z"])
         self.atoms["type"] = np.array([self.atom_symbol_to_type[s] for s in self.atoms["sym"]])
-        self.atoms.drop("sym", axis=1)
+        self.atoms = self.atoms.drop("sym", axis=1)
 
     def import_cfg(self, import_filename: Union[str, pathlib.Path]):
         """

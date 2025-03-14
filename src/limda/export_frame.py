@@ -237,7 +237,6 @@ class ExportFrame(
         """
         if out_columns is None:
             out_columns = ['type', 'mask', 'x', 'y', 'z']
-
         if 'mask' not in self.atoms:
             print('warning : mask is not defined')
             print('warning : mask has been initialized to 0')
@@ -418,15 +417,15 @@ class ExportFrame(
                 出力先
             out_columns: List[str]
                 sf.atomsのどのカラムを出力するのか
-                デフォルトは['symbol', 'x', 'y', 'z', 'fx', 'fy', 'fz']
+                デフォルトは['symbol', 'x', 'y', 'z']
         """
         if out_columns is None:
-            out_columns = ['symbol', 'x', 'y', 'z', 'fx', 'fy', 'fz']
+            out_columns = ['symbol', 'x', 'y', 'z']
         now = datetime.now()
         f = open(ofn, 'w')
 
         header = []
-        header.append(f'# total energy =   {self.potential_energy if self.potential_energy is not None else -1 * (now.month * 10000 + now.day * 100 + now.hour + now.minute / 100 + now.second / 10000)} \n')
+        header.append(f'# total energy =   {self.potential_energy} \n')
         header.append("\n")
         if self.cell is not None:
             header.append("CRYSTAL\n")
@@ -442,12 +441,6 @@ class ExportFrame(
         # 1-index
         self.atoms['symbol'] = self.atoms['type'].replace(
             self.atom_type_to_symbol)
-        if "fx" not in self.atoms.keys():
-            self.atoms["fx"] = np.array([0.0001 for _ in range(len(self))])
-        if "fy" not in self.atoms.keys():
-            self.atoms["fy"] = np.array([0.0001 for _ in range(len(self))])
-        if "fz" not in self.atoms.keys():
-            self.atoms["fz"] = np.array([0.0001 for _ in range(len(self))])
         self.atoms.index += 1
         self.atoms.to_csv(f, columns=out_columns, sep=' ',
                                         mode='a', header=False, index=False,

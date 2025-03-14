@@ -352,7 +352,6 @@ class ImportFrames(
         assert self.atom_symbol_to_type is not None, "import atom symbol first"
         assert self.atom_type_to_mass is not None, "import atom symbol first"
         assert self.atom_type_to_symbol is not None, "import atom symbol first"
-
         if dir_name is None:
             dir_name = pathlib.Path.cwd()  
         else:
