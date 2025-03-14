@@ -417,7 +417,7 @@ class ExportFrame(
             ofn: str
                 出力先
             out_columns: List[str]
-                sdat.atomsのどのカラムを出力するのか
+                sf.atomsのどのカラムを出力するのか
                 デフォルトは['symbol', 'x', 'y', 'z', 'fx', 'fy', 'fz']
         """
         if out_columns is None:
